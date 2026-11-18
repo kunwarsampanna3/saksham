@@ -35,12 +35,19 @@ export function Header() {
     return () => { document.body.style.overflow = ""; };
   }, [drawer]);
 
-  const nav = useMemo(() => [
+  // The top bar follows the mode: hiring shows hiring links, working shows work links.
+  const working = user?.activeRole === "provider";
+  const nav = useMemo(() => working ? [
+    { href: "/explore", label: t.home.quick.findWork, Icon: Search },
+    { href: "/my-tasks", label: t.home.quick.myOffers, Icon: ClipboardList },
+    { href: "/wallet", label: t.home.quick.earnings, Icon: Wallet },
+    { href: "/messages", label: t.nav.messages, Icon: MessageSquare },
+  ] : [
     { href: "/explore", label: t.home.landing.navBrowse, Icon: Compass },
     { href: "/professionals", label: t.nav.professionals, Icon: Users },
     { href: "/my-tasks", label: t.nav.myTasks, Icon: ClipboardList },
     { href: "/messages", label: t.nav.messages, Icon: MessageSquare },
-  ], [t]);
+  ], [t, working]);
 
   const closeDrawer = useCallback(() => setDrawer(false), []);
   const isActive = (href: string) => pathname === href || pathname.startsWith(`${href}/`);
@@ -92,9 +99,15 @@ export function Header() {
             <Search size={19} aria-hidden /> <span className="sr-only sm:not-sr-only">{t.nav.searchShort}</span>
           </button>
 
-          <Link href="/post" className="btn btn-primary hidden !min-h-10 !px-3.5 md:inline-flex">
-            <Plus size={18} aria-hidden /> {t.nav.post}
-          </Link>
+          {working ? (
+            <Link href="/explore" className="btn hidden !min-h-10 !px-3.5 bg-forest text-leaf hover:brightness-110 md:inline-flex">
+              <Search size={18} aria-hidden /> {t.home.quick.findWork}
+            </Link>
+          ) : (
+            <Link href="/post" className="btn btn-primary hidden !min-h-10 !px-3.5 md:inline-flex">
+              <Plus size={18} aria-hidden /> {t.nav.post}
+            </Link>
+          )}
 
           <div className="hidden sm:block"><LangSwitch /></div>
           <div className="hidden md:block"><ThemeToggle /></div>
@@ -481,7 +494,9 @@ function MobileDrawer({ nav, onClose, isActive, user, messages }: {
               </span>
             </div>
           )}
-          <Link href="/post" onClick={onClose} className="btn btn-primary w-full"><Plus size={18} aria-hidden /> {t.nav.post}</Link>
+          {user?.activeRole === "provider"
+            ? <Link href="/explore" onClick={onClose} className="btn w-full bg-forest text-leaf hover:brightness-110"><Search size={18} aria-hidden /> {t.home.quick.findWork}</Link>
+            : <Link href="/post" onClick={onClose} className="btn btn-primary w-full"><Plus size={18} aria-hidden /> {t.nav.post}</Link>}
 
           <nav aria-label="Primary" className="mt-4">
             <ul className="space-y-0.5">{nav.map((n) => item(n, n.href === "/messages" ? messages : 0))}</ul>

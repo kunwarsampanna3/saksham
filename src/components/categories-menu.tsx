@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import { ChevronDown } from "lucide-react";
-import { useI18n } from "@/components/providers";
+import { useI18n, useUser } from "@/components/providers";
 import { useDismiss } from "@/components/use-dismiss";
 import { CATEGORIES } from "@/lib/pricing";
 
@@ -19,7 +19,10 @@ export function CategoriesMenu() {
   const l = t.home.landing;
   const path = usePathname();
   const [open, setOpen] = useState(false);
-  const [mode, setMode] = useState<Mode>("client");
+  const { user } = useUser();
+  const [mode, setMode] = useState<Mode>(user?.activeRole === "provider" ? "provider" : "client");
+  // Follow the Hiring / Working switch.
+  useEffect(() => { setMode(user?.activeRole === "provider" ? "provider" : "client"); }, [user?.activeRole]);
   const btn = useRef<HTMLButtonElement>(null);
   const panel = useRef<HTMLDivElement>(null);
   const close = useCallback(() => setOpen(false), []);
