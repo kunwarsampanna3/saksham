@@ -39,6 +39,12 @@ export interface User {
   womenLed?: boolean;
   /** Display-only tag used for the demo personas; real accounts get it from verification. */
   headline?: string;
+  /** Categories chosen at sign-up: skills offered (providers) or what they usually need (clients). */
+  categories?: string[];
+  /** Opted in to product updates and offers (unticked by default). */
+  marketingOptIn?: boolean;
+  /** When the user accepted the Terms and Privacy Policy. */
+  termsAcceptedAt?: string;
   passkeys: Passkey[];
   createdAt: string;
   updatedAt: string;

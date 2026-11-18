@@ -7,6 +7,7 @@ import { hashMpin } from "@/lib/auth/mpin";
 import { clearVerifiedTicket, readVerifiedTicket } from "@/lib/auth/otp";
 import { nowSec, setSessionCookie } from "@/lib/auth/session";
 import type { Role } from "@/lib/store/types";
+import { CATEGORY_IDS } from "@/lib/pricing";
 import { isEmail } from "@/lib/auth/target";
 
 const Body = z.object({
@@ -15,12 +16,17 @@ const Body = z.object({
   role: roleChoiceSchema,
   mpin: mpinSchema,
   lang: langSchema.default("en"),
+  categories: z.array(z.enum(CATEGORY_IDS)).max(20).default([]),
+  marketingOptIn: z.boolean().default(false),
+  acceptTerms: z.literal(true, { message: "terms_required" }),
 });
 
 export async function POST(req: NextRequest) {
   const g = await guard(req, { name: "register", schema: Body, limit: 5, windowSec: 60 });
   if ("res" in g) return g.res;
-  const { name, city, role, mpin, lang } = g.data;
+  const { name, city, role, mpin, lang, categories, marketingOptIn } = g.data;
+  // Providers say what they do, so the right tasks reach them.
+  if (role !== "client" && categories.length === 0) return fail(422, "categories_required", { field: "categories" });
 
   // The verified phone or email comes from the OTP ticket cookie, never from the request body.
   const target = await readVerifiedTicket("signup");
@@ -42,6 +48,9 @@ export async function POST(req: NextRequest) {
       isDemo: false,
       isAdmin: false,
       passkeys: [],
+      categories: [...new Set(categories)],
+      marketingOptIn,
+      termsAcceptedAt: new Date().toISOString(),
     });
     await clearVerifiedTicket();
     await setSessionCookie({ sub: user.id, role: user.activeRole, mpinAt: nowSec() });

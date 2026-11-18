@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Contours } from "@/components/contours";
 import { FilterBar } from "@/components/browse/filters";
 import { ResultsLayout } from "@/components/browse/results-layout";
 import { TaskCard, ProviderCard } from "@/components/browse/cards";
@@ -34,29 +33,27 @@ export default async function Explore({ searchParams }: { searchParams: SP }) {
 
   return (
     <div className="relative">
-      <div className="relative overflow-hidden border-b border-line">
-        <Contours seed={31} centers={1} rings={8} />
-        <div className="relative mx-auto max-w-[88rem] px-4 pb-6 pt-10 sm:px-6">
-          <h1 className="font-display text-4xl font-extrabold sm:text-5xl">{e.title}</h1>
-          <p className="mt-2 max-w-2xl text-lg text-muted">{e.lead}</p>
-
-          <nav aria-label={e.title} className="mt-6 inline-flex rounded-[5px] border border-line-strong bg-surface p-1">
+      {/* Slim toolbar like a classic task marketplace: tabs + one row of filters, stuck under the header. */}
+      <div className="sticky top-[var(--header-h)] z-30 border-b border-line bg-bg/95 backdrop-blur supports-[backdrop-filter]:bg-bg/85">
+        <div className="mx-auto flex max-w-[88rem] flex-wrap items-center gap-x-4 gap-y-2 px-4 py-3 sm:px-6">
+          <h1 className="sr-only">{e.title}</h1>
+          <nav aria-label={e.title} className="inline-flex rounded-full border border-line-strong bg-surface p-1">
             {(["tasks", "pros"] as const).map((v) => (
               <Link key={v} href={`/explore${tab(v)}`} aria-current={f.view === v ? "page" : undefined}
-                className={`min-h-10 rounded-[4px] px-4 py-2 text-[0.95rem] font-semibold ${f.view === v ? "bg-accent text-accent-contrast" : "hover:text-accent"}`}>
+                className={`rounded-full px-4 py-1.5 text-[0.93rem] font-semibold ${f.view === v ? "bg-accent text-accent-contrast" : "hover:text-accent"}`}>
                 {e.tabs[v]}
               </Link>
             ))}
           </nav>
-
-          <div className="mt-5">
-            <FilterBar key={f.view} f={f} canSeeWomenOnly={women} />
+          <div className="min-w-0 flex-1">
+            <FilterBar key={f.view} f={f} canSeeWomenOnly={women} compact />
           </div>
         </div>
       </div>
 
       <div className="mx-auto max-w-[88rem] px-4 pb-10 sm:px-6">
         <ResultsLayout
+          split
           t={t}
           count={count}
           pins={pins}
@@ -64,7 +61,7 @@ export default async function Explore({ searchParams }: { searchParams: SP }) {
           note={f.view === "tasks" ? (women ? undefined : e.womenHidden) : `${t.browse.exampleNote} ${f.sort === "best" ? e.bestReason : ""}`}
         >
           {n > 0 ? (
-            <ul className={`grid gap-4 ${f.view === "tasks" ? "md:grid-cols-2" : "sm:grid-cols-2 xl:grid-cols-2"}`}>
+            <ul className="grid gap-3">
               {f.view === "tasks"
                 ? tasks.map((x) => <li key={x.id}><TaskCard task={x} t={t} lang={lang} /></li>)
                 : pros.map((p) => <li key={p.id}><ProviderCard p={p} t={t} lang={lang} /></li>)}

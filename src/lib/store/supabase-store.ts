@@ -22,6 +22,7 @@ type Row = {
   is_demo: boolean; is_admin: boolean; headline: string | null; gender: User["gender"] | null;
   area: string | null; lat: number | null; lng: number | null; radius_km: number | null; trusted_contacts: { name: string; phone: string }[] | null;
   verified: boolean; women_led: boolean; created_at: string; updated_at: string;
+  categories: string[] | null; marketing_opt_in: boolean | null; terms_accepted_at: string | null;
   passkeys?: { credential_id: string; public_key: string; counter: number; transports: string[] | null; label: string; created_at: string }[];
 };
 
@@ -34,6 +35,7 @@ function toUser(r: Row): User {
     isDemo: r.is_demo, isAdmin: r.is_admin, headline: r.headline ?? undefined, gender: r.gender ?? undefined,
     area: r.area ?? undefined, lat: r.lat ?? undefined, lng: r.lng ?? undefined, radiusKm: r.radius_km ?? undefined, trustedContacts: r.trusted_contacts ?? [],
     verified: r.verified, womenLed: r.women_led,
+    categories: r.categories ?? [], marketingOptIn: r.marketing_opt_in ?? false, termsAcceptedAt: r.terms_accepted_at ?? undefined,
     createdAt: r.created_at, updatedAt: r.updated_at,
     passkeys: (r.passkeys ?? []).map<Passkey>((p) => ({
       id: p.credential_id, publicKey: p.public_key, counter: p.counter,
@@ -57,6 +59,9 @@ function toRow(u: Partial<User>): Partial<Row> {
   if (u.isDemo !== undefined) r.is_demo = u.isDemo;
   if (u.isAdmin !== undefined) r.is_admin = u.isAdmin;
   if (u.headline !== undefined) r.headline = u.headline;
+  if (u.categories !== undefined) r.categories = u.categories;
+  if (u.marketingOptIn !== undefined) r.marketing_opt_in = u.marketingOptIn;
+  if (u.termsAcceptedAt !== undefined) r.terms_accepted_at = u.termsAcceptedAt;
   if (u.gender !== undefined) r.gender = u.gender;
   if (u.area !== undefined) r.area = u.area;
   if (u.lat !== undefined) r.lat = u.lat;

@@ -13,7 +13,7 @@ import { num } from "@/lib/format";
  * Filter bar. A plain GET form (works without JS); with JS every change updates the URL
  * in place, so results re-render on the server without a full reload.
  */
-export function FilterBar({ f, showView = true, canSeeWomenOnly }: { f: Filters; showView?: boolean; canSeeWomenOnly: boolean }) {
+export function FilterBar({ f, showView = true, canSeeWomenOnly, compact = false }: { f: Filters; showView?: boolean; canSeeWomenOnly: boolean; compact?: boolean }) {
   const { t, lang } = useI18n();
   const e = t.explore;
   const router = useRouter();
@@ -78,6 +78,63 @@ export function FilterBar({ f, showView = true, canSeeWomenOnly }: { f: Filters;
       </label>
     </>
   );
+
+  if (compact) {
+    // Slim one-line toolbar (Explore): every control is a small pill; extra checkboxes sit in "Other filters".
+    const pill = "h-10 appearance-none rounded-full border border-line-strong bg-surface pl-4 pr-8 text-[0.93rem] font-semibold hover:border-accent focus:border-accent";
+    const chevron = { backgroundImage: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2345564d' stroke-width='2.4'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E\")", backgroundRepeat: "no-repeat", backgroundPosition: "right 0.75rem center", backgroundSize: "14px" };
+    const extras = Number(f.online) + Number(f.women) + Number(f.verified);
+    return (
+      <form ref={form} action={path} method="get" role="search" aria-busy={pending}
+        onSubmit={(ev) => { ev.preventDefault(); push(); }} className="flex flex-wrap items-center gap-2">
+        {showView && <input type="hidden" name="view" value={f.view} />}
+        <label className="relative w-full sm:w-60">
+          <span className="sr-only">{e.search}</span>
+          <input name="q" type="search" defaultValue={f.q} maxLength={80} placeholder={e.searchPh}
+            className="h-10 w-full rounded-full border border-line-strong bg-surface pl-4 pr-10 text-[0.93rem] hover:border-accent focus:border-accent" />
+          <button type="submit" aria-label={e.search} className="absolute right-1 top-1/2 grid h-8 w-8 -translate-y-1/2 place-items-center rounded-full text-muted hover:text-accent"><Search size={17} aria-hidden /></button>
+        </label>
+        <label><span className="sr-only">{e.category}</span>
+          <select name="category" defaultValue={f.cat} onChange={push} className={pill} style={chevron}>
+            <option value="">{e.category}</option>
+            {CATEGORIES.filter((c) => c.id !== "other").map((c) => <option key={c.id} value={c.id}>{lang === "ne" ? c.ne : c.en}</option>)}
+          </select></label>
+        <label><span className="sr-only">{e.city}</span>
+          <select name="city" defaultValue={f.city} onChange={push} className={pill} style={chevron}>
+            <option value={ANYWHERE}>{t.nav.anywhere}</option>
+            {HEADER_CITIES.map((c) => <option key={c} value={c}>{c === "Online" ? t.browse.online : c}</option>)}
+          </select></label>
+        <label><span className="sr-only">{e.radius}</span>
+          <select name="radius" defaultValue={f.radius ?? ""} onChange={push} className={pill} style={chevron} disabled={f.city === "Online" || f.city === ANYWHERE}>
+            <option value="">{e.anyDistance}</option>
+            {RADII.map((r) => <option key={r} value={r}>{e.within(r)}</option>)}
+          </select></label>
+        <label><span className="sr-only">{e.price}</span>
+          <select name="max" defaultValue={f.max ?? ""} onChange={push} className={pill} style={chevron}>
+            <option value="">{e.anyPrice}</option>
+            {PRICE_CAPS.map((p) => <option key={p} value={p}>{lang === "ne" ? `रु. ${num(p, lang)}` : `Rs. ${num(p, lang)}`}</option>)}
+          </select></label>
+        <details className="relative">
+          <summary className={`inline-flex h-10 cursor-pointer list-none items-center gap-1.5 rounded-full border px-4 text-[0.93rem] font-semibold hover:border-accent [&::-webkit-details-marker]:hidden ${extras ? "border-accent bg-accent-soft text-accent" : "border-line-strong bg-surface"}`}>
+            <SlidersHorizontal size={15} aria-hidden /> {e.otherFilters}{extras ? ` (${extras})` : ""}
+          </summary>
+          <div className="absolute left-0 top-12 z-30 w-64 space-y-2 rounded-[12px] border border-line bg-surface p-3 shadow-[0_16px_40px_-16px_rgba(13,26,20,.45)]">
+            <Check name="online" label={e.onlineOnly} on={f.online} />
+            {f.view === "pros" && <Check name="women" label={e.womenLedOnly} on={f.women} />}
+            {f.view === "tasks" && canSeeWomenOnly && <Check name="women" label={e.womenOnly} on={f.women} />}
+            {f.view === "pros" && <Check name="verified" label={e.verifiedOnly} on={f.verified} />}
+          </div>
+        </details>
+        <label><span className="sr-only">{e.sort}</span>
+          <select name="sort" defaultValue={f.sort} onChange={push} className={pill} style={chevron}>
+            {(["best", "near", "rating", "price"] as const)
+              .filter((s) => f.view === "pros" || s !== "rating")
+              .map((s) => <option key={s} value={s}>{e.sorts[s]}</option>)}
+          </select></label>
+        <a href={`${path}${showView ? `?view=${f.view}` : ""}`} className="btn btn-quiet !min-h-10 text-sm"><X size={15} aria-hidden /> {e.clear}</a>
+      </form>
+    );
+  }
 
   return (
     <form ref={form} action={path} method="get" role="search" aria-busy={pending}

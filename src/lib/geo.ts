@@ -96,3 +96,15 @@ export const EXAMPLE_FX: Partial<Record<(typeof ABROAD_COUNTRIES)[number], { cod
   UK: { code: "GBP", nprPer: 170 }, "Saudi Arabia": { code: "SAR", nprPer: 36 }, Kuwait: { code: "KWD", nprPer: 440 },
   "South Korea": { code: "KRW", nprPer: 0.098 },
 };
+
+/** Nepal's 7 provinces, with the sign-up cities in each (every province also allows "Other"). */
+export const PROVINCES = [
+  { id: "koshi", en: "Koshi", ne: "कोशी", cities: ["Biratnagar", "Dharan", "Itahari", "Damak", "Ilam"] },
+  { id: "madhesh", en: "Madhesh", ne: "मधेश", cities: ["Birgunj", "Janakpur"] },
+  { id: "bagmati", en: "Bagmati", ne: "बागमती", cities: ["Kathmandu", "Lalitpur", "Bhaktapur", "Bharatpur", "Hetauda", "Banepa", "Dhulikhel"] },
+  { id: "gandaki", en: "Gandaki", ne: "गण्डकी", cities: ["Pokhara", "Gorkha"] },
+  { id: "lumbini", en: "Lumbini", ne: "लुम्बिनी", cities: ["Butwal", "Bhairahawa", "Nepalgunj", "Ghorahi", "Tulsipur"] },
+  { id: "karnali", en: "Karnali", ne: "कर्णाली", cities: ["Birendranagar"] },
+  { id: "sudurpashchim", en: "Sudurpashchim", ne: "सुदूरपश्चिम", cities: ["Dhangadhi"] },
+] as const;
+export type ProvinceId = (typeof PROVINCES)[number]["id"];
