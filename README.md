@@ -12,13 +12,26 @@ A skills marketplace for all of Nepal. Next.js 15 · React 19 · Tailwind 4 · S
 To save changes back to GitHub, use the **Source Control** icon on the left (commit, then **Sync**), or in the Codespace terminal: `git add -A`, `git commit -m "..."`, `git push`.
 Stop the Codespace when you're done (github.com/codespaces → ⋯ → Stop) to save free hours.
 
-## Run it on a laptop
+## Run it on a Windows laptop — double-click
+
+- **`Start Saksham.bat`** — fast mode (production build). Pages load in about 0.05 s. Use this to show or use the app.
+- **`Edit Saksham.bat`** — edit mode. The site reloads by itself when you save a file (Turbopack, ~1 s per new page).
+
+Both install packages and create `.env.local` the first time, then open http://localhost:3000. Close the window to stop.
+
+## Run it from a terminal
 
 ```bash
 npm install
-node scripts/setup-env.mjs
-npm run dev
+npm run setup     # creates .env.local once
+npm run dev       # edit mode (Turbopack)
+npm run fast      # fast mode: build + start
 ```
+
+### Security notes
+- `DEMO_MODE=true` shows sign-in codes on screen, so anyone using the site can sign in to or reset any account. Keep it for demos on your own laptop only; set `DEMO_MODE=false` (with an SMS provider) before the site is public.
+- Numbers in `OWNER_PHONES` get the Admin page. Register your own number first, and never put a number you don't control there.
+- Secrets live only in `.env.local`, which git never uploads. `npm audit` reports 0 known vulnerabilities (PostCSS is pinned to a patched version via `overrides`).
 
 Open http://localhost:3000. `scripts/setup-env.mjs` creates `.env.local` with `DEMO_MODE=true` and a random `SESSION_SECRET` (it never overwrites an existing one).
 

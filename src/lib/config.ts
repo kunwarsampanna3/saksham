@@ -26,7 +26,9 @@ export const config = {
 
 export const useSupabase = Boolean(config.supabase.url && config.supabase.serviceKey);
 
-if (config.isProd && config.demoMode && process.env.ALLOW_DEMO_IN_PROD !== "true") {
+const g = globalThis as { __sakshamDemoWarned?: boolean };
+if (config.isProd && config.demoMode && process.env.ALLOW_DEMO_IN_PROD !== "true" && !g.__sakshamDemoWarned) {
+  g.__sakshamDemoWarned = true; // once per process, not once per page
   // A loud warning rather than a crash, so a staging deploy can still opt in explicitly.
   console.warn("[saksham] DEMO_MODE is on in a production build. Set DEMO_MODE=false before launch.");
 }

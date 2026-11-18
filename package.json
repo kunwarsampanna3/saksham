@@ -3,10 +3,13 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev -p 3000",
+    "dev": "next dev --turbopack -p 3000",
     "build": "next build",
     "start": "next start -p 3000",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "dev:webpack": "next dev -p 3000",
+    "setup": "node scripts/setup-env.mjs",
+    "fast": "npm run build && npm run start"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^1.9.0",
@@ -35,5 +38,8 @@
     "postcss": "^8.5.33",
     "tailwindcss": "^4.3.5",
     "typescript": "^5.9.3"
+  },
+  "overrides": {
+    "postcss": "$postcss"
   }
 }
