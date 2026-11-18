@@ -116,6 +116,19 @@ export function SignupFlow({ cities }: { cities: readonly string[] }) {
           if (channel === "email" && !isEmailAddress(email)) return setPhoneErr(t.errors.email_invalid);
           setStep(1);
         }}>
+          <fieldset>
+            <legend className="font-display mb-3 text-xl font-bold">{s.goal}</legend>
+            <div className="grid gap-2.5 sm:grid-cols-3">
+              {goals.map(({ v, title, sub, Icon }) => (
+                <label key={v} className={`flex cursor-pointer flex-col items-center gap-1.5 rounded-[10px] border-[1.5px] p-4 text-center transition-colors ${role === v ? "border-accent bg-accent-soft" : "border-line hover:border-line-strong"}`}>
+                  <input type="radio" name="goal" value={v} checked={role === v} onChange={() => setRole(v)} className="sr-only" />
+                  <Icon size={26} aria-hidden className="text-accent" />
+                  <span className="font-semibold">{title}</span>
+                  <span className="text-sm text-muted">{sub}</span>
+                </label>
+              ))}
+            </div>
+          </fieldset>
           <p className="text-muted">{s.phoneLead}</p>
           <IdentityInput channel={channel} onChannel={(c) => { setChannel(c); setPhoneErr(null); setServerErr(null); }}
             phone={phone} onPhone={(v) => { setPhone(v); setPhoneErr(null); }}
@@ -192,19 +205,15 @@ export function SignupFlow({ cities }: { cities: readonly string[] }) {
             {errs.city ? <p role="alert" className="field-error">{errs.city}</p> : <p id="su-city-h" className="field-hint">{s.cityIn(provName)}</p>}
           </div>
 
-          <fieldset>
-            <legend className="field-label">{s.goal} *</legend>
-            <div className="grid gap-2.5 sm:grid-cols-3">
-              {goals.map(({ v, title, sub, Icon }) => (
-                <label key={v} className={`flex cursor-pointer flex-col items-center gap-1.5 rounded-[10px] border-[1.5px] p-4 text-center transition-colors ${role === v ? "border-accent bg-accent-soft" : "border-line hover:border-line-strong"}`}>
-                  <input type="radio" name="goal" value={v} checked={role === v} onChange={() => setRole(v)} className="sr-only" />
-                  <Icon size={26} aria-hidden className="text-accent" />
-                  <span className="font-semibold">{title}</span>
-                  <span className="text-sm text-muted">{sub}</span>
-                </label>
+          <div>
+            <p className="field-label">{s.goal}</p>
+            <div role="radiogroup" aria-label={s.goal} className="flex gap-1 rounded-[8px] bg-surface-2 p-1">
+              {goals.map(({ v, title }) => (
+                <button key={v} type="button" role="radio" aria-checked={role === v} onClick={() => setRole(v)}
+                  className={`flex-1 rounded-[6px] px-2 py-2 text-sm font-semibold transition-colors ${role === v ? "bg-surface text-accent shadow-sm" : "text-muted hover:text-text"}`}>{title}</button>
               ))}
             </div>
-          </fieldset>
+          </div>
 
           <fieldset>
             <legend className="field-label">{needsCats ? `${s.catsProvider} *` : s.catsClient}</legend>
