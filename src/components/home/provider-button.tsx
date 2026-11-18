@@ -7,14 +7,14 @@ import { postJson, useUser } from "@/components/providers";
 import type { PublicUser } from "@/lib/store/types";
 
 /** Adds the provider role to a client account, switches to it, then opens verification. */
-export function ProviderButton({ label }: { label: string }) {
+export function ProviderButton({ label, className = "btn btn-primary" }: { label: string; className?: string }) {
   const { setUser } = useUser();
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   return (
     <button
       type="button"
-      className="btn btn-primary"
+      className={className}
       disabled={busy}
       onClick={async () => {
         setBusy(true);

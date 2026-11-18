@@ -139,6 +139,15 @@ export const en = {
   },
   home: {
     hello: (n: string) => `Namaste, ${n.split(" ")[0]}`,
+    landing: {
+      title: "Get any job done", pitch: "Post any task. Compare fair offers. Pay safely, step by step.",
+      post: "Post your task for free", earn: "Earn money with your skills",
+      facts: ["Fair price shown first", "Money held safely in escrow", "Nepali and English", "Verified people"],
+      firstTitle: "Post your first task in seconds", firstLead: "Save time and get your job done by someone skilled near you.",
+      steps: ["Describe what you need done", "See the fair price and set your budget", "Get offers and pick the best person"],
+      cta: "Post your task", allCats: "See all categories", catHint: (from: string) => `From ${from}`,
+      topCats: "Top categories", topCatsLead: "Every skill in Nepal, from websites to plumbing.",
+    },
     quick: {
       it: "IT & digital skills", home: "Home & everyday services", mine: "Your Saksham", all: "See all",
       short: {
@@ -740,6 +749,15 @@ export const ne: Dict = {
   },
   home: {
     hello: (n: string) => `नमस्ते, ${n.split(" ")[0]}`,
+    landing: {
+      title: "जुनसुकै काम गराउनुहोस्", pitch: "जुनसुकै काम पोस्ट गर्नुहोस्। उचित प्रस्ताव तुलना गर्नुहोस्। चरणबद्ध रूपमा सुरक्षित भुक्तानी गर्नुहोस्।",
+      post: "निःशुल्क काम पोस्ट गर्नुहोस्", earn: "आफ्नो सीपबाट कमाउनुहोस्",
+      facts: ["उचित मूल्य पहिले देखिन्छ", "पैसा एस्क्रोमा सुरक्षित", "नेपाली र अंग्रेजी", "प्रमाणित मानिस"],
+      firstTitle: "केही सेकेन्डमै पहिलो काम पोस्ट गर्नुहोस्", firstLead: "समय बचाउनुहोस् र नजिकैका सीपालु मानिसबाट काम गराउनुहोस्।",
+      steps: ["के गर्नुपर्छ लेख्नुहोस्", "उचित मूल्य हेरेर बजेट राख्नुहोस्", "प्रस्ताव पाउनुहोस् र राम्रो मान्छे छान्नुहोस्"],
+      cta: "काम पोस्ट गर्नुहोस्", allCats: "सबै वर्ग हेर्नुहोस्", catHint: (from: string) => `${from} देखि`,
+      topCats: "मुख्य वर्गहरू", topCatsLead: "वेबसाइटदेखि प्लम्बिङसम्म, नेपालका सबै सीप।",
+    },
     quick: {
       it: "IT र डिजिटल सीप", home: "घर र दैनिक सेवा", mine: "तपाईंको सक्षम", all: "सबै हेर्नुहोस्",
       short: {
