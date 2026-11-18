@@ -117,6 +117,83 @@ export function FirstTask({ t, lang }: P) {
   );
 }
 
+/* ================================================================ post your first task (scrolling cards) */
+const COL_A: CategoryId[] = ["moving", "cleaning", "assembly", "gardening", "painting", "handyman", "accounting", "plumbing"];
+const COL_B: CategoryId[] = ["web-design", "coding", "it-support", "phone-repair", "graphic-design", "tutoring", "electrician", "tailoring"];
+/** Soft tints for the icon tiles (each has a dark-mode pair). */
+const TINTS = [
+  "bg-[#e3f2e6] text-[#1E8E4E] dark:bg-[#16321f] dark:text-[#8fd99a]",
+  "bg-[#fdf1d6] text-[#8a5a00] dark:bg-[#3a2c0a] dark:text-[#f6d27a]",
+  "bg-[#fbe9e3] text-[#8a3a1d] dark:bg-[#3a1d12] dark:text-[#f0b49c]",
+  "bg-[#e6eefc] text-[#1d4f9a] dark:bg-[#14243d] dark:text-[#9dbcf2]",
+];
+
+function TaskCard({ id, t, lang, hidden }: P & { id: CategoryId; hidden?: boolean }) {
+  const l = t.home.landing;
+  const Icon = CATEGORY_ICONS[id];
+  const c = CATEGORIES.find((x) => x.id === id)!;
+  const tint = TINTS[[...id].reduce((a, ch) => a + ch.charCodeAt(0), 0) % TINTS.length];
+  return (
+    <li aria-hidden={hidden || undefined}>
+      <Link href={`/explore?category=${id}`} tabIndex={hidden ? -1 : undefined}
+        className="flex items-center gap-4 rounded-[12px] border border-line bg-surface p-3.5 transition-shadow hover:border-accent hover:shadow-[0_10px_28px_-14px_rgba(13,26,20,.4)]">
+        <span className={`grid h-16 w-16 shrink-0 place-items-center rounded-[12px] ${tint}`}>
+          <Icon size={30} strokeWidth={1.6} aria-hidden />
+        </span>
+        <span className="min-w-0">
+          <span className="font-display block text-lg font-bold leading-tight">{lang === "ne" ? c.ne : c.en}</span>
+          <span className="mt-0.5 block text-sm leading-snug text-muted">{l.cards[id as keyof typeof l.cards]}</span>
+        </span>
+      </Link>
+    </li>
+  );
+}
+
+/** One endlessly scrolling column. The list is rendered twice so the loop is seamless; the copy is hidden from screen readers. */
+function ScrollColumn({ ids, reverse, className = "", ...p }: P & { ids: CategoryId[]; reverse?: boolean; className?: string }) {
+  return (
+    <div className={`marquee-col overflow-hidden ${className}`}>
+      <ul className={`flex flex-col gap-4 pb-4 ${reverse ? "marquee-down" : "marquee-up"}`}>
+        {ids.map((id) => <TaskCard key={id} id={id} {...p} />)}
+        {ids.map((id) => <TaskCard key={`${id}-copy`} id={id} hidden {...p} />)}
+      </ul>
+    </div>
+  );
+}
+
+/** "Post your first task in seconds": steps + button on the left, slowly scrolling task cards on the right. */
+export function PostFirstTask({ t, lang, visitor = false }: P & { visitor?: boolean }) {
+  const l = t.home.landing;
+  return (
+    <section aria-labelledby="first-h" id="cats" className="mx-auto grid max-w-[88rem] scroll-mt-20 items-center gap-10 px-4 pt-16 sm:px-6 lg:grid-cols-12 lg:pt-24">
+      <div className="lg:col-span-5">
+        <h2 id="first-h" className="font-display text-[2.4rem] font-extrabold leading-[1.05] sm:text-6xl" lang={lang}>{l.firstTitle}</h2>
+        <p className="mt-4 text-xl text-muted">{l.firstLead}</p>
+        <ol className="mt-7 space-y-4">
+          {l.steps.map((s, i) => (
+            <li key={s} className="flex items-center gap-3 text-[1.08rem] font-semibold">
+              <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-accent-soft font-bold text-accent" aria-hidden>{i + 1}</span>{s}
+            </li>
+          ))}
+        </ol>
+        <Link href={visitor ? "/signup?next=%2Fpost" : "/post"} className="btn btn-primary mt-8 !min-h-12 rounded-full px-7 text-base">
+          {l.cta} <ArrowRight size={18} aria-hidden />
+        </Link>
+      </div>
+
+      <div className="marquee relative h-[30rem] overflow-hidden rounded-[18px] bg-accent-soft px-3 sm:h-[36rem] sm:px-5 lg:col-span-7">
+        <div className="grid h-full grid-cols-1 gap-4 sm:grid-cols-2">
+          <ScrollColumn ids={COL_A} t={t} lang={lang} />
+          <ScrollColumn ids={COL_B} t={t} lang={lang} reverse className="hidden sm:block" />
+        </div>
+        {/* soft fade at the top and bottom edges */}
+        <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-12 bg-gradient-to-b from-[var(--accent-soft)] to-transparent" />
+        <div aria-hidden className="pointer-events-none absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-[var(--accent-soft)] to-transparent" />
+      </div>
+    </section>
+  );
+}
+
 /* ================================================================ visitor (signed-out) pieces */
 export function PublicHeader({ t }: { t: Dict }) {
   const l = t.home.landing;

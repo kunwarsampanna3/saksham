@@ -303,6 +303,17 @@ h1:lang(ne), h2:lang(ne), h3:lang(ne) { line-height: 1.3; }
 .drawer-slide { animation: drawer-in .28s cubic-bezier(.2,.7,.2,1) both; }
 .drawer-fade { animation: fade-in .2s ease-out both; }
 
+/* Endless vertical card scroll ("post your first task"). The list is doubled, so -50% loops seamlessly. */
+@keyframes marquee-y { from { transform: translateY(0); } to { transform: translateY(-50%); } }
+.marquee-up { animation: marquee-y 38s linear infinite; }
+.marquee-down { animation: marquee-y 42s linear infinite reverse; }
+.marquee:hover .marquee-up, .marquee:hover .marquee-down,
+.marquee:focus-within .marquee-up, .marquee:focus-within .marquee-down { animation-play-state: paused; }
+@media (prefers-reduced-motion: reduce) {
+  .marquee-up, .marquee-down { animation: none !important; }
+  .marquee-col { overflow-y: auto; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: .001ms !important;
