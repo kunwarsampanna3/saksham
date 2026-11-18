@@ -4,6 +4,7 @@ import { CATEGORY_ICONS } from "@/components/browse/cards";
 import { ProviderButton } from "@/components/home/provider-button";
 import { TaskBox } from "@/components/home/task-box";
 import { Logo } from "@/components/logo";
+import { CategoriesMenu } from "@/components/categories-menu";
 import { LangSwitch, ThemeToggle } from "@/components/prefs-controls";
 import { CATEGORIES, fairRange, type CategoryId } from "@/lib/pricing";
 import { num } from "@/lib/format";
@@ -124,10 +125,10 @@ export function PublicHeader({ t }: { t: Dict }) {
       <a href="#main" className="skip-link">{t.nav.skip}</a>
       <div className="mx-auto flex h-[var(--header-h)] max-w-[88rem] items-center gap-3 px-4 sm:px-6">
         <Logo />
-        <nav aria-label="Primary" className="ml-2 hidden items-center gap-1 lg:flex">
-          {[["#how", l.navHow], ["#cats", l.navCats], ["#it-h", l.navIt]].map(([href, label]) => (
-            <a key={href} href={href} className="rounded-md px-3 py-2 text-[0.95rem] font-semibold hover:text-accent">{label}</a>
-          ))}
+        <nav aria-label="Primary" className="ml-2 hidden items-center gap-1 md:flex">
+          <CategoriesMenu />
+          <Link href="/explore" className="rounded-md px-3 py-2 text-[0.95rem] font-semibold hover:text-accent">{l.navBrowse}</Link>
+          <a href="#how" className="rounded-md px-3 py-2 text-[0.95rem] font-semibold hover:text-accent">{l.navHow}</a>
         </nav>
         <div className="ml-auto flex items-center gap-2">
           <div className="hidden sm:block"><LangSwitch /></div>
@@ -151,7 +152,7 @@ export function AllCategories({ t, lang }: P) {
       <h2 id="cats-h" className="font-display text-[2.1rem] font-extrabold leading-tight sm:text-5xl" lang={lang}>{l.catsTitle}</h2>
       <p className="mt-2 text-lg text-muted">{l.catsLead}</p>
       <ul className="mt-7 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-        {CATEGORIES.filter((c) => c.id !== "other").map((c) => {
+        {CATEGORIES.filter((c) => c.id !== "other").slice(0, 15).map((c) => {
           const Icon = CATEGORY_ICONS[c.id];
           return (
             <li key={c.id}>
@@ -168,6 +169,12 @@ export function AllCategories({ t, lang }: P) {
             </li>
           );
         })}
+        <li>
+          <a href="#topcat-h" className="flex h-full min-h-[7.5rem] flex-col justify-between rounded-[12px] bg-forest p-4 text-white hover:brightness-110">
+            <ArrowRight size={24} aria-hidden className="text-leaf" />
+            <span className="font-semibold">{l.allCats}</span>
+          </a>
+        </li>
       </ul>
     </section>
   );
@@ -197,8 +204,8 @@ export function FinalCta({ t, lang }: P) {
 export function TopCategories({ t, lang }: P) {
   const l = t.home.landing;
   return (
-    <section aria-labelledby="topcat-h" className="mx-auto max-w-[88rem] px-4 pb-6 pt-20 sm:px-6">
-      <h2 id="topcat-h" className="font-display text-2xl font-extrabold sm:text-3xl">{l.topCats}</h2>
+    <section aria-labelledby="topcat-h" className="mx-auto max-w-[88rem] scroll-mt-20 px-4 pb-6 pt-20 sm:px-6">
+      <h2 id="topcat-h" className="scroll-mt-24 font-display text-2xl font-extrabold sm:text-3xl">{l.topCats}</h2>
       <p className="mt-1 text-muted">{l.topCatsLead}</p>
       <ul className="mt-5 grid grid-cols-2 gap-x-6 gap-y-2.5 sm:grid-cols-3 lg:grid-cols-4">
         {CATEGORIES.filter((c) => c.id !== "other").map((c) => (

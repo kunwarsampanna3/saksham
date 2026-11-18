@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { startRegistration } from "@simplewebauthn/browser";
 import { Logo } from "./logo";
+import { CategoriesMenu } from "./categories-menu";
 import { LangSwitch, ThemeToggle } from "./prefs-controls";
 import { postJson, useCity, useI18n, useUser } from "./providers";
 import { ANYWHERE, CITY_COORDS, HEADER_CITIES } from "@/lib/geo";
@@ -35,7 +36,7 @@ export function Header() {
   }, [drawer]);
 
   const nav = useMemo(() => [
-    { href: "/explore", label: t.nav.explore, Icon: Compass },
+    { href: "/explore", label: t.home.landing.navBrowse, Icon: Compass },
     { href: "/professionals", label: t.nav.professionals, Icon: Users },
     { href: "/my-tasks", label: t.nav.myTasks, Icon: ClipboardList },
     { href: "/messages", label: t.nav.messages, Icon: MessageSquare },
@@ -64,6 +65,7 @@ export function Header() {
         <CityPicker />
 
         <nav aria-label="Primary" className="ml-1 hidden items-center gap-0.5 xl:flex">
+          <CategoriesMenu />
           {nav.map(({ href, label }) => (
             <Link
               key={href}
