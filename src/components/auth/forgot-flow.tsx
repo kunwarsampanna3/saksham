@@ -5,7 +5,8 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { postJson, useI18n, useUser } from "@/components/providers";
 import { TerraceSteps } from "@/components/terrace-steps";
-import { PhoneInput, isNepalMobile } from "./phone-input";
+import { isNepalMobile } from "./phone-input";
+import { IdentityInput, isEmailAddress, targetBody, type Channel } from "./identity-input";
 import { OtpStep } from "./otp-step";
 import { SetMpin } from "./set-mpin";
 import type { PublicUser } from "@/lib/store/types";
@@ -15,7 +16,9 @@ export function ForgotFlow() {
   const { setUser } = useUser();
   const router = useRouter();
   const [step, setStep] = useState(0);
+  const [channel, setChannel] = useState<Channel>("phone");
   const [phone, setPhone] = useState("");
+  const [email, setEmail] = useState("");
   const [phoneErr, setPhoneErr] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
@@ -44,15 +47,19 @@ export function ForgotFlow() {
       {step === 0 && (
         <form className="space-y-6" noValidate onSubmit={(e) => {
           e.preventDefault();
-          if (!isNepalMobile(phone)) return setPhoneErr(t.errors.phone_invalid);
+          if (channel === "phone" && !isNepalMobile(phone)) return setPhoneErr(t.errors.phone_invalid);
+          if (channel === "email" && !isEmailAddress(email)) return setPhoneErr(t.errors.email_invalid);
           setStep(1);
         }}>
           <p className="text-muted">{t.forgot.lead}</p>
-          <PhoneInput value={phone} onChange={(v) => { setPhone(v); setPhoneErr(null); }} label={t.login.phone} hint={t.login.phoneHint} error={phoneErr ?? err} autoFocus />
+          <IdentityInput channel={channel} onChannel={(c) => { setChannel(c); setPhoneErr(null); setErr(null); }}
+            phone={phone} onPhone={(v) => { setPhone(v); setPhoneErr(null); }}
+            email={email} onEmail={(v) => { setEmail(v); setPhoneErr(null); }}
+            error={phoneErr ?? err} autoFocus />
           <button type="submit" className="btn btn-primary w-full sm:w-auto sm:min-w-44">{t.common.continue}</button>
         </form>
       )}
-      {step === 1 && <OtpStep phone={phone} purpose="reset" onVerified={() => setStep(2)} onChangeNumber={() => setStep(0)} />}
+      {step === 1 && <OtpStep target={targetBody(channel, phone, email) as { phone: string } | { email: string }} purpose="reset" onVerified={() => setStep(2)} onChangeNumber={() => setStep(0)} />}
       {step === 2 && <SetMpin submitLabel={t.common.save} onSubmit={(p) => void save(p)} serverError={err} busy={busy} />}
 
       <p className="mt-6 border-t border-line pt-5 text-[0.95rem]">

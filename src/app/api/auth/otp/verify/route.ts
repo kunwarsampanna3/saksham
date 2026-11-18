@@ -1,21 +1,23 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
 import { guard, fail } from "@/lib/auth/http";
-import { otpSchema, phoneSchema } from "@/lib/validation";
+import { otpSchema } from "@/lib/validation";
+import { exactlyOne, targetFields, targetOf } from "@/lib/auth/target";
 import { checkOtp, setVerifiedTicket } from "@/lib/auth/otp";
 
-const Body = z.object({ phone: phoneSchema, purpose: z.enum(["signup", "reset"]), code: otpSchema });
+const Body = z.object({ ...targetFields, purpose: z.enum(["signup", "reset"]), code: otpSchema }).refine(exactlyOne, { message: "target_required" });
 
 export async function POST(req: NextRequest) {
   const g = await guard(req, { name: "otp-verify", schema: Body, limit: 15, windowSec: 60 });
   if ("res" in g) return g.res;
-  const { phone, purpose, code } = g.data;
+  const { purpose, code } = g.data;
+  const target = targetOf(g.data);
 
-  const r = await checkOtp(phone, purpose, code);
+  const r = await checkOtp(target, purpose, code);
   if (!r.ok) {
     const status = r.error === "otp_wrong" ? 401 : r.error === "otp_too_many" ? 429 : 410;
     return fail(status, r.error, { attemptsLeft: r.attemptsLeft });
   }
-  await setVerifiedTicket(phone, purpose);
+  await setVerifiedTicket(target, purpose);
   return NextResponse.json({ ok: true });
 }

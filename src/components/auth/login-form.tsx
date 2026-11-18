@@ -7,7 +7,8 @@ import { Fingerprint, LockKeyhole, ArrowRight } from "lucide-react";
 import { startAuthentication } from "@simplewebauthn/browser";
 import { postJson, useI18n, useUser } from "@/components/providers";
 import { MpinInput, type MpinHandle } from "./mpin-input";
-import { PhoneInput, isNepalMobile } from "./phone-input";
+import { isNepalMobile } from "./phone-input";
+import { IdentityInput, isEmailAddress, targetBody, type Channel } from "./identity-input";
 import type { PublicUser } from "@/lib/store/types";
 
 export const PASSKEY_FLAG = "sk_passkey_device";
@@ -23,7 +24,9 @@ export function LoginForm({ next }: { next?: string }) {
   const router = useRouter();
   const pinRef = useRef<MpinHandle>(null);
 
+  const [channel, setChannel] = useState<Channel>("phone");
   const [phone, setPhone] = useState("");
+  const [email, setEmail] = useState("");
   const [mpin, setMpin] = useState("");
   const [phoneErr, setPhoneErr] = useState<string | null>(null);
   const [pinErr, setPinErr] = useState<string | null>(null);
@@ -36,6 +39,9 @@ export function LoginForm({ next }: { next?: string }) {
     try {
       const last = localStorage.getItem("sk_last_phone");
       if (last && isNepalMobile(last)) setPhone(last);
+      const lastEmail = localStorage.getItem("sk_last_email");
+      if (lastEmail && isEmailAddress(lastEmail)) setEmail(lastEmail);
+      if (localStorage.getItem("sk_last_channel") === "email") setChannel("email");
     } catch { /* storage unavailable */ }
     (async () => {
       try {
@@ -54,7 +60,10 @@ export function LoginForm({ next }: { next?: string }) {
   }, [lockedFor > 0]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const done = (user: PublicUser) => {
-    try { localStorage.setItem("sk_last_phone", phone); } catch { /* ignore */ }
+    try {
+      if (channel === "email") localStorage.setItem("sk_last_email", email.trim().toLowerCase()); else localStorage.setItem("sk_last_phone", phone);
+      localStorage.setItem("sk_last_channel", channel);
+    } catch { /* ignore */ }
     setUser(user);
     router.replace(safeNext(next));
     router.refresh();
@@ -69,17 +78,19 @@ export function LoginForm({ next }: { next?: string }) {
 
   const submit = async (pin = mpin) => {
     setPhoneErr(null); setPinErr(null);
-    if (!isNepalMobile(phone)) { setPhoneErr(t.errors.phone_invalid); return; }
+    if (channel === "phone" && !isNepalMobile(phone)) { setPhoneErr(t.errors.phone_invalid); return; }
+    if (channel === "email" && !isEmailAddress(email)) { setPhoneErr(t.errors.email_invalid); return; }
     if (!/^\d{4}$/.test(pin)) { fail(t.errors.mpin_format); return; }
     if (lockedFor > 0) return;
     setBusy(true);
-    const r = await postJson<{ user: PublicUser; attemptsLeft?: number; retryAfter?: number }>("/api/auth/login", { phone, mpin: pin });
+    const r = await postJson<{ user: PublicUser; attemptsLeft?: number; retryAfter?: number }>("/api/auth/login", { ...targetBody(channel, phone, email), mpin: pin });
     setBusy(false);
     if (r.ok) return done(r.user);
     if (r.error === "wrong_credentials") fail(`${t.login.wrong} ${t.login.attemptsLeft(r.attemptsLeft ?? 0)}`);
     else if (r.error === "locked") { setLockedFor(r.retryAfter ?? 900); fail(t.login.locked(Math.ceil((r.retryAfter ?? 900) / 60))); }
     else if (r.error === "rate_limited") fail(t.login.rateLimited);
     else if (r.error === "phone_invalid") setPhoneErr(t.errors.phone_invalid);
+    else if (r.error === "email_invalid") setPhoneErr(t.errors.email_invalid);
     else fail(r.error === "offline" ? t.errors.offline : t.errors.generic);
   };
 
@@ -108,13 +119,12 @@ export function LoginForm({ next }: { next?: string }) {
       <p className="mt-1.5 text-muted">{t.login.subtitle}</p>
 
       <form className="mt-7 space-y-6" noValidate onSubmit={(e) => { e.preventDefault(); void submit(); }}>
-        <PhoneInput
-          value={phone}
-          onChange={(v) => { setPhone(v); setPhoneErr(null); }}
-          label={t.login.phone}
-          hint={t.login.phoneHint}
+        <IdentityInput
+          channel={channel} onChannel={(c) => { setChannel(c); setPhoneErr(null); }}
+          phone={phone} onPhone={(v) => { setPhone(v); setPhoneErr(null); }}
+          email={email} onEmail={(v) => { setEmail(v); setPhoneErr(null); }}
           error={phoneErr}
-          autoFocus={!phone}
+          autoFocus={channel === "phone" ? !phone : !email}
         />
         <MpinInput
           ref={pinRef}

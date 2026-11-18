@@ -17,7 +17,7 @@ function db(): SupabaseClient {
 }
 
 type Row = {
-  id: string; phone: string; name: string; city: string; roles: User["roles"]; active_role: User["activeRole"];
+  id: string; phone: string | null; email: string | null; name: string; city: string; roles: User["roles"]; active_role: User["activeRole"];
   mpin_hash: string; failed_attempts: number; locked_until: string | null; lang: User["lang"];
   is_demo: boolean; is_admin: boolean; headline: string | null; gender: User["gender"] | null;
   area: string | null; lat: number | null; lng: number | null; radius_km: number | null; trusted_contacts: { name: string; phone: string }[] | null;
@@ -29,7 +29,7 @@ const SELECT = "*, passkeys(credential_id, public_key, counter, transports, labe
 
 function toUser(r: Row): User {
   return {
-    id: r.id, phone: r.phone, name: r.name, city: r.city, roles: r.roles, activeRole: r.active_role,
+    id: r.id, phone: r.phone ?? "", email: r.email ?? undefined, name: r.name, city: r.city, roles: r.roles, activeRole: r.active_role,
     mpinHash: r.mpin_hash, failedAttempts: r.failed_attempts, lockedUntil: r.locked_until, lang: r.lang,
     isDemo: r.is_demo, isAdmin: r.is_admin, headline: r.headline ?? undefined, gender: r.gender ?? undefined,
     area: r.area ?? undefined, lat: r.lat ?? undefined, lng: r.lng ?? undefined, radiusKm: r.radius_km ?? undefined, trustedContacts: r.trusted_contacts ?? [],
@@ -44,7 +44,8 @@ function toUser(r: Row): User {
 
 function toRow(u: Partial<User>): Partial<Row> {
   const r: Partial<Row> = {};
-  if (u.phone !== undefined) r.phone = u.phone;
+  if (u.phone !== undefined) r.phone = u.phone || null;
+  if (u.email !== undefined) r.email = u.email || null;
   if (u.name !== undefined) r.name = u.name;
   if (u.city !== undefined) r.city = u.city;
   if (u.roles !== undefined) r.roles = u.roles;
@@ -88,7 +89,8 @@ async function syncPasskeys(userId: string, passkeys: Passkey[]) {
 
 type BaseMethods = Omit<Store, "listReports" | "putReport" | "listBlocks" | "putBlock" | "deleteBlock" | "listPriceOverrides" | "putPriceOverride" | "purgeDemoData" | "listPayouts" | "putPayout" | "listRatingsFor" | "getRatingByBooking" | "putRating" | "listCreditApplications" | "putCreditApplication" | "listConversations" | "getConversation" | "findConversation" | "putConversation" | "listMessages" | "putMessage" | "listNotifications" | "putNotification" | "getBooking" | "getBookingByTask" | "listBookings" | "putBooking" | "listReceipts" | "putReceipt" | "listDisputes" | "putDispute" | "listTasks" | "getTask" | "putTask" | "listBids" | "putBid" | "listQuestions" | "putQuestion" | "listVerifications" | "putVerification" | "deleteVerification" | "listPendingVerifications" | "putFile" | "getFile" | "deleteFile">;
 const base: BaseMethods = {
-  getUserByPhone: (phone) => one(db().from("users").select(SELECT).eq("phone", phone).maybeSingle()),
+  getUserByPhone: async (phone) => (phone ? one(db().from("users").select(SELECT).eq("phone", phone).maybeSingle()) : null),
+  getUserByEmail: async (email) => (email ? one(db().from("users").select(SELECT).eq("email", email.trim().toLowerCase()).maybeSingle()) : null),
   getUserById: (id) => one(db().from("users").select(SELECT).eq("id", id).maybeSingle()),
   async getUserByPasskeyId(credentialId) {
     const { data, error } = await db().from("passkeys").select("user_id").eq("credential_id", credentialId).maybeSingle();
@@ -97,7 +99,7 @@ const base: BaseMethods = {
   },
   async createUser(input) {
     const { data, error } = await db().from("users").insert(toRow(input)).select(SELECT).single();
-    if (error) throw new Error(error.code === "23505" ? "phone_taken" : error.message);
+    if (error) throw new Error(error.code === "23505" ? (/email/.test(error.message) ? "email_taken" : "phone_taken") : error.message);
     return toUser(data as Row);
   },
   async updateUser(id, patch) {

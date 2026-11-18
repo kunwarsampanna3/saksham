@@ -87,6 +87,7 @@ Also landed early because later steps depend on them: the Claude integration (`/
 | Phone + MPIN sign-in, bcrypt hashing, 5-tries → 15-min lock, rate limits, httpOnly session cookie, CSRF origin check | Real |
 | Fingerprint / face sign-in (WebAuthn passkeys) | Real (turn on from the profile menu) |
 | SMS OTP | **Demo:** code shown on screen as "Sandbox OTP". Production needs `SMS_PROVIDER` (Sparrow SMS wired) |
+| Email sign-up / sign-in / forgot MPIN | Real: 6-digit code emailed through Gmail SMTP or Resend once `EMAIL_FROM` + SMTP or `RESEND_API_KEY` are set (also in demo mode). Without them, demo mode shows the code on screen, labelled. Emails are stored lower-case and unique |
 | One-tap example accounts | **Demo only**, hidden when `DEMO_MODE=false` |
 | Selfie-to-ID face match | **Simulated** in demo (labelled); without DEMO_MODE it waits for manual review — no face-match provider connected |
 | eSewa / Khalti payments | **Sandbox · demo**: a labelled test screen; escrow states, receipts and the 7% example fee are real logic, but no money moves. Real gateway integration needs merchant keys |

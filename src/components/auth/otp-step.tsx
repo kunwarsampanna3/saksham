@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { FlaskConical } from "lucide-react";
 import { postJson, useI18n } from "@/components/providers";
 
@@ -9,8 +9,9 @@ import { postJson, useI18n } from "@/components/providers";
  * we show it in a clearly labelled sandbox box — no real SMS is sent.
  */
 export function OtpStep({
-  phone, purpose, onVerified, onChangeNumber,
-}: { phone: string; purpose: "signup" | "reset"; onVerified: () => void; onChangeNumber: () => void }) {
+  target, purpose, onVerified, onChangeNumber,
+}: { target: { phone: string } | { email: string }; purpose: "signup" | "reset"; onVerified: () => void; onChangeNumber: () => void }) {
+  const viaEmail = "email" in target;
   const { t } = useI18n();
   const id = useId();
   const [code, setCode] = useState("");
@@ -22,7 +23,7 @@ export function OtpStep({
 
   const send = async () => {
     setError(null);
-    const r = await postJson<{ devCode?: string; resendIn?: number; retryAfter?: number }>("/api/auth/otp/request", { phone, purpose });
+    const r = await postJson<{ devCode?: string; resendIn?: number; retryAfter?: number }>("/api/auth/otp/request", { ...target, purpose });
     if (r.ok) {
       setSent(true);
       setDevCode(r.devCode ?? null);
@@ -33,14 +34,20 @@ export function OtpStep({
       setError(t.otp.cooldown(r.retryAfter ?? 30));
     } else if (r.error === "phone_taken") {
       setError(t.signup.taken);
+    } else if (r.error === "email_taken") {
+      setError(t.signup.emailTaken);
     } else if (r.error === "sms_unavailable") {
       setError(t.otp.smsDown);
+    } else if (r.error === "email_unavailable") {
+      setError(t.otp.emailDown);
     } else {
       setError(r.error === "offline" ? t.errors.offline : t.errors.generic);
     }
   };
 
-  useEffect(() => { void send(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, []);
+  // Send once on mount. (React runs effects twice in dev; a second request would only hit the 30 s cooldown.)
+  const autoSent = useRef(false);
+  useEffect(() => { if (autoSent.current) return; autoSent.current = true; void send(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, []);
   useEffect(() => {
     if (cooldown <= 0) return;
     const tm = setInterval(() => setCooldown((c) => Math.max(0, c - 1)), 1000);
@@ -50,7 +57,7 @@ export function OtpStep({
   const verify = async (c = code) => {
     if (!/^\d{6}$/.test(c)) { setError(t.errors.otp_format); return; }
     setBusy(true); setError(null);
-    const r = await postJson<{ attemptsLeft?: number }>("/api/auth/otp/verify", { phone, purpose, code: c });
+    const r = await postJson<{ attemptsLeft?: number }>("/api/auth/otp/verify", { ...target, purpose, code: c });
     setBusy(false);
     if (r.ok) return onVerified();
     if (r.error === "otp_wrong") setError(t.otp.wrong(r.attemptsLeft ?? 0));
@@ -59,14 +66,14 @@ export function OtpStep({
     else setError(r.error === "offline" ? t.errors.offline : t.errors.generic);
   };
 
-  const pretty = `+977 ${phone.slice(0, 3)} ${phone.slice(3, 6)} ${phone.slice(6)}`;
+  const pretty = "email" in target ? target.email : `+977 ${target.phone.slice(0, 3)} ${target.phone.slice(3, 6)} ${target.phone.slice(6)}`;
 
   return (
     <form className="space-y-5" onSubmit={(e) => { e.preventDefault(); void verify(); }} noValidate>
       <p className="text-muted">
-        {sent ? t.otp.sentTo(pretty) : t.common.loading}{" "}
+        {sent ? (viaEmail && !devCode ? t.otp.sentToEmail(pretty) : t.otp.sentTo(pretty)) : t.common.loading}{" "}
         <button type="button" className="font-semibold text-accent underline-offset-4 hover:underline" onClick={onChangeNumber}>
-          {t.otp.changeNumber}
+          {viaEmail ? t.otp.changeEmail : t.otp.changeNumber}
         </button>
       </p>
 
@@ -78,7 +85,7 @@ export function OtpStep({
               <span className="demo-tag mr-2">{t.common.sandbox}</span>{t.otp.sandboxCode}:{" "}
               <span className="font-display text-lg tracking-[0.2em]">{devCode}</span>
             </p>
-            <p className="text-sm">{t.otp.sandboxNote}</p>
+            <p className="text-sm">{viaEmail ? t.otp.sandboxEmailNote : t.otp.sandboxNote}</p>
           </div>
         </div>
       )}

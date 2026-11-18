@@ -3,7 +3,7 @@ import { useSupabase } from "@/lib/config";
 import { fileStore } from "./file-store";
 import { supabaseStore } from "./supabase-store";
 import type { PublicUser, Store, User } from "./types";
-import { maskPhone } from "@/lib/validation";
+import { maskEmail, maskPhone } from "@/lib/validation";
 
 export const store: Store = useSupabase ? supabaseStore : fileStore;
 export const storeKind = useSupabase ? "supabase" : "file";
@@ -11,7 +11,7 @@ export const storeKind = useSupabase ? "supabase" : "file";
 export function toPublicUser(u: User): PublicUser {
   return {
     id: u.id,
-    phoneMasked: maskPhone(u.phone),
+    phoneMasked: maskPhone(u.phone) || (u.email ? maskEmail(u.email) : ""),
     name: u.name,
     city: u.city,
     roles: u.roles,

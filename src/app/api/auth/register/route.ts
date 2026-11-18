@@ -7,6 +7,7 @@ import { hashMpin } from "@/lib/auth/mpin";
 import { clearVerifiedTicket, readVerifiedTicket } from "@/lib/auth/otp";
 import { nowSec, setSessionCookie } from "@/lib/auth/session";
 import type { Role } from "@/lib/store/types";
+import { isEmail } from "@/lib/auth/target";
 
 const Body = z.object({
   name: nameSchema,
@@ -21,9 +22,10 @@ export async function POST(req: NextRequest) {
   if ("res" in g) return g.res;
   const { name, city, role, mpin, lang } = g.data;
 
-  // Phone comes from the OTP ticket cookie, never from the request body.
-  const phone = await readVerifiedTicket("signup");
-  if (!phone) return fail(401, "otp_required");
+  // The verified phone or email comes from the OTP ticket cookie, never from the request body.
+  const target = await readVerifiedTicket("signup");
+  if (!target) return fail(401, "otp_required");
+  const viaEmail = isEmail(target);
 
   const problem = mpinProblem(mpin);
   if (problem === "weak") return fail(422, "mpin_weak", { field: "mpin" });
@@ -31,7 +33,7 @@ export async function POST(req: NextRequest) {
   const roles: Role[] = role === "both" ? ["client", "provider"] : [role];
   try {
     const user = await store.createUser({
-      phone, name, city, roles,
+      phone: viaEmail ? "" : target, ...(viaEmail ? { email: target } : {}), name, city, roles,
       activeRole: roles[0],
       mpinHash: await hashMpin(mpin),
       failedAttempts: 0,
@@ -45,7 +47,7 @@ export async function POST(req: NextRequest) {
     await setSessionCookie({ sub: user.id, role: user.activeRole, mpinAt: nowSec() });
     return NextResponse.json({ ok: true, user: toPublicUser(user) });
   } catch (e) {
-    if (e instanceof Error && e.message === "phone_taken") return fail(409, "phone_taken");
+    if (e instanceof Error && (e.message === "phone_taken" || e.message === "email_taken")) return fail(409, e.message);
     throw e;
   }
 }

@@ -11,7 +11,9 @@ export interface Passkey {
 
 export interface User {
   id: string;
-  phone: string; // local 10-digit, e.g. 9812345678
+  phone: string; // local 10-digit, e.g. 9812345678 — "" for accounts created with email only
+  /** Verified email (lower-case). Optional; accounts can sign in with phone or email. */
+  email?: string;
   name: string;
   city: string;
   roles: Role[];
@@ -388,6 +390,7 @@ export interface Store {
   putQuestion(q: Question): Promise<Question>;
 
   getUserByPhone(phone: string): Promise<User | null>;
+  getUserByEmail(email: string): Promise<User | null>;
   getUserById(id: string): Promise<User | null>;
   getUserByPasskeyId(credentialId: string): Promise<User | null>;
   createUser(u: Omit<User, "id" | "createdAt" | "updatedAt">): Promise<User>;

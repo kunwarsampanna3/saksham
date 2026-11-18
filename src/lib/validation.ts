@@ -13,8 +13,17 @@ export function formatNepalPhone(local: string): string {
 
 /** Last four digits only, for display in logs/UI where the full number is not needed. */
 export function maskPhone(local: string): string {
-  return `+977 ••••••${local.slice(-4)}`;
+  return local ? `+977 ••••••${local.slice(-4)}` : "";
 }
+
+/** Email shown as m•••@gmail.com. */
+export function maskEmail(email: string): string {
+  const [user, domain] = email.split("@");
+  return user && domain ? `${user[0]}•••@${domain}` : "";
+}
+
+export const emailSchema = z.string().trim().toLowerCase().max(254)
+  .regex(/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/, "email_invalid");
 
 const WEAK_MPINS = new Set(["0000", "1111", "2222", "3333", "4444", "5555", "6666", "7777", "8888", "9999", "1234", "4321", "0123", "9876", "1212", "2580", "1122"]);
 

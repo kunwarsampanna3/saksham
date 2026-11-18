@@ -6,7 +6,8 @@ import { useRouter } from "next/navigation";
 import { Briefcase, Hammer, Repeat2, ArrowLeft } from "lucide-react";
 import { postJson, useI18n, useUser } from "@/components/providers";
 import { TerraceSteps } from "@/components/terrace-steps";
-import { PhoneInput, isNepalMobile } from "./phone-input";
+import { isNepalMobile } from "./phone-input";
+import { IdentityInput, isEmailAddress, targetBody, type Channel } from "./identity-input";
 import { OtpStep } from "./otp-step";
 import { SetMpin } from "./set-mpin";
 import type { PublicUser } from "@/lib/store/types";
@@ -18,7 +19,9 @@ export function SignupFlow({ cities }: { cities: readonly string[] }) {
   const { setUser } = useUser();
   const router = useRouter();
   const [step, setStep] = useState(0);
+  const [channel, setChannel] = useState<Channel>("phone");
   const [phone, setPhone] = useState("");
+  const [email, setEmail] = useState("");
   const [phoneErr, setPhoneErr] = useState<string | null>(null);
   const [name, setName] = useState("");
   const [city, setCity] = useState("");
@@ -40,7 +43,7 @@ export function SignupFlow({ cities }: { cities: readonly string[] }) {
     const r = await postJson<{ user: PublicUser }>("/api/auth/register", { name: name.trim(), city, role, mpin, lang });
     setBusy(false);
     if (r.ok) {
-      try { localStorage.setItem("sk_last_phone", phone); } catch { /* ignore */ }
+      try { localStorage.setItem(channel === "email" ? "sk_last_email" : "sk_last_phone", channel === "email" ? email.trim().toLowerCase() : phone); localStorage.setItem("sk_last_channel", channel); } catch { /* ignore */ }
       setUser(r.user);
       router.replace("/");
       router.refresh();
@@ -48,6 +51,7 @@ export function SignupFlow({ cities }: { cities: readonly string[] }) {
     }
     if (r.error === "mpin_weak") setServerErr(t.signup.weak);
     else if (r.error === "phone_taken") setServerErr(t.signup.taken);
+    else if (r.error === "email_taken") setServerErr(t.signup.emailTaken);
     else if (r.error === "otp_required") { setServerErr(t.errors.otp_required); setStep(0); }
     else setServerErr(r.error === "offline" ? t.errors.offline : t.errors.generic);
   };
@@ -66,17 +70,21 @@ export function SignupFlow({ cities }: { cities: readonly string[] }) {
       {step === 0 && (
         <form className="space-y-6" noValidate onSubmit={(e) => {
           e.preventDefault();
-          if (!isNepalMobile(phone)) return setPhoneErr(t.errors.phone_invalid);
+          if (channel === "phone" && !isNepalMobile(phone)) return setPhoneErr(t.errors.phone_invalid);
+          if (channel === "email" && !isEmailAddress(email)) return setPhoneErr(t.errors.email_invalid);
           setStep(1);
         }}>
           <p className="text-muted">{t.signup.phoneLead}</p>
-          <PhoneInput value={phone} onChange={(v) => { setPhone(v); setPhoneErr(null); }} label={t.login.phone} hint={t.login.phoneHint} error={phoneErr ?? serverErr} autoFocus />
+          <IdentityInput channel={channel} onChannel={(c) => { setChannel(c); setPhoneErr(null); setServerErr(null); }}
+            phone={phone} onPhone={(v) => { setPhone(v); setPhoneErr(null); }}
+            email={email} onEmail={(v) => { setEmail(v); setPhoneErr(null); }}
+            error={phoneErr ?? serverErr} autoFocus />
           <button type="submit" className="btn btn-primary w-full sm:w-auto sm:min-w-44">{t.common.continue}</button>
         </form>
       )}
 
       {step === 1 && (
-        <OtpStep phone={phone} purpose="signup" onVerified={() => setStep(2)} onChangeNumber={() => setStep(0)} />
+        <OtpStep target={targetBody(channel, phone, email) as { phone: string } | { email: string }} purpose="signup" onVerified={() => setStep(2)} onChangeNumber={() => setStep(0)} />
       )}
 
       {step === 2 && (

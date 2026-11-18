@@ -34,8 +34,9 @@ export async function statusFor(user: User): Promise<StatusMap> {
       fileIds: v.files.map((f) => ({ id: f.id, label: f.label })),
     };
   }
-  // Every account proved its phone with an OTP at sign-up (demo accounts are pre-verified).
-  if (map.phone.status === "not_started") map.phone = { ...empty(), status: "verified", simulated: user.isDemo };
+  // Phone accounts proved their number with an OTP at sign-up (demo accounts are pre-verified).
+  // Email-only accounts proved their email instead, so the phone check stays open for them.
+  if (map.phone.status === "not_started" && user.phone) map.phone = { ...empty(), status: "verified", simulated: user.isDemo };
   return map;
 }
 

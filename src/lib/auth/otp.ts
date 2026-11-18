@@ -5,16 +5,19 @@ import { cookies } from "next/headers";
 import { config, policy } from "@/lib/config";
 import { store } from "@/lib/store";
 import type { OtpPurpose } from "@/lib/store/types";
+import { codeEmail, emailConfigured, sendEmail } from "./email";
 
 const pepper = () => config.sessionSecret;
-const hashCode = (code: string, phone: string) =>
-  createHash("sha256").update(`${pepper()}:${phone}:${code}`).digest("hex");
+const hashCode = (code: string, target: string) =>
+  createHash("sha256").update(`${pepper()}:${target}:${code}`).digest("hex");
 
 export type OtpSendResult =
-  | { ok: true; devCode?: string; resendIn: number }
+  | { ok: true; devCode?: string; resendIn: number; channel: "sms" | "email" }
   | { ok: false; error: "otp_cooldown"; retryAfter: number }
-  | { ok: false; error: "sms_unavailable" };
+  | { ok: false; error: "sms_unavailable" | "email_unavailable" };
 
+/** A code target is a 10-digit Nepal mobile or a lower-case email address. */
+export const isEmailTarget = (target: string) => target.includes("@");
 /** Sends an SMS through the configured provider. Returns false if none is configured. */
 async function sendSms(phone: string, text: string): Promise<boolean> {
   if (config.sms.provider === "sparrow" && config.sms.token) {
@@ -30,8 +33,8 @@ async function sendSms(phone: string, text: string): Promise<boolean> {
   return false;
 }
 
-export async function issueOtp(phone: string, purpose: OtpPurpose): Promise<OtpSendResult> {
-  const key = `${purpose}:${phone}`;
+export async function issueOtp(target: string, purpose: OtpPurpose): Promise<OtpSendResult> {
+  const key = `${purpose}:${target}`;
   const existing = await store.getOtp(key);
   if (existing) {
     const since = (Date.now() - new Date(existing.lastSentAt).getTime()) / 1000;
@@ -40,34 +43,47 @@ export async function issueOtp(phone: string, purpose: OtpPurpose): Promise<OtpS
     }
   }
   const code = String(randomInt(0, 1_000_000)).padStart(6, "0");
-  const text = `Saksham code: ${code}. Valid 5 minutes. Never share it — Saksham staff will never ask for it.`;
+  const email = isEmailTarget(target);
 
   let devCode: string | undefined;
-  if (config.demoMode) {
-    devCode = code; // shown on screen, labelled "Sandbox OTP · demo"
-  } else if (!(await sendSms(phone, text))) {
-    return { ok: false, error: "sms_unavailable" };
+  if (email) {
+    // Email is free to send, so a configured mailbox is used even in DEMO_MODE (the code arrives for real).
+    if (emailConfigured()) {
+      const m = codeEmail(code, purpose);
+      if (!(await sendEmail(target, m.subject, m.text, m.html))) return { ok: false, error: "email_unavailable" };
+    } else if (config.demoMode) {
+      devCode = code; // no mailbox configured: shown on screen, labelled "Sandbox · demo"
+    } else {
+      return { ok: false, error: "email_unavailable" };
+    }
+  } else {
+    const text = `Saksham code: ${code}. Valid 5 minutes. Never share it — Saksham staff will never ask for it.`;
+    if (config.demoMode) {
+      devCode = code; // shown on screen, labelled "Sandbox OTP · demo"
+    } else if (!(await sendSms(target, text))) {
+      return { ok: false, error: "sms_unavailable" };
+    }
   }
 
   await store.putOtp({
-    key, phone, purpose,
-    codeHash: hashCode(code, phone),
+    key, phone: target, purpose,
+    codeHash: hashCode(code, target),
     expiresAt: new Date(Date.now() + policy.otpTtlSeconds * 1000).toISOString(),
     attempts: 0,
     lastSentAt: new Date().toISOString(),
   });
-  return { ok: true, devCode, resendIn: policy.otpResendSeconds };
+  return { ok: true, devCode, resendIn: policy.otpResendSeconds, channel: email ? "email" : "sms" };
 }
 
 export type OtpCheck = { ok: true } | { ok: false; error: "otp_expired" | "otp_wrong" | "otp_too_many"; attemptsLeft?: number };
 
-export async function checkOtp(phone: string, purpose: OtpPurpose, code: string): Promise<OtpCheck> {
-  const key = `${purpose}:${phone}`;
+export async function checkOtp(target: string, purpose: OtpPurpose, code: string): Promise<OtpCheck> {
+  const key = `${purpose}:${target}`;
   const rec = await store.getOtp(key);
   if (!rec || new Date(rec.expiresAt).getTime() < Date.now()) return { ok: false, error: "otp_expired" };
   if (rec.attempts >= policy.otpMaxAttempts) return { ok: false, error: "otp_too_many" };
 
-  const a = Buffer.from(hashCode(code, phone), "hex");
+  const a = Buffer.from(hashCode(code, target), "hex");
   const b = Buffer.from(rec.codeHash, "hex");
   if (a.length === b.length && timingSafeEqual(a, b)) {
     await store.deleteOtp(key);
@@ -79,7 +95,7 @@ export async function checkOtp(phone: string, purpose: OtpPurpose, code: string)
   return { ok: false, error: "otp_wrong", attemptsLeft: policy.otpMaxAttempts - attempts };
 }
 
-/* ---- "phone verified" ticket: proves OTP success to the next step (15 min, httpOnly) ---- */
+/* ---- "phone or email verified" ticket: proves OTP success to the next step (15 min, httpOnly) ---- */
 const TICKET = "sk_verified";
 const ticketKey = () => new TextEncoder().encode(`${config.sessionSecret}:ticket`);
 

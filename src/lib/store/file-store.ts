@@ -38,28 +38,33 @@ const safePath = (p: string) => {
   if (!full.startsWith(PRIVATE_DIR + path.sep)) throw new Error("bad_path");
   return full;
 };
-let cache: DB | null = null;
-let writing: Promise<void> = Promise.resolve();
+/**
+ * One shared in-memory copy for the whole server process. In dev, each route can load its own copy of this
+ * module, so the cache and the write queue live on globalThis — otherwise one route could miss (or overwrite)
+ * another route's changes.
+ */
+const shared = globalThis as unknown as { __sakshamFileDb?: { cache: DB | null; writing: Promise<void> } };
+const state = (shared.__sakshamFileDb ??= { cache: null, writing: Promise.resolve() });
 
 async function load(): Promise<DB> {
-  if (cache) return cache;
+  if (state.cache) return state.cache;
   try {
-    cache = JSON.parse(await fs.readFile(FILE, "utf8")) as DB;
+    state.cache = JSON.parse(await fs.readFile(FILE, "utf8")) as DB;
   } catch {
-    cache = { users: [], otps: [] };
+    state.cache = { users: [], otps: [] };
   }
-  return cache;
+  return state.cache;
 }
 
 function persist(db: DB): Promise<void> {
   // Serialise writes so concurrent requests can't interleave partial files.
-  writing = writing.then(async () => {
+  state.writing = state.writing.then(async () => {
     await fs.mkdir(path.dirname(FILE), { recursive: true });
     const tmp = `${FILE}.${process.pid}.tmp`;
     await fs.writeFile(tmp, JSON.stringify(db, null, 2), "utf8");
     await fs.rename(tmp, FILE);
   });
-  return writing;
+  return state.writing;
 }
 
 const now = () => new Date().toISOString();
@@ -262,7 +267,13 @@ export const fileStore: Store = {
     return q;
   },
   async getUserByPhone(phone) {
+    if (!phone) return null;
     return (await load()).users.find((u) => u.phone === phone) ?? null;
+  },
+  async getUserByEmail(email) {
+    const e = email.trim().toLowerCase();
+    if (!e) return null;
+    return (await load()).users.find((u) => u.email === e) ?? null;
   },
   async getUserById(id) {
     return (await load()).users.find((u) => u.id === id) ?? null;
@@ -272,7 +283,8 @@ export const fileStore: Store = {
   },
   async createUser(input) {
     const db = await load();
-    if (db.users.some((u) => u.phone === input.phone)) throw new Error("phone_taken");
+    if (input.phone && db.users.some((u) => u.phone === input.phone)) throw new Error("phone_taken");
+    if (input.email && db.users.some((u) => u.email === input.email)) throw new Error("email_taken");
     const user: User = { ...input, id: randomUUID(), createdAt: now(), updatedAt: now() };
     db.users.push(user);
     await persist(db);

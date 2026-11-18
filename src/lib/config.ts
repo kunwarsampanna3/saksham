@@ -9,6 +9,15 @@ export const config = {
   sessionSecret: process.env.SESSION_SECRET ?? "",
   anthropicModel: process.env.ANTHROPIC_MODEL || "claude-opus-5-5",
   hasAnthropic: Boolean(process.env.ANTHROPIC_API_KEY),
+  /** Outgoing email for sign-in codes (Resend key, or SMTP such as Gmail with an app password). */
+  email: {
+    from: process.env.EMAIL_FROM ?? "",
+    resendKey: process.env.RESEND_API_KEY ?? "",
+    smtpHost: process.env.SMTP_HOST ?? "",
+    smtpPort: Number(process.env.SMTP_PORT ?? 465),
+    smtpUser: process.env.SMTP_USER ?? "",
+    smtpPass: process.env.SMTP_PASS ?? "",
+  },
   /** Support contact shown on /contact; empty values are hidden. */
   support: { email: process.env.SUPPORT_EMAIL ?? "", phone: process.env.SUPPORT_PHONE ?? "" },
   /** Owner/admin phone numbers (10 digits, comma-separated). These accounts get /admin. */

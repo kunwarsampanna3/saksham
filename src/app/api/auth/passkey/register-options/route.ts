@@ -13,7 +13,7 @@ export async function POST(req: NextRequest) {
   const options = await generateRegistrationOptions({
     rpName,
     rpID,
-    userName: user.phone,
+    userName: user.phone || user.email || user.id,
     userDisplayName: user.name,
     userID: new TextEncoder().encode(user.id),
     attestationType: "none",

@@ -1,27 +1,29 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
 import { guard, fail } from "@/lib/auth/http";
-import { phoneSchema, mpinSchema } from "@/lib/validation";
+import { mpinSchema } from "@/lib/validation";
+import { exactlyOne, targetFields, targetOf, userByTarget } from "@/lib/auth/target";
 import { store, toPublicUser } from "@/lib/store";
 import { burnTime, checkMpin, lockRemainingSeconds, lockUntilIso } from "@/lib/auth/mpin";
 import { nowSec, setSessionCookie } from "@/lib/auth/session";
 import { rateLimit } from "@/lib/auth/rate-limit";
 import { policy } from "@/lib/config";
 
-const Body = z.object({ phone: phoneSchema, mpin: mpinSchema });
+const Body = z.object({ ...targetFields, mpin: mpinSchema }).refine(exactlyOne, { message: "target_required" });
 
-// Unknown numbers get the same response shape as known ones (no account enumeration).
+// Unknown numbers/emails get the same response shape as known ones (no account enumeration).
 const ghostAttempts = new Map<string, { n: number; until: number }>();
 
 export async function POST(req: NextRequest) {
   const g = await guard(req, { name: "login", schema: Body, limit: 12, windowSec: 60 });
   if ("res" in g) return g.res;
-  const { phone, mpin } = g.data;
+  const { mpin } = g.data;
+  const phone = targetOf(g.data); // phone number or email
 
-  const perPhone = rateLimit(`login-phone:${phone}`, 15, 15 * 60);
+  const perPhone = rateLimit(`login-target:${phone}`, 15, 15 * 60);
   if (!perPhone.ok) return fail(429, "rate_limited", { retryAfter: perPhone.retryAfter });
 
-  const user = await store.getUserByPhone(phone);
+  const user = await userByTarget(phone);
   if (!user) {
     await burnTime(mpin);
     const prev = ghostAttempts.get(phone);
