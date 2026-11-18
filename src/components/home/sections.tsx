@@ -315,7 +315,7 @@ export function ItStudents({ t, lang, isProvider }: P & { isProvider: boolean })
       <div className="notch-frame">
         <div className="notch-card terrace-edge grid overflow-hidden lg:grid-cols-12">
           <div className="relative min-h-56 lg:col-span-5">
-            <Photo k="tutoring" sizes="(min-width:1024px) 40vw, 100vw" creditAt="top" />
+            <Photo k="itPro" sizes="(min-width:1024px) 40vw, 100vw" creditAt="top" />
           </div>
           <div className="p-6 sm:p-8 lg:col-span-7">
             <p className="font-semibold text-accent">{it.eyebrow}</p>

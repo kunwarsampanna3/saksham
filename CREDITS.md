@@ -9,7 +9,7 @@ Rules (from the product brief):
 - Stand-ins are labelled **"Sample photo"** on screen.
 - Served as sized AVIF/WebP via next/image, lazy-loaded except the first visible image.
 
-All photos below come from Wikimedia Commons. They were downscaled (max 1600px) and converted to WebP;
+All photos below come from Wikimedia Commons, except `it-professional.webp` from Pexels. They were downscaled (max 1600px) and converted to WebP;
 under CC BY-SA those resized files are shared under the same licence. Downloaded 2026-11-17.
 
 | File (public/photos) | Shows | Author | Licence | Source |
@@ -23,6 +23,7 @@ under CC BY-SA those resized files are shared under the same licence. Downloaded
 | `corner-shop.webp` | Cat outside a Kathmandu corner shop | Alexey Komarov | CC BY-SA 4.0 | https://commons.wikimedia.org/wiki/File:Citizen_of_Kathmandu.jpg |
 | `terraces-tansen.webp` | Terraced fields near Tansen | Gerd Eichmann | CC BY-SA 4.0 | https://commons.wikimedia.org/wiki/File:Pokhara-Tansen-38-Terrassen-2013-gje.jpg |
 | `terraces-bahundanda.webp` | Paddy terraces, Bahundanda | Till Niermann | CC BY-SA 3.0 | https://commons.wikimedia.org/wiki/File:Paddy_fields_Bahundanda_Nepal.jpg |
+| `it-professional.webp` | Young woman working on a laptop in an office (IT students section) | Yan Krukau | Pexels License (free commercial use) | https://www.pexels.com/photo/a-woman-using-laptop-at-the-office-8837767/ |
 
 ## Still wanted
 Own or consented photos of real Saksham providers at work (tailors, tutors, repair counters, students coding,

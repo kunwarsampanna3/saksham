@@ -29,6 +29,7 @@ const BY_SA_4 = { license: "CC BY-SA 4.0", licenseUrl: "https://creativecommons.
 const BY_SA_3 = { license: "CC BY-SA 3.0", licenseUrl: "https://creativecommons.org/licenses/by-sa/3.0/" };
 const BY_SA_2 = { license: "CC BY-SA 2.0", licenseUrl: "https://creativecommons.org/licenses/by-sa/2.0/" };
 const BY_3 = { license: "CC BY 3.0", licenseUrl: "https://creativecommons.org/licenses/by/3.0/" };
+const PEXELS = { license: "Pexels License", licenseUrl: "https://www.pexels.com/license/" };
 const commons = (f: string) => `https://commons.wikimedia.org/wiki/File:${encodeURIComponent(f.replace(/ /g, "_"))}`;
 
 export const PHOTOS = {
@@ -51,6 +52,11 @@ export const PHOTOS = {
     src: "/photos/computer-lab.webp", width: 1600, height: 1200,
     alt: { en: "Young women working at computers in a classroom in Nepal", ne: "नेपालको एउटा कक्षाकोठामा कम्प्युटरमा काम गर्दै युवतीहरू" },
     credit: "Prakash Neupane (OKFN Nepal)", ...BY_SA_3, source: commons("Girls in ICT in Nepal.jpg"), isSample: true,
+  },
+  itPro: {
+    src: "/photos/it-professional.webp", width: 1600, height: 1067, focus: "45% 40%",
+    alt: { en: "A young woman working on a laptop at a desk in a bright office", ne: "उज्यालो कार्यालयमा ल्यापटपमा काम गर्दै एक युवती" },
+    credit: "Yan Krukau (Pexels)", ...PEXELS, source: "https://www.pexels.com/photo/a-woman-using-laptop-at-the-office-8837767/", isSample: true,
   },
   beauty: {
     src: "/photos/barber-shop.webp", width: 1600, height: 2133, focus: "60% 40%",
