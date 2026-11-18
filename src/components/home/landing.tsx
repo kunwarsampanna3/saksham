@@ -42,10 +42,11 @@ export function LandingHero({ t, lang, name, isProvider, visitor = false }: P & 
               ? "text-[2.6rem] leading-[1.25] xs:text-[3rem] sm:text-6xl lg:text-[5.2rem]"
               : "text-[3rem] uppercase leading-[0.92] xs:text-[3.6rem] sm:text-7xl lg:text-[6.5rem]"}`}
             style={{ ["--delay" as string]: "0.2s" }}>
-            {l.title}
+            <span className="block">{l.title}</span>
+            <span className="block text-leaf">{l.title2}</span>
           </h1>
-          <p className="rise font-display mt-2 text-2xl font-bold text-leaf sm:text-3xl" style={{ ["--delay" as string]: "0.3s" }}>
-            {t.home.hero.line1} {t.home.hero.line2}
+          <p className="rise font-display mt-3 text-2xl font-bold text-white/90 sm:text-3xl" style={{ ["--delay" as string]: "0.3s" }}>
+            {l.subline}
           </p>
           <p className="rise mx-auto mt-4 max-w-2xl text-lg text-white/85 sm:text-xl" style={{ ["--delay" as string]: "0.4s" }}>{l.pitch}</p>
           <div className="rise mt-7 flex flex-col items-center justify-center gap-3 sm:flex-row" style={{ ["--delay" as string]: "0.5s" }}>

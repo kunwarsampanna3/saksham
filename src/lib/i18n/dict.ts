@@ -156,7 +156,7 @@ export const en = {
   home: {
     hello: (n: string) => `Namaste, ${n.split(" ")[0]}`,
     landing: {
-      title: "Get any job done", pitch: "Post any task. Compare fair offers. Pay safely, step by step.",
+      title: "Your skill.", title2: "Your price.", subline: "Find help. Find work.", pitch: "Hire skilled people near you, or earn with what you're good at. Fair prices, verified people, and payment held safely until the work is done.",
       post: "Post your task for free", earn: "Earn money with your skills",
       facts: ["Fair price shown first", "Money held safely in escrow", "Nepali and English", "Verified people"],
       firstTitle: "Post your first task in seconds", firstLead: "Save time and get your job done by someone skilled near you.",
@@ -816,7 +816,7 @@ export const ne: Dict = {
   home: {
     hello: (n: string) => `नमस्ते, ${n.split(" ")[0]}`,
     landing: {
-      title: "जुनसुकै काम गराउनुहोस्", pitch: "जुनसुकै काम पोस्ट गर्नुहोस्। उचित प्रस्ताव तुलना गर्नुहोस्। चरणबद्ध रूपमा सुरक्षित भुक्तानी गर्नुहोस्।",
+      title: "तपाईंको सीप।", title2: "तपाईंको मूल्य।", subline: "सहयोग पाउनुहोस्। काम पाउनुहोस्।", pitch: "नजिकैका सीपालु मानिसलाई काम दिनुहोस्, वा आफूलाई आउने सीपबाट कमाउनुहोस्। उचित मूल्य, प्रमाणित मानिस, र काम नसकिँदासम्म भुक्तानी सुरक्षित।",
       post: "निःशुल्क काम पोस्ट गर्नुहोस्", earn: "आफ्नो सीपबाट कमाउनुहोस्",
       facts: ["उचित मूल्य पहिले देखिन्छ", "पैसा एस्क्रोमा सुरक्षित", "नेपाली र अंग्रेजी", "प्रमाणित मानिस"],
       firstTitle: "केही सेकेन्डमै पहिलो काम पोस्ट गर्नुहोस्", firstLead: "समय बचाउनुहोस् र नजिकैका सीपालु मानिसबाट काम गराउनुहोस्।",
