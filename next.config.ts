@@ -19,6 +19,8 @@ const csp = [
 const nextConfig: NextConfig = {
   poweredByHeader: false,
   reactStrictMode: true,
+  // Lets the dev server be opened through GitHub Codespaces' forwarded address.
+  allowedDevOrigins: ["*.app.github.dev"],
   images: {
     formats: ["image/avif", "image/webp"],
     remotePatterns: [

@@ -2,14 +2,25 @@
 
 A skills marketplace for all of Nepal. Next.js 15 · React 19 · Tailwind 4 · Supabase · Claude.
 
-## Run it
+## Open it in your browser (no install) — GitHub Codespaces
+
+1. On this repo's GitHub page, click the green **Code** button → **Codespaces** tab → **Create codespace on main**.
+2. Wait 2–3 minutes. It installs everything, creates `.env.local` and starts the site by itself.
+3. The site opens in a new browser tab (or open the **Ports** tab → port **3000** → the globe icon).
+4. Tap a demo account to sign in (MPIN **2468**). Edit files in the browser editor; the site updates on save.
+
+To save changes back to GitHub, use the **Source Control** icon on the left (commit, then **Sync**), or in the Codespace terminal: `git add -A`, `git commit -m "..."`, `git push`.
+Stop the Codespace when you're done (github.com/codespaces → ⋯ → Stop) to save free hours.
+
+## Run it on a laptop
 
 ```bash
 npm install
+node scripts/setup-env.mjs
 npm run dev
 ```
 
-Open http://localhost:3000. `.env.local` was created for you with `DEMO_MODE=true` and a random `SESSION_SECRET`.
+Open http://localhost:3000. `scripts/setup-env.mjs` creates `.env.local` with `DEMO_MODE=true` and a random `SESSION_SECRET` (it never overwrites an existing one).
 
 ### Turn on Claude (AI task parsing and the assistant)
 
