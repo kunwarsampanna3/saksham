@@ -313,10 +313,14 @@ h1:lang(ne), h2:lang(ne), h3:lang(ne) { line-height: 1.3; }
 @keyframes slide-x { from { transform: translateX(0); } to { transform: translateX(-33.3333%); } }
 .slide-left { animation: slide-x 45s linear infinite; }
 .slide-right { animation: slide-x 50s linear infinite reverse; }
+/* Gentle float for the trust-section badges. */
+@keyframes float-y { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+.float-a { animation: float-y 5s ease-in-out infinite; }
+.float-b { animation: float-y 6s ease-in-out 1s infinite; }
 .marquee-x:hover .slide-left, .marquee-x:hover .slide-right,
 .marquee-x:focus-within .slide-left, .marquee-x:focus-within .slide-right { animation-play-state: paused; }
 @media (prefers-reduced-motion: reduce) {
-  .slide-left, .slide-right { animation: none !important; }
+  .slide-left, .slide-right, .float-a, .float-b { animation: none !important; }
   .marquee-x > div { overflow-x: auto; }
   .marquee-up, .marquee-down { animation: none !important; }
   .marquee-col { overflow-y: auto; }

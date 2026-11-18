@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { ArrowRight, BadgeCheck, Languages, LockKeyhole, Scale } from "lucide-react";
+import { ArrowRight, BadgeCheck, Languages, LockKeyhole, Scale, ShieldCheck, Star, ThumbsUp } from "lucide-react";
+import { Photo } from "@/components/photo";
 import { CATEGORY_ICONS } from "@/components/browse/cards";
 import { ProviderButton } from "@/components/home/provider-button";
 import { TaskBox } from "@/components/home/task-box";
@@ -165,7 +166,7 @@ function ScrollColumn({ ids, reverse, className = "", ...p }: P & { ids: Categor
 export function PostFirstTask({ t, lang, visitor = false }: P & { visitor?: boolean }) {
   const l = t.home.landing;
   return (
-    <section aria-labelledby="first-h" id="cats" className="mx-auto grid max-w-[88rem] scroll-mt-20 items-center gap-10 px-4 pt-16 sm:px-6 lg:grid-cols-12 lg:pt-24">
+    <section aria-labelledby="first-h" id="how" className="mx-auto grid max-w-[88rem] scroll-mt-20 items-center gap-10 px-4 pt-16 sm:px-6 lg:grid-cols-12 lg:pt-24">
       <div className="lg:col-span-5">
         <h2 id="first-h" className="font-display text-[2.4rem] font-extrabold leading-[1.05] sm:text-6xl" lang={lang}>{l.firstTitle}</h2>
         <p className="mt-4 text-xl text-muted">{l.firstLead}</p>
@@ -189,6 +190,51 @@ export function PostFirstTask({ t, lang, visitor = false }: P & { visitor?: bool
         {/* soft fade at the top and bottom edges */}
         <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-12 bg-gradient-to-b from-[var(--accent-soft)] to-transparent" />
         <div aria-hidden className="pointer-events-none absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-[var(--accent-soft)] to-transparent" />
+      </div>
+    </section>
+  );
+}
+
+/* ================================================================ trust and safety */
+/** Photo with two floating feature badges on the left, the protections on the right. Every item is a real feature. */
+export function TrustSafety({ t, lang }: P) {
+  const s = t.home.landing.trust;
+  const icons = [LockKeyhole, BadgeCheck, Star, ShieldCheck];
+  const links = ["/safety#guarantee", "/verification", "/wallet", "/safety#guarantee"];
+  return (
+    <section aria-labelledby="trustsafe-h" className="mx-auto grid max-w-[88rem] items-center gap-12 px-4 pt-20 sm:px-6 lg:grid-cols-12 lg:pt-28">
+      <div className="relative mx-auto w-full max-w-lg lg:col-span-5">
+        <div className="relative aspect-[4/5] overflow-hidden rounded-[22px] bg-accent-soft">
+          <Photo k="itPro" sizes="(min-width:1024px) 36vw, 90vw" creditAt="top" />
+        </div>
+        {/* floating feature badges (features, not ratings or claims about the person shown) */}
+        <div className="float-a absolute -left-3 top-[34%] flex items-center gap-3 rounded-[14px] border border-line bg-surface px-4 py-3 shadow-[0_14px_34px_-14px_rgba(13,26,20,.45)] sm:-left-8">
+          <span className="grid h-10 w-10 place-items-center rounded-full bg-accent-soft text-accent"><LockKeyhole size={20} aria-hidden /></span>
+          <span className="font-semibold leading-tight">{s.badgeEscrow}</span>
+        </div>
+        <div className="float-b absolute -right-2 bottom-8 flex items-center gap-3 rounded-full border border-line bg-surface px-4 py-2.5 shadow-[0_14px_34px_-14px_rgba(13,26,20,.45)] sm:-right-8">
+          <ThumbsUp size={20} aria-hidden className="text-accent" />
+          <span className="font-semibold">{s.badgeRelease}</span>
+        </div>
+      </div>
+
+      <div className="lg:col-span-7">
+        <h2 id="trustsafe-h" className="font-display text-[2.2rem] font-extrabold leading-[1.05] sm:text-6xl" lang={lang}>{s.title}</h2>
+        <ul className="mt-8 space-y-7">
+          {s.items.map((it, i) => {
+            const Icon = icons[i] ?? ShieldCheck;
+            return (
+              <li key={it.t} className="flex gap-4">
+                <Icon size={26} aria-hidden className="mt-0.5 shrink-0 text-accent" />
+                <div>
+                  <h3 className="font-display text-xl font-bold">{it.t}</h3>
+                  <p className="mt-1 max-w-xl text-[1.05rem] text-muted">{it.d}</p>
+                  <Link href={links[i]} className="mt-1 inline-block font-semibold text-accent hover:underline">{s.readMore}</Link>
+                </div>
+              </li>
+            );
+          })}
+        </ul>
       </div>
     </section>
   );

@@ -146,6 +146,16 @@ export const en = {
       firstTitle: "Post your first task in seconds", firstLead: "Save time and get your job done by someone skilled near you.",
       steps: ["Describe what you need done", "See the fair price and set your budget", "Get offers and pick the best person"],
       cta: "Post your task", allCats: "See all categories", catHint: (from: string) => `From ${from}`,
+      trust: {
+        title: "Trust and safety features for your protection", readMore: "Read more",
+        badgeEscrow: "Payment held in escrow", badgeRelease: "Released when you're happy",
+        items: [
+          { t: "Secure payments", d: "Your money waits in escrow. Release it only when the task is done to your satisfaction." },
+          { t: "Verified people", d: "ID, selfie and address checks before anyone takes paid work, so you know who is coming." },
+          { t: "Ratings from real jobs", d: "Only clients who paid through Saksham can rate, so every review comes from a real job." },
+          { t: "Service Guarantee", d: "Work not as agreed? Open a dispute: payment freezes and we arrange a redo or a refund." },
+        ],
+      },
       showcase: {
         title: "See what you can get done", lead: "Example tasks with fair price ranges from Saksham's price table. Tap one to post a task like it.",
         tabs: { moving: "Moving home", repairs: "Home repairs", business: "Starting a business", events: "Weddings & parties", study: "Study & IT", family: "Family abroad" },
@@ -775,6 +785,16 @@ export const ne: Dict = {
       firstTitle: "केही सेकेन्डमै पहिलो काम पोस्ट गर्नुहोस्", firstLead: "समय बचाउनुहोस् र नजिकैका सीपालु मानिसबाट काम गराउनुहोस्।",
       steps: ["के गर्नुपर्छ लेख्नुहोस्", "उचित मूल्य हेरेर बजेट राख्नुहोस्", "प्रस्ताव पाउनुहोस् र राम्रो मान्छे छान्नुहोस्"],
       cta: "काम पोस्ट गर्नुहोस्", allCats: "सबै वर्ग हेर्नुहोस्", catHint: (from: string) => `${from} देखि`,
+      trust: {
+        title: "तपाईंको सुरक्षाका लागि भरोसा र सुरक्षा सुविधा", readMore: "थप पढ्नुहोस्",
+        badgeEscrow: "भुक्तानी एस्क्रोमा सुरक्षित", badgeRelease: "चित्त बुझेपछि मात्र छोडिन्छ",
+        items: [
+          { t: "सुरक्षित भुक्तानी", d: "तपाईंको पैसा एस्क्रोमा रहन्छ। काम चित्त बुझ्दो गरी सकिएपछि मात्र छोड्नुहोस्।" },
+          { t: "प्रमाणित मानिस", d: "पैसा लिने काम गर्नुअघि परिचयपत्र, सेल्फी र ठेगाना जाँच हुन्छ, त्यसैले को आउँदैछ थाहा हुन्छ।" },
+          { t: "वास्तविक कामबाट मूल्याङ्कन", d: "सक्षममार्फत तिर्ने ग्राहकले मात्र मूल्याङ्कन गर्न सक्छन्, त्यसैले हरेक समीक्षा वास्तविक कामबाट आउँछ।" },
+          { t: "सेवा ग्यारेन्टी", d: "भनेजस्तो काम भएन? विवाद खोल्नुहोस्: भुक्तानी रोकिन्छ र हामी फेरि काम वा पैसा फिर्ता मिलाउँछौँ।" },
+        ],
+      },
       showcase: {
         title: "तपाईं के-के गराउन सक्नुहुन्छ हेर्नुहोस्", lead: "सक्षमको मूल्य तालिकाअनुसार उचित मूल्य सहितका नमुना कामहरू। यस्तै काम पोस्ट गर्न थिच्नुहोस्।",
         tabs: { moving: "घर सार्ने", repairs: "घर मर्मत", business: "व्यवसाय सुरु", events: "बिहे र पार्टी", study: "पढाइ र IT", family: "विदेशबाट परिवारका लागि" },

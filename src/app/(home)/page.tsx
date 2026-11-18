@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
-import { LandingHero, PostFirstTask, TopCategories, FinalCta } from "@/components/home/landing";
-import { LiveTasks, Abroad, ProviderCta, HowItWorks } from "@/components/home/sections";
+import { LandingHero, PostFirstTask, FinalCta, TrustSafety } from "@/components/home/landing";
+import { LiveTasks, Abroad, ProviderCta } from "@/components/home/sections";
 import { Showcase } from "@/components/home/showcase";
 import { currentUser } from "@/lib/auth/current-user";
 import { getCity, getDict } from "@/lib/i18n/server";
@@ -22,10 +22,9 @@ export default async function Home() {
         <LandingHero t={t} lang={lang} visitor />
         <PostFirstTask t={t} lang={lang} visitor />
         <Showcase visitor />
-        <HowItWorks t={t} lang={lang} />
+        <TrustSafety t={t} lang={lang} />
         <Abroad t={t} lang={lang} />
         <FinalCta t={t} lang={lang} />
-        <TopCategories t={t} lang={lang} />
       </>
     );
   }
@@ -37,10 +36,10 @@ export default async function Home() {
       <LandingHero t={t} lang={lang} name={user.name} isProvider={isProvider} />
       <PostFirstTask t={t} lang={lang} />
       <Showcase />
+      <TrustSafety t={t} lang={lang} />
       <LiveTasks t={t} lang={lang} city={city} viewer={user} />
       <Abroad t={t} lang={lang} />
       <ProviderCta t={t} lang={lang} isProvider={isProvider} />
-      <TopCategories t={t} lang={lang} />
     </>
   );
 }
