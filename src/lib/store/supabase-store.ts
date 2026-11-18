@@ -96,6 +96,11 @@ type BaseMethods = Omit<Store, "listReports" | "putReport" | "listBlocks" | "put
 const base: BaseMethods = {
   getUserByPhone: async (phone) => (phone ? one(db().from("users").select(SELECT).eq("phone", phone).maybeSingle()) : null),
   getUserByEmail: async (email) => (email ? one(db().from("users").select(SELECT).eq("email", email.trim().toLowerCase()).maybeSingle()) : null),
+  async listProviderUsers() {
+    const { data, error } = await db().from("users").select(SELECT).contains("roles", ["provider"]).eq("is_demo", false).limit(500);
+    if (error) throw new Error(error.message);
+    return (data as Row[]).map(toUser);
+  },
   getUserById: (id) => one(db().from("users").select(SELECT).eq("id", id).maybeSingle()),
   async getUserByPasskeyId(credentialId) {
     const { data, error } = await db().from("passkeys").select("user_id").eq("credential_id", credentialId).maybeSingle();

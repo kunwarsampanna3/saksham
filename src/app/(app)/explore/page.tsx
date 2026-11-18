@@ -5,6 +5,8 @@ import { ResultsLayout } from "@/components/browse/results-layout";
 import { TaskRow, ProviderCard } from "@/components/browse/cards";
 import type { Pin } from "@/components/map/map";
 import { requireUser } from "@/lib/auth/current-user";
+import { EXAMPLE_PROVIDERS } from "@/lib/seed/providers";
+import { realProviders } from "@/lib/real-providers";
 import { canSeeWomenOnly } from "@/lib/store";
 import { getCity, getDict } from "@/lib/i18n/server";
 import { parseFilters, filtersToQuery, searchProviders } from "@/lib/search";
@@ -21,7 +23,7 @@ export default async function Explore({ searchParams }: { searchParams: SP }) {
   const women = canSeeWomenOnly(user);
 
   const tasks = f.view === "tasks" ? await searchTasks(f, user) : [];
-  const pros = f.view === "pros" ? searchProviders(f) : [];
+  const pros = f.view === "pros" ? searchProviders(f, user.isDemo ? EXAMPLE_PROVIDERS : await realProviders()) : [];
   const n = f.view === "tasks" ? tasks.length : pros.length;
 
   const pins: Pin[] = f.view === "tasks"
@@ -58,7 +60,7 @@ export default async function Explore({ searchParams }: { searchParams: SP }) {
           count={count}
           pins={pins}
           emptyHref={`/explore?view=${f.view}`}
-          note={f.view === "tasks" ? (women ? undefined : e.womenHidden) : `${t.browse.exampleNote} ${f.sort === "best" ? e.bestReason : ""}`}
+          note={f.view === "tasks" ? (women ? undefined : e.womenHidden) : `${user.isDemo ? t.browse.exampleNote : ""} ${f.sort === "best" ? e.bestReason : ""}`.trim() || undefined}
         >
           {n > 0 ? (
             <ul className="grid gap-3">

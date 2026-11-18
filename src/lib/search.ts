@@ -100,9 +100,10 @@ export interface ProviderResult extends ExampleProvider {
   score: number;
 }
 
-export function searchProviders(f: Filters): ProviderResult[] {
+/** `pool`: example providers for demo accounts, real provider accounts for everyone else (see real-providers.ts). */
+export function searchProviders(f: Filters, pool: ExampleProvider[] = EXAMPLE_PROVIDERS): ProviderResult[] {
   const o = origin(f.city);
-  return EXAMPLE_PROVIDERS
+  return pool
     .filter((p) => !f.cat || p.categories.includes(f.cat))
     .filter((p) => !f.online || p.onlineOk)
     .filter((p) => !f.women || p.womenLed)

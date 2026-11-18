@@ -40,6 +40,8 @@ export interface ExampleProvider {
   week: [boolean, boolean, boolean, boolean, boolean, boolean, boolean];
   reviews: ExampleReview[];
   demoPersona?: "bikash" | "aasha";
+  /** A real Saksham account (not example data): no "Example" labels, real ratings only. */
+  isReal?: boolean;
 }
 
 const u = (en: string, ne: string) => ({ en, ne });

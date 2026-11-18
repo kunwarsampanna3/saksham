@@ -397,6 +397,8 @@ export interface Store {
 
   getUserByPhone(phone: string): Promise<User | null>;
   getUserByEmail(email: string): Promise<User | null>;
+  /** Real (non-demo) accounts that offer skills. */
+  listProviderUsers(): Promise<User[]>;
   getUserById(id: string): Promise<User | null>;
   getUserByPasskeyId(credentialId: string): Promise<User | null>;
   createUser(u: Omit<User, "id" | "createdAt" | "updatedAt">): Promise<User>;

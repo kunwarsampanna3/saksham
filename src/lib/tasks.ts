@@ -124,13 +124,30 @@ export async function createTask(user: User, input: NewTask): Promise<Task> {
     status: "open", createdAt: now(), updatedAt: now(),
   };
   await store.putTask(t);
-  if (config.demoMode) for (const b of exampleOffers(t, 4, 15)) await store.putBid(b);
+  // Example offers only for the demo accounts; a real task waits for real offers.
+  if (config.demoMode && user.isDemo) for (const b of exampleOffers(t, 4, 15)) await store.putBid(b);
   return t;
 }
 
 /* ================================================================ visibility */
-export function canView(task: Task, viewer: User): boolean {
+/**
+ * Real accounts use a real marketplace: they never see example tasks or anything the demo accounts post,
+ * and the demo accounts only see the examples and each other. Pass a cache when checking many tasks.
+ */
+export async function sameWorld(task: Task, viewer: User, cache = new Map<string, boolean>()): Promise<boolean> {
+  if (task.isExample) return viewer.isDemo;
+  if (!task.clientId || task.clientId === viewer.id) return true;
+  let demo = cache.get(task.clientId);
+  if (demo === undefined) {
+    demo = !!(await store.getUserById(task.clientId))?.isDemo;
+    cache.set(task.clientId, demo);
+  }
+  return demo === viewer.isDemo;
+}
+
+export async function canView(task: Task, viewer: User): Promise<boolean> {
   if (task.clientId === viewer.id) return true;
+  if (!(await sameWorld(task, viewer))) return false;
   return !task.womenOnly || canSeeWomenOnly(viewer);
 }
 
@@ -171,11 +188,14 @@ async function statsFor(b: Bid) {
   const u = await store.getUserById(b.providerId);
   if (!u) return null;
   const persona = u.isDemo ? getProvider(PERSONA_PROFILE[u.phone] ?? "") : null;
+  // Real accounts: their own ratings and their real profile page.
+  const ratings = persona ? [] : await store.listRatingsFor(u.id);
+  const avg = ratings.length ? Math.round((ratings.reduce((a, r) => a + r.stars, 0) / ratings.length) * 10) / 10 : 0;
   return {
-    rating: persona?.rating ?? 0, ratingCount: persona?.ratingCount ?? 0, jobs: persona?.jobsDone ?? 0,
+    rating: persona?.rating ?? avg, ratingCount: persona?.ratingCount ?? ratings.length, jobs: persona?.jobsDone ?? ratings.length,
     verified: !!u.verified, womenLed: !!u.womenLed,
     coords: (u.lat !== undefined && u.lng !== undefined ? [u.lat, u.lng] : CITY_COORDS[u.city] ?? null) as [number, number] | null,
-    href: persona ? `/profile/${persona.id}` : null,
+    href: persona ? `/profile/${persona.id}` : !u.isDemo && u.roles.includes("provider") ? `/profile/${u.id}` : null,
   };
 }
 
@@ -229,7 +249,7 @@ export class RuleError extends Error {
 export async function placeBid(task: Task, user: User, input: { amount: number; days: number; message: string }) {
   if (!user.roles.includes("provider")) throw new RuleError("provider_only", 403);
   if (isOwner(task, user)) throw new RuleError("own_task", 403);
-  if (!canView(task, user)) throw new RuleError("not_found", 404);
+  if (!(await canView(task, user))) throw new RuleError("not_found", 404);
   if (task.status !== "open") throw new RuleError("task_closed");
   if ((await statusFor(user)).id.status !== "verified") throw new RuleError("id_required", 403);
   if (task.clientId && (await isBlocked(task.clientId, user.id))) throw new RuleError("not_found", 404);
@@ -313,7 +333,7 @@ export async function acceptBid(task: Task, user: User, bidId: string) {
 }
 
 export async function ask(task: Task, user: User, body: string): Promise<Question> {
-  if (!canView(task, user)) throw new RuleError("not_found", 404);
+  if (!(await canView(task, user))) throw new RuleError("not_found", 404);
   if (isOwner(task, user)) throw new RuleError("own_task", 403);
   const mine = (await store.listQuestions(task.id)).filter((q) => q.askerId === user.id);
   if (mine.length >= 5) throw new RuleError("too_many_questions", 429);

@@ -29,7 +29,7 @@ export default async function TaskPage({ params }: { params: Params }) {
   await ensureExampleTasks();
   const task = /^[\w-]{3,64}$/.test(id) ? await store.getTask(id) : null;
   // Women-only tasks are indistinguishable from missing ones for anyone who may not see them.
-  if (!task || !canView(task, user)) notFound();
+  if (!task || !(await canView(task, user))) notFound();
 
   const k = t.task;
   const owner = isOwner(task, user);

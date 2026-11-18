@@ -12,7 +12,7 @@ export async function loadTask(id: string): Promise<{ user: User; task: Task } |
   if (!user) return { res: fail(401, "signed_out") };
   if (!/^[\w-]{3,64}$/.test(id)) return { res: fail(404, "not_found") };
   const task = await store.getTask(id);
-  if (!task || !canView(task, user)) return { res: fail(404, "not_found") };
+  if (!task || !(await canView(task, user))) return { res: fail(404, "not_found") };
   return { user, task };
 }
 

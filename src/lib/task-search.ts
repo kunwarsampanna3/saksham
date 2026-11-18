@@ -3,15 +3,18 @@ import { store, canSeeWomenOnly } from "@/lib/store";
 import type { Task, User } from "@/lib/store/types";
 import { category, type CategoryId } from "@/lib/pricing";
 import { haversineKm } from "@/lib/geo";
-import { ensureExampleTasks, taskCoords } from "@/lib/tasks";
+import { ensureExampleTasks, sameWorld, taskCoords } from "@/lib/tasks";
 import { matchesQuery, originFor, type Filters, type TaskResult } from "@/lib/search";
 
 /** Open tasks the viewer may see, as cards. Women-only requests appear only to women providers (and their owner). */
 export async function openTasksFor(viewer: User): Promise<TaskResult[]> {
-  await ensureExampleTasks();
+  if (viewer.isDemo) await ensureExampleTasks();
   const women = canSeeWomenOnly(viewer);
   const now = Date.now();
-  const tasks = (await store.listTasks()).filter((t) => t.status === "open" && (!t.womenOnly || women || t.clientId === viewer.id));
+  const demoCache = new Map<string, boolean>();
+  const open = (await store.listTasks()).filter((t) => t.status === "open" && (!t.womenOnly || women || t.clientId === viewer.id));
+  const seen = await Promise.all(open.map((t) => sameWorld(t, viewer, demoCache)));
+  const tasks = open.filter((_, i) => seen[i]);
   return Promise.all(tasks.map(async (t) => toResult(t, (await store.listBids(t.id)).filter((b) => b.status !== "withdrawn" && new Date(b.appearAt).getTime() <= now).length)));
 }
 

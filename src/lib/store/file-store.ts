@@ -270,6 +270,9 @@ export const fileStore: Store = {
     if (!phone) return null;
     return (await load()).users.find((u) => u.phone === phone) ?? null;
   },
+  async listProviderUsers() {
+    return (await load()).users.filter((u) => !u.isDemo && u.roles.includes("provider"));
+  },
   async getUserByEmail(email) {
     const e = email.trim().toLowerCase();
     if (!e) return null;

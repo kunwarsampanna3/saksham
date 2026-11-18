@@ -6,6 +6,7 @@ import { requireUser } from "@/lib/auth/current-user";
 import { getDict } from "@/lib/i18n/server";
 import { EXAMPLE_PROVIDERS, providerCoords } from "@/lib/seed/providers";
 import { openTasksFor } from "@/lib/task-search";
+import { realProviders } from "@/lib/real-providers";
 
 export const metadata: Metadata = { title: "Location" };
 
@@ -16,9 +17,9 @@ export default async function LocationPage() {
   const pins: Pin[] = [
     ...(await openTasksFor(user)).flatMap((x) =>
       x.coords ? [{ id: x.id, lat: x.coords[0], lng: x.coords[1], kind: "task" as const, label: x.title[lang], href: `/task/${x.id}` }] : []),
-    ...EXAMPLE_PROVIDERS.map((p) => {
+    ...(user.isDemo ? EXAMPLE_PROVIDERS : await realProviders()).map((p) => {
       const c = providerCoords(p);
-      return { id: p.id, lat: c[0], lng: c[1], kind: "provider" as const, label: p.name, sub: `${p.area}, ${p.city}`, href: `/profile/${p.id}` };
+      return { id: p.id, lat: c[0], lng: c[1], kind: "provider" as const, label: p.name, sub: p.area ? `${p.area}, ${p.city}` : p.city, href: `/profile/${p.id}` };
     }),
   ];
 

@@ -6,6 +6,8 @@ import { FilterBar } from "@/components/browse/filters";
 import { ResultsLayout } from "@/components/browse/results-layout";
 import { ProviderCard } from "@/components/browse/cards";
 import { requireUser } from "@/lib/auth/current-user";
+import { EXAMPLE_PROVIDERS } from "@/lib/seed/providers";
+import { realProviders } from "@/lib/real-providers";
 import { getCity, getDict } from "@/lib/i18n/server";
 import { parseFilters, searchProviders } from "@/lib/search";
 
@@ -16,7 +18,7 @@ type SP = Promise<Record<string, string | string[] | undefined>>;
 export default async function Professionals({ searchParams }: { searchParams: SP }) {
   const [user, { t, lang }, sp] = await Promise.all([requireUser("/professionals"), getDict(), searchParams]);
   const f = { ...parseFilters(sp, await getCity(user.city), "pros"), view: "pros" as const };
-  const pros = searchProviders(f);
+  const pros = searchProviders(f, user.isDemo ? EXAMPLE_PROVIDERS : await realProviders());
   const p = t.pros;
 
   return (
@@ -54,7 +56,7 @@ export default async function Professionals({ searchParams }: { searchParams: SP
           count={t.explore.count(pros.length, t.explore.prosWord)}
           pins={pros.map((x) => ({ id: x.id, lat: x.coords[0], lng: x.coords[1], kind: "provider" as const, label: x.name, sub: `${x.area}, ${x.city}`, href: `/profile/${x.id}` }))}
           emptyHref="/professionals"
-          note={`${t.browse.exampleNote} ${f.sort === "best" ? t.explore.bestReason : ""}`}
+          note={`${user.isDemo ? t.browse.exampleNote : ""} ${f.sort === "best" ? t.explore.bestReason : ""}`.trim() || undefined}
         >
           {pros.length ? (
             <ul className="grid gap-4 sm:grid-cols-2">

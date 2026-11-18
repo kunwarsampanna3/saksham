@@ -118,7 +118,9 @@ export function ProviderCard({ p, t, lang }: { p: ProviderResult; t: Dict; lang:
     <article className="notch-frame h-full">
       <div className="notch-card terrace-edge relative flex h-full flex-col">
         <div className="relative h-32 overflow-hidden">
-          <Photo k={p.cover} sizes="(min-width:1280px) 25vw, (min-width:640px) 50vw, 100vw" credit="none" />
+          {p.isReal
+            ? <div className="h-full w-full bg-gradient-to-br from-forest via-forest to-accent" aria-hidden />
+            : <Photo k={p.cover} sizes="(min-width:1280px) 25vw, (min-width:640px) 50vw, 100vw" credit="none" />}
           <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" aria-hidden />
         </div>
         <div className="flex flex-1 flex-col px-5 pb-5">
@@ -126,7 +128,7 @@ export function ProviderCard({ p, t, lang }: { p: ProviderResult; t: Dict; lang:
             <span className="font-display relative z-10 inline-flex h-14 w-14 items-center justify-center rounded-[5px] border-[3px] border-surface bg-forest text-lg font-bold text-white" aria-hidden>
               {initials}
             </span>
-            <span className="demo-tag mb-1">{b.exampleProfile}</span>
+            {!p.isReal && <span className="demo-tag mb-1">{b.exampleProfile}</span>}
           </div>
           <h3 className="font-display mt-2 text-lg font-bold leading-tight">
             <Link href={`/profile/${p.id}`} className="after:absolute after:inset-0 hover:text-accent">{p.name}</Link>
@@ -138,10 +140,12 @@ export function ProviderCard({ p, t, lang }: { p: ProviderResult; t: Dict; lang:
             <span className="rounded-[3px] bg-accent-soft px-2 py-0.5 text-xs font-bold text-accent">{b.level(p.level)}</span>
           </div>
           <ul className="mt-3 space-y-1 text-sm">
-            <li><Stars rating={p.rating} count={p.ratingCount} t={t} lang={lang} /></li>
-            <li className="inline-flex items-center gap-1.5 text-muted"><MessageCircle size={14} aria-hidden /> {b.replies(p.responseMinutes)}</li>
+            <li>{p.isReal && p.ratingCount === 0
+              ? <span className="inline-flex items-center gap-1.5 font-semibold text-accent"><Star size={14} aria-hidden /> {b.newProvider}</span>
+              : <Stars rating={p.rating} count={p.ratingCount} t={t} lang={lang} />}</li>
+            {!(p.isReal && !p.responseMinutes) && <li className="inline-flex items-center gap-1.5 text-muted"><MessageCircle size={14} aria-hidden /> {b.replies(p.responseMinutes)}</li>}
             <li className="flex items-center gap-1.5 text-muted">
-              <MapPin size={14} aria-hidden /> {p.area}, {p.city}
+              <MapPin size={14} aria-hidden /> {p.area ? `${p.area}, ` : ""}{p.city}
               {p.distanceKm !== null && <> · {b.km(p.distanceKm.toFixed(1))}</>}
               {p.onlineOk && <span className="ml-1 inline-flex items-center gap-1"><Globe2 size={13} aria-hidden /> {b.onlineOk}</span>}
             </li>

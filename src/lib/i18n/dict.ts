@@ -305,7 +305,7 @@ export const en = {
     photoBy: (n: string, l: string) => `Photo: ${n} · ${l}`,
   },
   browse: {
-    example: "Example", exampleProfile: "Example profile", verified: "Verified", womenLed: "Women-led",
+    example: "Example", exampleProfile: "Example profile", newProvider: "New on Saksham", verified: "Verified", womenLed: "Women-led",
     level: (n: number) => `Level ${n}`, new: "New", reviews: (n: number) => `${n} review${n === 1 ? "" : "s"}`,
     respTime: (m: number) => (m < 60 ? `~${m} min` : `~${Math.round(m / 60)} h`),
     noReviews: "No reviews yet", replies: (m: number) => (m < 60 ? `Replies in ~${m} min` : `Replies in ~${Math.round(m / 60)} h`),
@@ -965,7 +965,7 @@ export const ne: Dict = {
     photoBy: (n: string, l: string) => `फोटो: ${n} · ${l}`,
   },
   browse: {
-    example: "नमुना", exampleProfile: "नमुना प्रोफाइल", verified: "प्रमाणित", womenLed: "महिला नेतृत्व",
+    example: "नमुना", newProvider: "सक्षममा नयाँ", exampleProfile: "नमुना प्रोफाइल", verified: "प्रमाणित", womenLed: "महिला नेतृत्व",
     level: (n: number) => `तह ${toDeva(n)}`, new: "नयाँ", reviews: (n: number) => `${toDeva(n)} समीक्षा`,
     respTime: (m: number) => (m < 60 ? `~${toDeva(m)} मिनेट` : `~${toDeva(Math.round(m / 60))} घण्टा`),
     noReviews: "अहिलेसम्म समीक्षा छैन", replies: (m: number) => (m < 60 ? `करिब ${toDeva(m)} मिनेटमा जवाफ` : `करिब ${toDeva(Math.round(m / 60))} घण्टामा जवाफ`),

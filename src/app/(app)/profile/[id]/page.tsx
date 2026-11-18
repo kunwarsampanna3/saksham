@@ -8,9 +8,10 @@ import { Contours } from "@/components/contours";
 import { NepalMap } from "@/components/map/map";
 import { VerifiedStamp, WomenLedBadge, Stars, CATEGORY_ICONS } from "@/components/browse/cards";
 import { ProfileActions } from "@/components/browse/quote-button";
-import { requireUser } from "@/lib/auth/current-user";
+import { currentUser, requireUser } from "@/lib/auth/current-user";
 import { getDict } from "@/lib/i18n/server";
-import { getProvider, isVerified, providerCoords } from "@/lib/seed/providers";
+import { isVerified, providerCoords } from "@/lib/seed/providers";
+import { findProvider } from "@/lib/real-providers";
 import { category } from "@/lib/pricing";
 import { rs, rsRange, num } from "@/lib/format";
 import { toDeva } from "@/lib/i18n/dict";
@@ -19,15 +20,16 @@ import { config } from "@/lib/config";
 type Params = Promise<{ id: string }>;
 
 export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
-  const p = getProvider((await params).id);
-  return { title: p ? p.name : "Profile" };
+  const [p, viewer] = await Promise.all([findProvider((await params).id), currentUser()]);
+  return { title: p && (p.isReal || viewer?.isDemo) ? p.name : "Profile" };
 }
 
 export default async function Profile({ params }: { params: Params }) {
   const { id } = await params;
-  const [, { t, lang }] = await Promise.all([requireUser(`/profile/${id}`), getDict()]);
-  const p = getProvider(id);
-  if (!p) notFound();
+  const [viewer, { t, lang }] = await Promise.all([requireUser(`/profile/${id}`), getDict()]);
+  const p = await findProvider(id);
+  // Example profiles are for the demo accounts only.
+  if (!p || (!p.isReal && !viewer.isDemo)) notFound();
 
   const b = t.browse, pr = t.profile;
   const verified = isVerified(p);
@@ -63,7 +65,9 @@ export default async function Profile({ params }: { params: Params }) {
     <div>
       {/* ------------------------------------------------------------ header */}
       <div className="relative h-44 overflow-hidden sm:h-56">
-        <Photo k={p.cover} priority sizes="100vw" />
+        {p.isReal
+          ? <div className="h-full w-full bg-gradient-to-br from-forest via-forest to-accent" aria-hidden />
+          : <Photo k={p.cover} priority sizes="100vw" />}
         <div className="absolute inset-0 bg-gradient-to-t from-forest/80 to-transparent" aria-hidden />
       </div>
       <div className="relative mx-auto max-w-[88rem] px-4 sm:px-6">
@@ -74,7 +78,7 @@ export default async function Profile({ params }: { params: Params }) {
             </span>
             <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-2">
-                <span className="demo-tag">{b.exampleProfile}</span>
+                {!p.isReal && <span className="demo-tag">{b.exampleProfile}</span>}
                 {verified && <VerifiedStamp label={b.verified} />}
                 {p.womenLed && <WomenLedBadge label={b.womenLed} />}
                 <span className="rounded-[3px] bg-accent-soft px-2 py-0.5 text-xs font-bold text-accent">{b.level(p.level)}</span>
@@ -90,7 +94,7 @@ export default async function Profile({ params }: { params: Params }) {
           {[
             { label: pr.rating, value: <span className="inline-flex items-center gap-1"><Star size={18} aria-hidden className="fill-marigold text-marigold" />{ratingTxt}</span>, sub: p.ratingCount ? b.reviews(p.ratingCount) : b.noReviews },
             { label: pr.completed, value: num(p.jobsDone, lang), sub: b.level(p.level) },
-            { label: pr.response, value: b.respTime(p.responseMinutes), sub: "" },
+            { label: pr.response, value: p.isReal && !p.responseMinutes ? b.newProvider : b.respTime(p.responseMinutes), sub: "" },
             { label: pr.priceRange, value: rsRange(p.priceMin, p.priceMax, lang), sub: "" },
           ].map((s) => (
             <div key={s.label} className="bg-surface p-4">
@@ -137,7 +141,7 @@ export default async function Profile({ params }: { params: Params }) {
             </ul>
           </section>
 
-          <section aria-labelledby="port-h">
+          {p.portfolio.length > 0 && <section aria-labelledby="port-h">
             <h2 id="port-h" className="font-display text-2xl font-bold">{pr.portfolio}</h2>
             <ul className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
               {p.portfolio.map((k) => (
@@ -146,7 +150,7 @@ export default async function Profile({ params }: { params: Params }) {
                 </li>
               ))}
             </ul>
-          </section>
+          </section>}
 
           <section aria-labelledby="rev-h">
             <div className="flex flex-wrap items-center justify-between gap-2">
@@ -161,7 +165,7 @@ export default async function Profile({ params }: { params: Params }) {
                       <span className="inline-flex items-center gap-0.5" aria-label={`${r.stars} / 5`}>
                         {Array.from({ length: 5 }, (_, i) => <Star key={i} size={15} aria-hidden className={i < r.stars ? "fill-marigold text-marigold" : "text-line-strong"} />)}
                       </span>
-                      <span className="demo-tag">{pr.exampleReview}</span>
+                      {!p.isReal && <span className="demo-tag">{pr.exampleReview}</span>}
                     </div>
                     <p className="mt-2">{r.text[lang]}</p>
                     <p className="mt-1 text-sm text-muted">— {r.by}</p>
@@ -169,7 +173,7 @@ export default async function Profile({ params }: { params: Params }) {
                 ))}
               </ul>
             ) : <p className="mt-3 text-muted">{b.noReviews}</p>}
-            <p className="mt-3 text-xs text-muted">{b.exampleNote}</p>
+            {!p.isReal && <p className="mt-3 text-xs text-muted">{b.exampleNote}</p>}
           </section>
         </div>
 
@@ -200,7 +204,7 @@ export default async function Profile({ params }: { params: Params }) {
             <div className="relative">
               <div className="flex items-center justify-between gap-2">
                 <h2 id="pass-h" className="font-display text-xl font-bold">{pr.passport}</h2>
-                <span className="demo-tag !border-white/40 !bg-white/10 !text-white">{b.example}</span>
+                {!p.isReal && <span className="demo-tag !border-white/40 !bg-white/10 !text-white">{b.example}</span>}
               </div>
               <div className="mt-4 flex items-center gap-4">
                 <div className="h-28 w-28 shrink-0 rounded-[4px] bg-white p-1.5" role="img" aria-label={`QR code: ${passportUrl}`}
