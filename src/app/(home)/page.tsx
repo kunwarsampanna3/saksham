@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
 import { LandingHero, PostFirstTask, TopCategories, FinalCta } from "@/components/home/landing";
-import { LiveTasks, TrustBand, Abroad, ProviderCta, ItStudents, HowItWorks } from "@/components/home/sections";
+import { LiveTasks, Abroad, ProviderCta, HowItWorks } from "@/components/home/sections";
+import { Showcase } from "@/components/home/showcase";
 import { currentUser } from "@/lib/auth/current-user";
 import { getCity, getDict } from "@/lib/i18n/server";
 
 export const metadata: Metadata = {
-  description: "Saksham — post any task in Nepal, compare fair offers from verified people, and pay safely in installments. Built for IT students, open to every skill.",
+  description: "Saksham — post any task in Nepal, compare fair offers from verified people, and pay safely in installments. Open to every skill.",
 };
 
 /**
@@ -20,9 +21,8 @@ export default async function Home() {
       <>
         <LandingHero t={t} lang={lang} visitor />
         <PostFirstTask t={t} lang={lang} visitor />
+        <Showcase visitor />
         <HowItWorks t={t} lang={lang} />
-        <TrustBand t={t} lang={lang} />
-        <ItStudents t={t} lang={lang} isProvider={false} visitor />
         <Abroad t={t} lang={lang} />
         <FinalCta t={t} lang={lang} />
         <TopCategories t={t} lang={lang} />
@@ -36,9 +36,8 @@ export default async function Home() {
     <>
       <LandingHero t={t} lang={lang} name={user.name} isProvider={isProvider} />
       <PostFirstTask t={t} lang={lang} />
+      <Showcase />
       <LiveTasks t={t} lang={lang} city={city} viewer={user} />
-      <TrustBand t={t} lang={lang} />
-      <ItStudents t={t} lang={lang} isProvider={isProvider} />
       <Abroad t={t} lang={lang} />
       <ProviderCta t={t} lang={lang} isProvider={isProvider} />
       <TopCategories t={t} lang={lang} />

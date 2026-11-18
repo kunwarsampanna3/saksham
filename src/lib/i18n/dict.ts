@@ -146,6 +146,11 @@ export const en = {
       firstTitle: "Post your first task in seconds", firstLead: "Save time and get your job done by someone skilled near you.",
       steps: ["Describe what you need done", "See the fair price and set your budget", "Get offers and pick the best person"],
       cta: "Post your task", allCats: "See all categories", catHint: (from: string) => `From ${from}`,
+      showcase: {
+        title: "See what you can get done", lead: "Example tasks with fair price ranges from Saksham's price table. Tap one to post a task like it.",
+        tabs: { moving: "Moving home", repairs: "Home repairs", business: "Starting a business", events: "Weddings & parties", study: "Study & IT", family: "Family abroad" },
+        example: "Example", fair: "Fair price", postLike: "Post a task like this",
+      },
       cards: {
         moving: "Packing, carrying and shifting homes and shops", cleaning: "Clean, mop and tidy your home or office",
         assembly: "Beds, wardrobes and tables put together", gardening: "Weeding, planting and tidying your garden",
@@ -770,6 +775,11 @@ export const ne: Dict = {
       firstTitle: "केही सेकेन्डमै पहिलो काम पोस्ट गर्नुहोस्", firstLead: "समय बचाउनुहोस् र नजिकैका सीपालु मानिसबाट काम गराउनुहोस्।",
       steps: ["के गर्नुपर्छ लेख्नुहोस्", "उचित मूल्य हेरेर बजेट राख्नुहोस्", "प्रस्ताव पाउनुहोस् र राम्रो मान्छे छान्नुहोस्"],
       cta: "काम पोस्ट गर्नुहोस्", allCats: "सबै वर्ग हेर्नुहोस्", catHint: (from: string) => `${from} देखि`,
+      showcase: {
+        title: "तपाईं के-के गराउन सक्नुहुन्छ हेर्नुहोस्", lead: "सक्षमको मूल्य तालिकाअनुसार उचित मूल्य सहितका नमुना कामहरू। यस्तै काम पोस्ट गर्न थिच्नुहोस्।",
+        tabs: { moving: "घर सार्ने", repairs: "घर मर्मत", business: "व्यवसाय सुरु", events: "बिहे र पार्टी", study: "पढाइ र IT", family: "विदेशबाट परिवारका लागि" },
+        example: "नमुना", fair: "उचित मूल्य", postLike: "यस्तै काम पोस्ट गर्नुहोस्",
+      },
       cards: {
         moving: "घर र पसल सार्ने, प्याक गर्ने र बोक्ने", cleaning: "घर वा कार्यालय सफा गर्ने र मिलाउने",
         assembly: "खाट, दराज र टेबल जोड्ने", gardening: "झार उखेल्ने, बोट रोप्ने र बगैँचा मिलाउने",

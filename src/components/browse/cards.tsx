@@ -1,21 +1,13 @@
 import Link from "next/link";
-import {
-  Scissors, GraduationCap, Smartphone, Code2, PlugZap, Droplets, Sparkles, Truck, Camera, Languages, Brush, HeartHandshake, Terminal, Monitor, Megaphone,
-  MapPin, Clock, Users, Globe2, Plane, Star, MessageCircle, BadgeCheck, Calculator, ClipboardList, Refrigerator, Armchair, Bike, Car, Hammer, ChefHat, HardHat, CarFront, PartyPopper, Sprout, Palette, Wrench, Sofa, Shirt, Music, PaintRoller, Bug, PawPrint, Clapperboard, Flame, Cctv, Sun, Grid3x3, Umbrella
-} from "lucide-react";
-import type { LucideIcon } from "lucide-react";
+import { CATEGORY_ICONS } from "@/components/category-icons";
+import { MapPin, Clock, Users, Globe2, Plane, Star, MessageCircle, BadgeCheck } from "lucide-react";
 import { Photo } from "@/components/photo";
 import { category, type CategoryId } from "@/lib/pricing";
 import { rs, rsRange } from "@/lib/format";
 import { toDeva, type Dict, type Lang } from "@/lib/i18n/dict";
 import type { TaskResult, ProviderResult } from "@/lib/search";
 
-export const CATEGORY_ICONS: Record<CategoryId, LucideIcon> = {
-  tailoring: Scissors, tutoring: GraduationCap, "phone-repair": Smartphone, "web-design": Code2, electrician: PlugZap,
-  plumbing: Droplets, cleaning: Sparkles, moving: Truck, photography: Camera, translation: Languages, beauty: Brush,
-  "elder-care": HeartHandshake, other: Sparkles, coding: Terminal, "it-support": Monitor, "digital-marketing": Megaphone,
-  "accounting": Calculator, "admin": ClipboardList, "appliances": Refrigerator, "assembly": Armchair, "bike-repair": Bike, "car-care": Car, "carpentry": Hammer, "catering": ChefHat, "construction": HardHat, "driving": CarFront, "events": PartyPopper, "gardening": Sprout, "graphic-design": Palette, "hair": Scissors, "handyman": Wrench, "interior": Sofa, "laundry": Shirt, "lessons": Music, "painting": PaintRoller, "pest-control": Bug, "pet-care": PawPrint, "video-editing": Clapperboard, "welding": Flame, "cctv": Cctv, "solar": Sun, "tiling": Grid3x3, "roofing": Umbrella,
-};
+export { CATEGORY_ICONS };
 
 export function VerifiedStamp({ label }: { label: string }) {
   return <span className="stamp"><BadgeCheck size={13} aria-hidden /> {label}</span>;
