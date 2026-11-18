@@ -9,6 +9,7 @@ import { TerraceSteps } from "@/components/terrace-steps";
 import { isNepalMobile } from "./phone-input";
 import { IdentityInput, isEmailAddress, targetBody, type Channel } from "./identity-input";
 import { OtpStep } from "./otp-step";
+import { AuthSwitch } from "./auth-switch";
 import { SetMpin } from "./set-mpin";
 import type { PublicUser } from "@/lib/store/types";
 
@@ -58,6 +59,7 @@ export function SignupFlow({ cities }: { cities: readonly string[] }) {
 
   return (
     <div>
+      {step === 0 && <AuthSwitch active="signup" />}
       <h1 className="font-display text-[2rem] font-extrabold sm:text-[2.3rem]">{t.signup.title}</h1>
       <div className="mt-5"><TerraceSteps steps={t.signup.steps} current={step} label={t.signup.title} /></div>
 

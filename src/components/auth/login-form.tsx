@@ -7,6 +7,7 @@ import { Fingerprint, LockKeyhole, ArrowRight } from "lucide-react";
 import { startAuthentication } from "@simplewebauthn/browser";
 import { postJson, useI18n, useUser } from "@/components/providers";
 import { MpinInput, type MpinHandle } from "./mpin-input";
+import { AuthSwitch } from "./auth-switch";
 import { isNepalMobile } from "./phone-input";
 import { IdentityInput, isEmailAddress, targetBody, type Channel } from "./identity-input";
 import type { PublicUser } from "@/lib/store/types";
@@ -114,6 +115,7 @@ export function LoginForm({ next }: { next?: string }) {
 
   return (
     <div>
+      <AuthSwitch active="login" />
       <p className="font-semibold text-accent" lang="ne">नमस्ते</p>
       <h1 className="font-display mt-1 text-[2.1rem] font-extrabold sm:text-[2.5rem]">{t.login.title}</h1>
       <p className="mt-1.5 text-muted">{t.login.subtitle}</p>
