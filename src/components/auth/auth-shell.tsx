@@ -1,4 +1,6 @@
 import Image from "next/image";
+import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
 import type { ReactNode } from "react";
 import { Contours } from "@/components/contours";
 import { Logo } from "@/components/logo";
@@ -69,6 +71,7 @@ export async function AuthShell({ children, below }: { children: ReactNode; belo
 
       <main id="auth-main" className="relative lg:col-span-7 lg:flex lg:min-h-dvh lg:flex-col">
         <div className="hidden items-center justify-end gap-2 p-6 lg:flex">
+          <Link href="/" className="btn btn-quiet mr-auto"><ArrowLeft size={16} aria-hidden /> {t.home.landing.back}</Link>
           <LangSwitch />
           <ThemeToggle />
         </div>
@@ -81,7 +84,10 @@ export async function AuthShell({ children, below }: { children: ReactNode; belo
               </div>
             </div>
             {below}
-            <div className="mt-6 flex justify-center lg:hidden"><ThemeToggle /></div>
+            <div className="mt-6 flex items-center justify-center gap-3 lg:hidden">
+              <Link href="/" className="btn btn-quiet"><ArrowLeft size={16} aria-hidden /> {t.home.landing.back}</Link>
+              <ThemeToggle />
+            </div>
           </div>
         </div>
       </main>

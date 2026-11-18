@@ -147,6 +147,9 @@ export const en = {
       steps: ["Describe what you need done", "See the fair price and set your budget", "Get offers and pick the best person"],
       cta: "Post your task", allCats: "See all categories", catHint: (from: string) => `From ${from}`,
       topCats: "Top categories", topCatsLead: "Every skill in Nepal, from websites to plumbing.",
+      join: "Join Saksham free", joinShort: "Join free", signIn: "Sign in", back: "See how Saksham works", navHow: "How it works", navCats: "Categories", navIt: "For IT students",
+      catsTitle: "What do you need done?", catsLead: "Pick a skill to see fair prices and the people who do it.",
+      finalTitle: "Ready when you are", finalLead: "Join free with your mobile number. Post a task or start earning in minutes.",
     },
     quick: {
       it: "IT & digital skills", home: "Home & everyday services", mine: "Your Saksham", all: "See all",
@@ -757,6 +760,9 @@ export const ne: Dict = {
       steps: ["के गर्नुपर्छ लेख्नुहोस्", "उचित मूल्य हेरेर बजेट राख्नुहोस्", "प्रस्ताव पाउनुहोस् र राम्रो मान्छे छान्नुहोस्"],
       cta: "काम पोस्ट गर्नुहोस्", allCats: "सबै वर्ग हेर्नुहोस्", catHint: (from: string) => `${from} देखि`,
       topCats: "मुख्य वर्गहरू", topCatsLead: "वेबसाइटदेखि प्लम्बिङसम्म, नेपालका सबै सीप।",
+      join: "सक्षममा निःशुल्क जोडिनुहोस्", joinShort: "जोडिनुहोस्", signIn: "साइन इन", back: "सक्षम कसरी चल्छ हेर्नुहोस्", navHow: "कसरी चल्छ", navCats: "वर्गहरू", navIt: "IT विद्यार्थीका लागि",
+      catsTitle: "तपाईंलाई के काम गराउनु छ?", catsLead: "उचित मूल्य र त्यो काम गर्ने मानिस हेर्न सीप छान्नुहोस्।",
+      finalTitle: "तपाईं तयार हुँदा हामी तयार", finalLead: "मोबाइल नम्बरबाट निःशुल्क जोडिनुहोस्। केही मिनेटमै काम पोस्ट गर्नुहोस् वा कमाउन सुरु गर्नुहोस्।",
     },
     quick: {
       it: "IT र डिजिटल सीप", home: "घर र दैनिक सेवा", mine: "तपाईंको सक्षम", all: "सबै हेर्नुहोस्",

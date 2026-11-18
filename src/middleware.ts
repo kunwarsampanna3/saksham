@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { jwtVerify } from "jose";
 
 /**
- * Route guard. The login screen is the front door: every page except the auth pages,
+ * Route guard. "/" is the public front page; every other page except the auth pages,
  * public legal pages and static assets needs a valid session cookie.
  * API routes do their own checks (they return JSON 401 rather than redirecting).
  */
@@ -10,7 +10,8 @@ const PUBLIC = ["/login", "/signup", "/forgot-mpin", "/credits", "/terms", "/pri
 
 export async function middleware(req: NextRequest) {
   const { pathname, search } = req.nextUrl;
-  if (PUBLIC.some((p) => pathname === p || pathname.startsWith(`${p}/`))) return NextResponse.next();
+  // "/" itself is the public front page for visitors (it shows the app home when signed in).
+  if (pathname === "/" || PUBLIC.some((p) => pathname === p || pathname.startsWith(`${p}/`))) return NextResponse.next();
 
   const token = req.cookies.get("sk_session")?.value;
   const secret = process.env.SESSION_SECRET ?? "";

@@ -308,7 +308,7 @@ export function ProviderCta({ t, lang, isProvider }: P & { isProvider: boolean }
 }
 
 /* ================================================================ IT students */
-export function ItStudents({ t, lang, isProvider }: P & { isProvider: boolean }) {
+export function ItStudents({ t, lang, isProvider, visitor = false }: P & { isProvider: boolean; visitor?: boolean }) {
   const it = t.home.it;
   return (
     <section aria-labelledby="it-h" className="mx-auto max-w-[88rem] px-4 pt-20 sm:px-6">
@@ -325,10 +325,12 @@ export function ItStudents({ t, lang, isProvider }: P & { isProvider: boolean })
               {it.points.map((x) => <li key={x} className="flex items-start gap-2"><BadgeCheck size={18} aria-hidden className="mt-0.5 shrink-0 text-accent" /> {x}</li>)}
             </ul>
             <div className="mt-6 flex flex-wrap gap-3">
-              {isProvider
-                ? <Link href="/verification" className="btn btn-primary">{it.cta} <ArrowRight size={18} aria-hidden /></Link>
-                : <ProviderButton label={it.cta} />}
-              <Link href="/explore?category=coding" className="btn btn-ghost">{it.browse}</Link>
+              {visitor
+                ? <Link href="/signup" className="btn btn-primary">{it.cta} <ArrowRight size={18} aria-hidden /></Link>
+                : isProvider
+                  ? <Link href="/verification" className="btn btn-primary">{it.cta} <ArrowRight size={18} aria-hidden /></Link>
+                  : <ProviderButton label={it.cta} />}
+              {!visitor && <Link href="/explore?category=coding" className="btn btn-ghost">{it.browse}</Link>}
             </div>
             <p className="mt-4 text-sm text-muted">{it.others}</p>
           </div>
