@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft, Check, CheckCircle2, ChevronRight, Coins, Repeat2, Search } from "lucide-react";
 import { postJson, useI18n, useUser } from "@/components/providers";
 import { TerraceSteps } from "@/components/terrace-steps";
@@ -37,7 +37,8 @@ export function SignupFlow({ cities }: { cities: readonly string[] }) {
   const [first, setFirst] = useState("");
   const [last, setLast] = useState("");
   const [city, setCity] = useState("");
-  const [role, setRole] = useState<Role>("client");
+  const goalParam = useSearchParams().get("goal");
+  const [role, setRole] = useState<Role>(goalParam === "provider" || goalParam === "both" ? goalParam : "client");
   const [cats, setCats] = useState<CategoryId[]>([]);
   const [catQuery, setCatQuery] = useState("");
   const [marketing, setMarketing] = useState(false);

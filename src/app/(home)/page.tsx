@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { LandingHero, PostFirstTask, FinalCta, TrustSafety } from "@/components/home/landing";
+import { LandingHero, PostFirstTask, FinalCta, TrustSafety, TwoPaths } from "@/components/home/landing";
 import { Abroad } from "@/components/home/sections";
 import { Dashboard } from "@/components/home/dashboard";
 import { Showcase } from "@/components/home/showcase";
@@ -23,6 +23,7 @@ export default async function Home({ searchParams }: { searchParams: SP }) {
     return (
       <>
         <LandingHero t={t} lang={lang} visitor />
+        <TwoPaths t={t} lang={lang} />
         <PostFirstTask t={t} lang={lang} visitor />
         <Showcase visitor />
         <TrustSafety t={t} lang={lang} />

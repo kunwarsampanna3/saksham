@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, BadgeCheck, Languages, LockKeyhole, Scale, ShieldCheck, Star, ThumbsUp } from "lucide-react";
+import { ArrowRight, BadgeCheck, ClipboardList, Coins, Languages, LockKeyhole, Scale, ShieldCheck, Star, ThumbsUp } from "lucide-react";
 import { Photo } from "@/components/photo";
 import { CATEGORY_ICONS } from "@/components/browse/cards";
 import { ProviderButton } from "@/components/home/provider-button";
@@ -190,6 +190,32 @@ export function PostFirstTask({ t, lang, visitor = false }: P & { visitor?: bool
         {/* soft fade at the top and bottom edges */}
         <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-12 bg-gradient-to-b from-[var(--accent-soft)] to-transparent" />
         <div aria-hidden className="pointer-events-none absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-[var(--accent-soft)] to-transparent" />
+      </div>
+    </section>
+  );
+}
+
+/* ================================================================ two paths (visitors) */
+/** Hire or earn: two clear doors right under the banner. Each opens sign-up with that goal already picked. */
+export function TwoPaths({ t, lang }: P) {
+  const q = t.home.quick;
+  const card = (href: string, Icon: typeof ArrowRight, title: string, sub: string, cta: string, dark: boolean) => (
+    <Link href={href}
+      className={`group flex h-full flex-col justify-between gap-6 rounded-[16px] border p-6 transition-shadow hover:shadow-[0_16px_40px_-18px_rgba(13,26,20,.45)] sm:p-8 ${dark ? "border-transparent bg-forest text-white" : "border-line bg-surface"}`}>
+      <div>
+        <span className={`grid h-14 w-14 place-items-center rounded-[14px] ${dark ? "bg-leaf text-forest" : "bg-accent-soft text-accent"}`}><Icon size={28} aria-hidden /></span>
+        <h3 className="font-display mt-5 text-2xl font-extrabold sm:text-3xl" lang={lang}>{title}</h3>
+        <p className={`mt-2 text-lg ${dark ? "text-white/85" : "text-muted"}`}>{sub}</p>
+      </div>
+      <span className={`inline-flex items-center gap-2 font-bold ${dark ? "text-leaf" : "text-accent"}`}>{cta} <ArrowRight size={18} aria-hidden className="transition-transform group-hover:translate-x-1" /></span>
+    </Link>
+  );
+  return (
+    <section aria-labelledby="paths-h" className="mx-auto max-w-[88rem] px-4 pt-12 sm:px-6">
+      <h2 id="paths-h" className="font-display text-2xl font-extrabold sm:text-3xl" lang={lang}>{q.pathsTitle}</h2>
+      <div className="mt-5 grid gap-4 md:grid-cols-2">
+        {card("/signup?goal=client", ClipboardList, q.pathHire, q.pathHireSub, q.pathHireCta, false)}
+        {card("/signup?goal=provider", Coins, q.pathWork, q.pathWorkSub, q.pathWorkCta, true)}
       </div>
     </section>
   );

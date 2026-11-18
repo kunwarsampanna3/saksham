@@ -195,6 +195,10 @@ export const en = {
     quick: {
       it: "IT & digital skills", home: "Home & everyday services", mine: "Your Saksham", all: "See all",
       seeMap: "See all on the map", verifiedYes: "Verified", verifyNow: "Get verified to build trust", whatToday: "What do you need done today?",
+      modeHiring: "Hiring", modeWorking: "Working", findWork: "Find work", yourWork: "Your work", findTasks: "Find tasks", myOffers: "My offers", earnings: "Earnings", passport: "Earnings Passport", profile: "My profile",
+      yourSkills: "Your skills", forYou: "Tasks for your skills", noSkillTasks: "No open tasks for your skills nearby right now. Try All of Nepal or check back soon.", addSkills: "Add skills",
+      pathsTitle: "How will you use Saksham?", pathHire: "I need something done", pathHireSub: "Post a task for free and get fair offers from verified people.", pathHireCta: "Post a task",
+      pathWork: "I want to earn", pathWorkSub: "Find tasks near you, send your price and get paid safely through escrow.", pathWorkCta: "Start earning",
       short: {
         "web-design": "Websites", coding: "Apps & code", "it-support": "IT support", "phone-repair": "Phone repair",
         "digital-marketing": "Social media", tutoring: "Tutoring", translation: "Writing", tailoring: "Tailoring",
@@ -851,6 +855,10 @@ export const ne: Dict = {
     quick: {
       it: "IT र डिजिटल सीप", home: "घर र दैनिक सेवा", mine: "तपाईंको सक्षम", all: "सबै हेर्नुहोस्",
       seeMap: "सबै नक्सामा हेर्नुहोस्", verifiedYes: "प्रमाणित", verifyNow: "भरोसा बढाउन प्रमाणित हुनुहोस्", whatToday: "आज के काम गराउनु छ?",
+      modeHiring: "काम गराउँदै", modeWorking: "काम गर्दै", findWork: "काम खोज्नुहोस्", yourWork: "तपाईंको काम", findTasks: "काम खोज्नुहोस्", myOffers: "मेरा प्रस्ताव", earnings: "कमाइ", passport: "कमाइ पासपोर्ट", profile: "मेरो प्रोफाइल",
+      yourSkills: "तपाईंका सीप", forYou: "तपाईंको सीपसँग मिल्ने काम", noSkillTasks: "अहिले नजिकै तपाईंको सीपसँग मिल्ने खुला काम छैन। सम्पूर्ण नेपाल हेर्नुहोस् वा केही समयपछि फेरि हेर्नुहोस्।", addSkills: "सीप थप्नुहोस्",
+      pathsTitle: "तपाईं सक्षम कसरी प्रयोग गर्नुहुन्छ?", pathHire: "मलाई काम गराउनु छ", pathHireSub: "निःशुल्क काम पोस्ट गर्नुहोस् र प्रमाणित मानिसबाट उचित प्रस्ताव पाउनुहोस्।", pathHireCta: "काम पोस्ट गर्नुहोस्",
+      pathWork: "म कमाउन चाहन्छु", pathWorkSub: "नजिकैका काम खोज्नुहोस्, आफ्नो मूल्य पठाउनुहोस् र एस्क्रोमार्फत सुरक्षित भुक्तानी पाउनुहोस्।", pathWorkCta: "कमाउन सुरु गर्नुहोस्",
       short: {
         "web-design": "वेबसाइट", coding: "एप र कोड", "it-support": "IT सहयोग", "phone-repair": "फोन मर्मत",
         "digital-marketing": "सोसल मिडिया", tutoring: "ट्युसन", translation: "लेखन", tailoring: "सिलाइ",
