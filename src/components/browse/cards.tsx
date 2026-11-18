@@ -73,6 +73,42 @@ export function TaskCard({ task, t, lang }: { task: TaskResult; t: Dict; lang: L
   );
 }
 
+/** Slim list row for the browse view (title + price on top, place and time, status and offers). */
+export function TaskRow({ task, t, lang }: { task: TaskResult; t: Dict; lang: Lang }) {
+  const l = t.home.live;
+  const cat = category(task.category);
+  const Icon = CATEGORY_ICONS[task.category];
+  return (
+    <Link href={`/task/${task.id}`}
+      className="group block rounded-[12px] border border-line bg-surface p-4 transition-colors hover:border-accent hover:bg-accent-soft/40">
+      <div className="flex items-start justify-between gap-3">
+        <h3 className="font-display text-[1.08rem] font-bold leading-snug group-hover:text-accent" lang={lang}>{task.title[lang]}</h3>
+        <span className="font-display shrink-0 text-right text-[1.05rem] font-extrabold leading-tight">{rsRange(task.range.low, task.range.high, lang)}</span>
+      </div>
+      <ul className="mt-2 space-y-1 text-sm text-muted">
+        <li className="flex items-center gap-1.5">
+          {task.city === "Online" ? <Globe2 size={15} aria-hidden /> : <MapPin size={15} aria-hidden />}
+          {task.city === "Online" ? l.remote : `${task.area ? `${task.area}, ` : ""}${task.city}${task.distanceKm !== null ? ` · ${l.km(task.distanceKm.toFixed(1))}` : ""}`}
+        </li>
+        <li className="flex items-center gap-1.5"><Clock size={15} aria-hidden /> {l.ago(task.postedMinutesAgo)}</li>
+        {task.forFamilyAbroad && <li className="flex items-center gap-1.5"><Plane size={15} aria-hidden /> {l.fromAbroad(task.forFamilyAbroad)}</li>}
+      </ul>
+      <div className="mt-3 flex items-center justify-between gap-2">
+        <span className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm">
+          <span className="font-bold text-accent">{t.home.live.open}</span>
+          <span className="text-muted" aria-hidden>·</span>
+          <span className="text-muted">{l.offers(task.offers)}</span>
+          {task.womenOnly && <WomenLedBadge label={t.explore.womenOnly} />}
+          {task.isExample && <span className="demo-tag">{t.browse.example}</span>}
+        </span>
+        <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-accent-soft text-accent" title={lang === "ne" ? cat.ne : cat.en}>
+          <Icon size={19} aria-hidden />
+        </span>
+      </div>
+    </Link>
+  );
+}
+
 /* -------------------------------------------------------------- provider */
 export function ProviderCard({ p, t, lang }: { p: ProviderResult; t: Dict; lang: Lang }) {
   const b = t.browse;

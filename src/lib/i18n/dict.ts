@@ -194,6 +194,7 @@ export const en = {
     },
     quick: {
       it: "IT & digital skills", home: "Home & everyday services", mine: "Your Saksham", all: "See all",
+      seeMap: "See all on the map", verifiedYes: "Verified", verifyNow: "Get verified to build trust", whatToday: "What do you need done today?",
       short: {
         "web-design": "Websites", coding: "Apps & code", "it-support": "IT support", "phone-repair": "Phone repair",
         "digital-marketing": "Social media", tutoring: "Tutoring", translation: "Writing", tailoring: "Tailoring",
@@ -247,7 +248,7 @@ export const en = {
       ],
     },
     live: {
-      near: (c: string) => `Tasks near ${c}`, online: "Online tasks", everywhere: "Tasks across Nepal",
+      near: (c: string) => `Tasks near ${c}`, online: "Online tasks", everywhere: "Tasks across Nepal", open: "Open",
       lead: "Example tasks while Saksham is in preview. Distance is from the centre of your city.",
       offers: (n: number) => `${n} offer${n === 1 ? "" : "s"}`,
       ago: (m: number) => (m < 60 ? `${m} min ago` : `${Math.round(m / 60)} h ago`),
@@ -849,6 +850,7 @@ export const ne: Dict = {
     },
     quick: {
       it: "IT र डिजिटल सीप", home: "घर र दैनिक सेवा", mine: "तपाईंको सक्षम", all: "सबै हेर्नुहोस्",
+      seeMap: "सबै नक्सामा हेर्नुहोस्", verifiedYes: "प्रमाणित", verifyNow: "भरोसा बढाउन प्रमाणित हुनुहोस्", whatToday: "आज के काम गराउनु छ?",
       short: {
         "web-design": "वेबसाइट", coding: "एप र कोड", "it-support": "IT सहयोग", "phone-repair": "फोन मर्मत",
         "digital-marketing": "सोसल मिडिया", tutoring: "ट्युसन", translation: "लेखन", tailoring: "सिलाइ",
@@ -902,7 +904,7 @@ export const ne: Dict = {
       ],
     },
     live: {
-      near: (c: string) => `${c} नजिकका कामहरू`, online: "अनलाइन कामहरू", everywhere: "नेपालभरिका कामहरू",
+      near: (c: string) => `${c} नजिकका कामहरू`, online: "अनलाइन कामहरू", everywhere: "नेपालभरिका कामहरू", open: "खुला",
       lead: "सक्षम पूर्वावलोकनमा हुँदा देखाइएका नमुना कामहरू। दूरी तपाईंको शहरको केन्द्रबाट हो।",
       offers: (n: number) => `${toDeva(n)} प्रस्ताव`,
       ago: (m: number) => (m < 60 ? `${toDeva(m)} मिनेट अघि` : `${toDeva(Math.round(m / 60))} घण्टा अघि`),

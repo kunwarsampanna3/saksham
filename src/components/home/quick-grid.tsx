@@ -12,11 +12,11 @@ export const HOME: CategoryId[] = ["tailoring", "electrician", "plumbing", "clea
 interface Tile { href: string; label: string; Icon: LucideIcon; accent?: boolean; badge?: number; active?: boolean }
 
 /** One grouped card: a title and a 4-column grid of icon tiles, the last tile optionally a "see all" arrow. */
-export function Group({ id, title, tiles, all }: { id: string; title: string; tiles: Tile[]; all?: { href: string; label: string } }) {
+export function Group({ id, title, tiles, all, wide = false }: { id: string; title: string; tiles: Tile[]; all?: { href: string; label: string }; wide?: boolean }) {
   return (
     <section aria-labelledby={id} className="rounded-[10px] border border-line bg-surface p-4 sm:p-5">
       <h2 id={id} className="font-display text-lg font-bold sm:text-xl">{title}</h2>
-      <ul className="mt-3 grid grid-cols-4 gap-x-1 gap-y-3 sm:gap-y-4">
+      <ul className={`mt-3 grid grid-cols-4 gap-x-1 gap-y-3 sm:gap-y-4 ${wide ? "md:grid-cols-8" : ""}`}>
         {tiles.map(({ href, label, Icon, accent, badge, active }) => (
           <li key={href + label}>
             <Link href={href} scroll={false} aria-current={active ? "true" : undefined} className={`group flex flex-col items-center gap-1.5 rounded-[8px] px-0.5 py-1.5 text-center ${active ? "bg-accent-soft ring-2 ring-accent" : "hover:bg-accent-soft"}`}>
@@ -42,7 +42,7 @@ export function Group({ id, title, tiles, all }: { id: string; title: string; ti
 }
 
 /** Home's grouped service cards: IT skills, everyday services, and the user's own shortcuts. */
-export function QuickGrid({ t, isProvider }: { t: Dict; lang: Lang; isProvider: boolean }) {
+export function QuickGrid({ t, isProvider, stacked = false }: { t: Dict; lang: Lang; isProvider: boolean; stacked?: boolean }) {
   const q = t.home.quick;
   const cat = (id: CategoryId): Tile => ({ href: `/explore?category=${id}`, label: q.short[id], Icon: CATEGORY_ICONS[id] });
   const mine: Tile[] = [
@@ -57,13 +57,13 @@ export function QuickGrid({ t, isProvider }: { t: Dict; lang: Lang; isProvider: 
   ];
   // Providers see their own shortcuts first; clients see what they can hire first.
   const groups = [
-    <Group key="it" id="q-it" title={q.it} tiles={IT.map(cat)} all={{ href: "/explore", label: q.all }} />,
-    <Group key="home" id="q-home" title={q.home} tiles={HOME.map(cat)} all={{ href: "/explore", label: q.all }} />,
-    <Group key="mine" id="q-mine" title={q.mine} tiles={mine} />,
+    <Group key="it" id="q-it" title={q.it} tiles={IT.map(cat)} all={{ href: "/explore", label: q.all }} wide={stacked} />,
+    <Group key="home" id="q-home" title={q.home} tiles={HOME.map(cat)} all={{ href: "/explore", label: q.all }} wide={stacked} />,
+    <Group key="mine" id="q-mine" title={q.mine} tiles={mine} wide={stacked} />,
   ];
   return (
-    <div className="mx-auto grid max-w-[88rem] gap-3 px-3 pt-6 sm:gap-4 sm:px-6 lg:grid-cols-3">
-      {isProvider ? [groups[2], groups[0], groups[1]] : groups}
+    <div className={stacked ? "grid gap-4" : "mx-auto grid max-w-[88rem] gap-3 px-3 pt-6 sm:gap-4 sm:px-6 lg:grid-cols-3"}>
+      {stacked ? [groups[2], groups[0], groups[1]] : isProvider ? [groups[2], groups[0], groups[1]] : groups}
     </div>
   );
 }

@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { FilterBar } from "@/components/browse/filters";
 import { ResultsLayout } from "@/components/browse/results-layout";
-import { TaskCard, ProviderCard } from "@/components/browse/cards";
+import { TaskRow, ProviderCard } from "@/components/browse/cards";
 import type { Pin } from "@/components/map/map";
 import { requireUser } from "@/lib/auth/current-user";
 import { canSeeWomenOnly } from "@/lib/store";
@@ -35,7 +35,7 @@ export default async function Explore({ searchParams }: { searchParams: SP }) {
     <div className="relative">
       {/* Slim toolbar like a classic task marketplace: tabs + one row of filters, stuck under the header. */}
       <div className="sticky top-[var(--header-h)] z-30 border-b border-line bg-bg/95 backdrop-blur supports-[backdrop-filter]:bg-bg/85">
-        <div className="mx-auto flex max-w-[88rem] flex-wrap items-center gap-x-4 gap-y-2 px-4 py-3 sm:px-6">
+        <div className="mx-auto flex max-w-[88rem] flex-wrap items-center gap-x-3 gap-y-2 px-4 py-2.5 sm:px-6">
           <h1 className="sr-only">{e.title}</h1>
           <nav aria-label={e.title} className="inline-flex rounded-full border border-line-strong bg-surface p-1">
             {(["tasks", "pros"] as const).map((v) => (
@@ -63,7 +63,7 @@ export default async function Explore({ searchParams }: { searchParams: SP }) {
           {n > 0 ? (
             <ul className="grid gap-3">
               {f.view === "tasks"
-                ? tasks.map((x) => <li key={x.id}><TaskCard task={x} t={t} lang={lang} /></li>)
+                ? tasks.map((x) => <li key={x.id}><TaskRow task={x} t={t} lang={lang} /></li>)
                 : pros.map((p) => <li key={p.id}><ProviderCard p={p} t={t} lang={lang} /></li>)}
             </ul>
           ) : null}

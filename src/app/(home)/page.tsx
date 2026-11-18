@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { LandingHero, PostFirstTask, FinalCta, TrustSafety } from "@/components/home/landing";
-import { LiveTasks, Abroad, ProviderCta } from "@/components/home/sections";
+import { Abroad } from "@/components/home/sections";
+import { Dashboard } from "@/components/home/dashboard";
 import { Showcase } from "@/components/home/showcase";
 import { currentUser } from "@/lib/auth/current-user";
 import { getCity, getDict } from "@/lib/i18n/server";
@@ -13,7 +14,9 @@ export const metadata: Metadata = {
  * Home, in the classic marketplace order. Visitors (signed out) see the public front page with
  * Join / Sign in; signed-in users see the same style with their task box, live tasks and shortcuts.
  */
-export default async function Home() {
+type SP = Promise<Record<string, string | string[] | undefined>>;
+
+export default async function Home({ searchParams }: { searchParams: SP }) {
   const [user, { t, lang }] = await Promise.all([currentUser(), getDict()]);
 
   if (!user) {
@@ -29,17 +32,7 @@ export default async function Home() {
     );
   }
 
-  const city = await getCity(user.city);
-  const isProvider = user.roles.includes("provider");
-  return (
-    <>
-      <LandingHero t={t} lang={lang} name={user.name} isProvider={isProvider} />
-      <PostFirstTask t={t} lang={lang} />
-      <Showcase />
-      <TrustSafety t={t} lang={lang} />
-      <LiveTasks t={t} lang={lang} city={city} viewer={user} />
-      <Abroad t={t} lang={lang} />
-      <ProviderCta t={t} lang={lang} isProvider={isProvider} />
-    </>
-  );
+  // Signed in: a simple eSewa-style home with separate cards; the full list + map lives on Browse tasks.
+  void searchParams;
+  return <Dashboard t={t} lang={lang} user={user} city={await getCity(user.city)} />;
 }

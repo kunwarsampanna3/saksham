@@ -81,14 +81,14 @@ export function FilterBar({ f, showView = true, canSeeWomenOnly, compact = false
 
   if (compact) {
     // Slim one-line toolbar (Explore): every control is a small pill; extra checkboxes sit in "Other filters".
-    const pill = "h-10 appearance-none rounded-full border border-line-strong bg-surface pl-4 pr-8 text-[0.93rem] font-semibold hover:border-accent focus:border-accent";
+    const pill = "h-10 max-w-[9.5rem] appearance-none truncate rounded-full border border-line-strong bg-surface pl-3.5 pr-7 text-[0.9rem] font-semibold hover:border-accent focus:border-accent";
     const chevron = { backgroundImage: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2345564d' stroke-width='2.4'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E\")", backgroundRepeat: "no-repeat", backgroundPosition: "right 0.75rem center", backgroundSize: "14px" };
     const extras = Number(f.online) + Number(f.women) + Number(f.verified);
     return (
       <form ref={form} action={path} method="get" role="search" aria-busy={pending}
         onSubmit={(ev) => { ev.preventDefault(); push(); }} className="flex flex-wrap items-center gap-2">
         {showView && <input type="hidden" name="view" value={f.view} />}
-        <label className="relative w-full sm:w-60">
+        <label className="relative w-full sm:w-40 xl:w-48">
           <span className="sr-only">{e.search}</span>
           <input name="q" type="search" defaultValue={f.q} maxLength={80} placeholder={e.searchPh}
             className="h-10 w-full rounded-full border border-line-strong bg-surface pl-4 pr-10 text-[0.93rem] hover:border-accent focus:border-accent" />
@@ -115,8 +115,8 @@ export function FilterBar({ f, showView = true, canSeeWomenOnly, compact = false
             {PRICE_CAPS.map((p) => <option key={p} value={p}>{lang === "ne" ? `रु. ${num(p, lang)}` : `Rs. ${num(p, lang)}`}</option>)}
           </select></label>
         <details className="relative">
-          <summary className={`inline-flex h-10 cursor-pointer list-none items-center gap-1.5 rounded-full border px-4 text-[0.93rem] font-semibold hover:border-accent [&::-webkit-details-marker]:hidden ${extras ? "border-accent bg-accent-soft text-accent" : "border-line-strong bg-surface"}`}>
-            <SlidersHorizontal size={15} aria-hidden /> {e.otherFilters}{extras ? ` (${extras})` : ""}
+          <summary className={`inline-flex h-10 cursor-pointer list-none items-center gap-1.5 rounded-full border px-3.5 text-[0.9rem] font-semibold hover:border-accent [&::-webkit-details-marker]:hidden ${extras ? "border-accent bg-accent-soft text-accent" : "border-line-strong bg-surface"}`}>
+            <SlidersHorizontal size={15} aria-hidden /> <span className="whitespace-nowrap">{e.otherFilters}{extras ? ` (${extras})` : ""}</span>
           </summary>
           <div className="absolute left-0 top-12 z-30 w-64 space-y-2 rounded-[12px] border border-line bg-surface p-3 shadow-[0_16px_40px_-16px_rgba(13,26,20,.45)]">
             <Check name="online" label={e.onlineOnly} on={f.online} />
@@ -131,7 +131,7 @@ export function FilterBar({ f, showView = true, canSeeWomenOnly, compact = false
               .filter((s) => f.view === "pros" || s !== "rating")
               .map((s) => <option key={s} value={s}>{e.sorts[s]}</option>)}
           </select></label>
-        <a href={`${path}${showView ? `?view=${f.view}` : ""}`} className="btn btn-quiet !min-h-10 text-sm"><X size={15} aria-hidden /> {e.clear}</a>
+        {(f.q || f.cat || f.radius || f.max || extras > 0 || f.sort !== "best") && <a href={`${path}${showView ? `?view=${f.view}` : ""}`} className="btn btn-quiet !min-h-10 text-sm"><X size={15} aria-hidden /> {e.clear}</a>}
       </form>
     );
   }
