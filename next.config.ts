@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { PHASE_DEVELOPMENT_SERVER } from "next/constants";
 
 const isDev = process.env.NODE_ENV !== "production";
 
@@ -45,4 +46,10 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+/**
+ * Edit mode (`next dev`) writes to `.next-dev`, the fast build (`next build` / `next start`) to `.next`.
+ * Keeping them apart means running one never breaks the other.
+ */
+export default function config(phase: string): NextConfig {
+  return { ...nextConfig, distDir: phase === PHASE_DEVELOPMENT_SERVER ? ".next-dev" : ".next" };
+}

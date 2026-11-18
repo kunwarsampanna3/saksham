@@ -28,6 +28,8 @@ npm run dev       # edit mode (Turbopack)
 npm run fast      # fast mode: build + start
 ```
 
+On Windows PowerShell, if `npm` says "running scripts is disabled on this system", type `npm.cmd` instead of `npm` (e.g. `npm.cmd run dev`), or use the `.bat` files. Edit mode builds into `.next-dev` and fast mode into `.next`, so both can be used without breaking each other.
+
 ### Security notes
 - `DEMO_MODE=true` shows sign-in codes on screen, so anyone using the site can sign in to or reset any account. Keep it for demos on your own laptop only; set `DEMO_MODE=false` (with an SMS provider) before the site is public.
 - Numbers in `OWNER_PHONES` get the Admin page. Register your own number first, and never put a number you don't control there.

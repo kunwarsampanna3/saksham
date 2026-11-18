@@ -13,7 +13,12 @@ if not exist node_modules (
 )
 if not exist .env.local call node scripts\setup-env.mjs
 
+rem If Saksham is already running (port 3000 busy), just open it instead of starting a second copy.
+netstat -ano | findstr /r /c:":3000 .*LISTENING" >nul && (echo Saksham is already running - opening it. & start http://localhost:3000 & exit /b 0)
+
 echo.
 echo Saksham edit mode at http://localhost:3000  (close this window to stop it)
-start "" cmd /c "timeout /t 8 >nul & start http://localhost:3000"
+rem Open the browser only once the site answers (the first page can take ~20 s to prepare).
+start "" /min cmd /c "for /l %%i in (1,1,90) do (curl -s -o nul http://localhost:3000/login && (start http://localhost:3000 & exit) || timeout /t 2 >nul)"
 call npm run dev
+pause
