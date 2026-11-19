@@ -3,6 +3,7 @@ import { ArrowRight, Check, Clock } from "lucide-react";
 import type { Dict, Lang } from "@/lib/i18n/dict";
 import type { User } from "@/lib/store/types";
 import type { StatusMap } from "./center";
+import { kycRole } from "@/lib/roles";
 
 type Item = { key: keyof Dict["verify"]["profileItems"]; done: boolean; pending?: boolean };
 
@@ -49,7 +50,7 @@ export function ProfileProgress({ user, status, t }: { user: User; status: Statu
         </div>
         <div className="shrink-0 sm:max-w-[15rem] sm:text-right">
           <Link href="/" className="btn btn-ghost">{v.skip} <ArrowRight size={17} aria-hidden /></Link>
-          <p className="mt-2 text-xs text-muted">{v.skipNote}</p>
+          <p className="mt-2 text-xs text-muted">{v.skipNote[kycRole(user.roles)]}</p>
         </div>
       </div>
     </section>

@@ -2,10 +2,11 @@ import { NextResponse, type NextRequest } from "next/server";
 import { fail } from "@/lib/auth/http";
 import { uploadGuard, str, file } from "@/lib/auth/upload-guard";
 import { cleanImage, saveFiles, submit, statusFor, UploadError } from "@/lib/verification";
+import { BACK_OPTIONAL, KYC_DOCS } from "@/lib/roles";
 
-const DOC_TYPES = ["citizenship", "national_id", "student_id"] as const;
+const DOC_TYPES = KYC_DOCS.both;
 
-/** Citizenship / national ID (front + back) or student ID (front, back optional). Goes to manual review. */
+/** ID card front + back (passport and student ID: back optional). Goes to manual review. */
 export async function POST(req: NextRequest) {
   const g = await uploadGuard(req, "verify-id");
   if ("res" in g) return g.res;
@@ -16,7 +17,7 @@ export async function POST(req: NextRequest) {
   const front = file(form, "front");
   const back = file(form, "back");
   if (!front) return fail(422, "file_missing", { field: "front" });
-  if (docType !== "student_id" && !back) return fail(422, "file_missing", { field: "back" });
+  if (!BACK_OPTIONAL.includes(docType) && !back) return fail(422, "file_missing", { field: "back" });
   try {
     const items = [{ label: "front", data: await cleanImage(front) }];
     if (back) items.push({ label: "back", data: await cleanImage(back) });

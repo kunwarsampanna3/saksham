@@ -371,7 +371,7 @@ function ProfileMenu({ user }: { user: PublicUser }) {
             </div>
           </div>
 
-          <fieldset className="border-b border-line p-4">
+          {user.roles.includes("client") && user.roles.includes("provider") && <fieldset className="border-b border-line p-4">
             <legend className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted">{t.nav.modeLabel}</legend>
             <div className="grid grid-cols-2 gap-1 rounded-md bg-surface-2 p-1">
               {(["client", "provider"] as const).map((r) => (
@@ -381,8 +381,7 @@ function ProfileMenu({ user }: { user: PublicUser }) {
                 </button>
               ))}
             </div>
-            {!user.roles.includes("provider") && <p className="mt-2 text-xs text-muted">{t.nav.becomeProvider}</p>}
-          </fieldset>
+          </fieldset>}
 
           <ul className="p-1.5">
             {links.map(({ href, label, Icon }) => (

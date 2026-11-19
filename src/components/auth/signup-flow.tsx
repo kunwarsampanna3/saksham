@@ -75,7 +75,7 @@ export function SignupFlow({ cities }: { cities: readonly string[] }) {
     if (r.ok) {
       try { localStorage.setItem(channel === "email" ? "sk_last_email" : "sk_last_phone", channel === "email" ? email.trim().toLowerCase() : phone); localStorage.setItem("sk_last_channel", channel); } catch { /* ignore */ }
       setUser(r.user);
-      router.replace(role === "client" ? "/" : "/verification");
+      router.replace("/verification");
       router.refresh();
       return;
     }

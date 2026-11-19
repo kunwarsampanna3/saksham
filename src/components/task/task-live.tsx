@@ -78,6 +78,13 @@ export function TaskLive({
           onDone={refresh} onWithdraw={myOffer ? () => act(myOffer.id, { action: "withdraw" }) : undefined} />
       )}
 
+      {/* Client: KYC before hiring */}
+      {live.owner && open && !idVerified && visibleOffers.length > 0 && (
+        <p className="flex flex-wrap items-center gap-3 rounded-[10px] border border-line bg-accent-soft p-4 text-sm font-semibold">
+          {k.kycHire} <Link href="/verification" className="btn btn-ghost !min-h-9">{k.verifyNow}</Link>
+        </p>
+      )}
+
       <section aria-labelledby="offers-h">
         <div className="flex flex-wrap items-end justify-between gap-2">
           <h2 id="offers-h" className="font-display text-2xl font-bold">{k.offers} <span className="text-muted">({lang === "ne" ? toDeva(visibleOffers.length) : visibleOffers.length})</span></h2>

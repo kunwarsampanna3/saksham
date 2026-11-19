@@ -11,6 +11,7 @@ import { postJson, useI18n, useUser } from "@/components/providers";
 import { PhotoInput } from "./photo-input";
 import { SelfieCamera } from "./selfie-camera";
 import type { VerificationKind, VerificationStatus } from "@/lib/store/types";
+import { BACK_OPTIONAL, KYC_DOCS, type DocType, type KycRole } from "@/lib/roles";
 
 type StatusEntry = { status: VerificationStatus; simulated: boolean; fields: Record<string, string>; note?: string; fileIds: { id: string; label: string }[] };
 export type StatusMap = Record<VerificationKind, StatusEntry>;
@@ -28,8 +29,8 @@ async function postForm<T>(url: string, fd: FormData): Promise<T & { ok: boolean
 }
 
 export function VerificationCenter({
-  initial, demoMode, isProvider, city, area,
-}: { initial: StatusMap; demoMode: boolean; isProvider: boolean; city: string; area?: string }) {
+  initial, demoMode, role, city, area,
+}: { initial: StatusMap; demoMode: boolean; role: KycRole; city: string; area?: string }) {
   const { t } = useI18n();
   const v = t.verify;
   const router = useRouter();
@@ -49,7 +50,9 @@ export function VerificationCenter({
   }, [router, user, setUser]);
 
   const done = (["phone", "id", "selfie"] as const).filter((k) => status[k].status === "verified").length;
-  const kinds: VerificationKind[] = ["phone", "id", "selfie", "address", ...(isProvider ? (["womenGroup"] as const) : [])];
+  // Client form: ID, selfie, address. Provider and "both" forms add the women-led group check.
+  const kinds: VerificationKind[] = ["phone", "id", "selfie", "address", ...(role !== "client" ? (["womenGroup"] as const) : [])];
+  const need = (k: VerificationKind) => (k === "id" || k === "selfie" ? "required" : k === "phone" ? null : "optional");
 
   return (
     <div className="grid gap-8 lg:grid-cols-12">
@@ -93,7 +96,11 @@ export function VerificationCenter({
                     <div className="flex items-start gap-3">
                       <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-[4px] bg-accent-soft text-accent"><Icon size={22} aria-hidden /></span>
                       <div>
-                        <h3 id={`st-${k}`} className="font-display text-lg font-bold">{step.title}</h3>
+                        <h3 id={`st-${k}`} className="font-display flex flex-wrap items-center gap-2 text-lg font-bold">
+                          {k === "id" ? v.idTitleBy[role] : step.title}
+                          {need(k) === "required" && <span className="rounded-[3px] bg-danger-soft px-1.5 py-0.5 text-[0.7rem] font-bold uppercase tracking-wide text-danger">{v.required}</span>}
+                          {need(k) === "optional" && <span className="rounded-[3px] bg-surface-2 px-1.5 py-0.5 text-[0.7rem] font-bold uppercase tracking-wide text-muted">{v.optional}</span>}
+                        </h3>
                         <p className="text-[0.95rem] text-muted">{step.body}</p>
                       </div>
                     </div>
@@ -103,7 +110,7 @@ export function VerificationCenter({
                     </div>
                   </div>
 
-                  <p className="mt-3 flex items-start gap-2 pl-2 text-sm"><Unlock size={15} aria-hidden className="mt-0.5 shrink-0 text-accent" /> <span><strong>{v.unlocks}:</strong> {step.unlocks}</span></p>
+                  <p className="mt-3 flex items-start gap-2 pl-2 text-sm"><Unlock size={15} aria-hidden className="mt-0.5 shrink-0 text-accent" /> <span><strong>{v.unlocks}:</strong> {v.unlocksBy[role][k] || step.unlocks}</span></p>
                   {s.status === "rejected" && s.note && <p className="mt-2 pl-2 text-sm text-danger"><strong>{v.note}:</strong> {s.note}</p>}
 
                   {/* files + remove */}
@@ -146,7 +153,7 @@ export function VerificationCenter({
                         <button type="button" className="btn btn-ghost" aria-expanded={false} onClick={() => setOpen(k)}>{t.common.continue}</button>
                       ) : (
                         <div className="border-t border-line pt-4">
-                          {k === "id" && <IdForm onDone={apply} errText={errText} />}
+                          {k === "id" && <IdForm onDone={apply} errText={errText} docs={KYC_DOCS[role]} />}
                           {k === "selfie" && (status.id.status === "not_started" || status.id.status === "rejected"
                             ? <p className="text-sm font-semibold text-danger">{v.errors.id_first}</p>
                             : <SelfieForm onDone={apply} errText={errText} demoMode={demoMode} />)}
@@ -209,16 +216,16 @@ function Consent({ name, label, checked, onChange }: { name: string; label: stri
   );
 }
 
-function IdForm({ onDone, errText }: FormProps) {
+function IdForm({ onDone, errText, docs }: FormProps & { docs: readonly DocType[] }) {
   const { t } = useI18n();
   const v = t.verify;
-  const [docType, setDocType] = useState<"citizenship" | "national_id" | "student_id">("citizenship");
+  const [docType, setDocType] = useState<DocType>(docs[0]);
   const [front, setFront] = useState<Blob | null>(null);
   const [back, setBack] = useState<Blob | null>(null);
   const [consent, setConsent] = useState(false);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
-  const backRequired = docType !== "student_id";
+  const backRequired = !BACK_OPTIONAL.includes(docType);
 
   const send = async () => {
     setErr(null);
@@ -239,7 +246,7 @@ function IdForm({ onDone, errText }: FormProps) {
       <fieldset>
         <legend className="field-label">{v.docType}</legend>
         <div className="flex flex-wrap gap-2">
-          {(["citizenship", "national_id", "student_id"] as const).map((d) => (
+          {docs.map((d) => (
             <label key={d} className={`inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-[4px] border-[1.5px] px-3 text-[0.95rem] font-semibold ${docType === d ? "border-accent bg-accent-soft text-accent" : "border-line-strong"}`}>
               <input type="radio" name="docType" value={d} checked={docType === d} onChange={() => setDocType(d)} className="accent-[var(--accent)]" /> {v.docTypes[d]}
             </label>

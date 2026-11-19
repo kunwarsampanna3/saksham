@@ -20,6 +20,8 @@ export function CategoriesMenu() {
   const path = usePathname();
   const [open, setOpen] = useState(false);
   const { user } = useUser();
+  // Visitors and "both" accounts pick a side; single-role accounts only see their own.
+  const both = !user || (user.roles.includes("client") && user.roles.includes("provider"));
   const [mode, setMode] = useState<Mode>(user?.activeRole === "provider" ? "provider" : "client");
   // Follow the Hiring / Working switch.
   useEffect(() => { setMode(user?.activeRole === "provider" ? "provider" : "client"); }, [user?.activeRole]);
@@ -57,9 +59,11 @@ export function CategoriesMenu() {
           <div className="grid lg:grid-cols-[17rem_1fr]">
             <div className="space-y-3 rounded-t-[14px] bg-accent-soft p-5 lg:rounded-l-[14px] lg:rounded-tr-none">
               <p className="font-display text-2xl font-extrabold leading-tight">{l.menuTitle}</p>
-              <p className="text-muted">{l.menuLead}</p>
-              {choice("client", l.asClient, l.asClientLead)}
-              {choice("provider", l.asProvider, l.asProviderLead)}
+              {both ? <>
+                <p className="text-muted">{l.menuLead}</p>
+                {choice("client", l.asClient, l.asClientLead)}
+                {choice("provider", l.asProvider, l.asProviderLead)}
+              </> : <p className="font-semibold text-accent">{mode === "client" ? l.asClientLead : l.asProviderLead}</p>}
             </div>
             <div className="p-5">
               <ul className="columns-2 gap-x-6 sm:columns-3 lg:columns-4">

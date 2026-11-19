@@ -251,7 +251,8 @@ export async function placeBid(task: Task, user: User, input: { amount: number; 
   if (isOwner(task, user)) throw new RuleError("own_task", 403);
   if (!(await canView(task, user))) throw new RuleError("not_found", 404);
   if (task.status !== "open") throw new RuleError("task_closed");
-  if ((await statusFor(user)).id.status !== "verified") throw new RuleError("id_required", 403);
+  const kyc = await statusFor(user);
+  if (kyc.id.status !== "verified" || kyc.selfie.status !== "verified") throw new RuleError("id_required", 403);
   if (task.clientId && (await isBlocked(task.clientId, user.id))) throw new RuleError("not_found", 404);
   if (input.amount < 100 || input.amount > task.fairHigh * 10) throw new RuleError("amount_range", 422, { field: "amount" });
 
@@ -315,6 +316,9 @@ export async function respondCounter(task: Task, user: User, bidId: string, acce
 export async function acceptBid(task: Task, user: User, bidId: string) {
   if (!isOwner(task, user)) throw new RuleError("forbidden", 403);
   if (task.status !== "open") throw new RuleError("task_closed");
+  // Clients finish KYC (ID card + selfie) before they hire.
+  const kyc = await statusFor(user);
+  if (kyc.id.status !== "verified" || kyc.selfie.status !== "verified") throw new RuleError("kyc_required", 403);
   const bids = await store.listBids(task.id);
   const b = bids.find((x) => x.id === bidId);
   if (!b || b.status !== "active" || new Date(b.appearAt).getTime() > Date.now()) throw new RuleError("bid_closed");

@@ -95,7 +95,7 @@ export default async function TaskPage({ params }: { params: Params }) {
             taskId={task.id}
             initial={initial}
             isProvider={user.activeRole === "provider" && user.roles.includes("provider")}
-            idVerified={vstatus.id.status === "verified"}
+            idVerified={vstatus.id.status === "verified" && vstatus.selfie.status === "verified"}
             fairLow={task.fairLow}
             fairHigh={task.fairHigh}
             taskDays={task.days}
