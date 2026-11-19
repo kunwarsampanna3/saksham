@@ -34,6 +34,13 @@ export const EXAMPLE_TASKS: ExampleTask[] = [
   { id: "ex-photo", category: "photography", title: { en: "Product photos for 40 dhaka shawls", ne: "४० वटा ढाका सलको उत्पादन फोटो" }, city: "Dharan", area: "Bhanu Chowk", days: 2, offers: 4, postedMinutesAgo: 260 },
   { id: "ex-clean", category: "cleaning", title: { en: "Deep clean a 3-bedroom flat before Dashain", ne: "दशैंअघि ३ कोठाको फ्ल्याट राम्ररी सफा गर्नु छ" }, city: "Kathmandu", area: "Baneshwor", offset: [-0.02, 0.016], days: 1, offers: 5, postedMinutesAgo: 25 },
   { id: "ex-laptop", category: "phone-repair", title: { en: "Laptop not charging — diagnose and repair", ne: "ल्यापटप चार्ज हुँदैन — जाँचेर बनाउनु छ" }, city: "Bhaktapur", area: "Kamalbinayak", offset: [0.004, 0.006], days: 1, offers: 2, postedMinutesAgo: 70 },
+  { id: "ex-uiux", category: "graphic-design", title: { en: "Design 5 app screens in Figma for a food delivery app", ne: "खाना डेलिभरी एपका लागि Figma मा ५ स्क्रिन डिजाइन" }, city: "Online", days: 5, offers: 6, postedMinutesAgo: 18 },
+  { id: "ex-react", category: "coding", title: { en: "Fix bugs in our React booking website", ne: "हाम्रो React बुकिङ वेबसाइटका बग सच्याउनु छ" }, city: "Online", days: 3, offers: 4, postedMinutesAgo: 42 },
+  { id: "ex-python", category: "coding", title: { en: "Python script to clean and merge Excel sales sheets", ne: "Excel बिक्री पाना सफा गरी जोड्ने Python स्क्रिप्ट" }, city: "Online", days: 2, offers: 3, postedMinutesAgo: 95 },
+  { id: "ex-office-it", category: "it-support", title: { en: "Set up office Wi-Fi and 6 computers with a shared printer", ne: "कार्यालयको Wi-Fi र साझा प्रिन्टरसहित ६ कम्प्युटर सेटअप" }, city: "Lalitpur", area: "Jawalakhel", offset: [0.006, 0.004], days: 1, offers: 3, postedMinutesAgo: 65 },
+  { id: "ex-logo", category: "graphic-design", title: { en: "Logo and Facebook cover for a new café", ne: "नयाँ क्याफेका लागि लोगो र फेसबुक कभर" }, city: "Online", days: 2, offers: 10, postedMinutesAgo: 150 },
+  { id: "ex-ads", category: "digital-marketing", title: { en: "Run Facebook and Instagram ads for a clothing shop, 2 weeks", ne: "कपडा पसलका लागि २ हप्ता फेसबुक र इन्स्टाग्राम विज्ञापन" }, city: "Online", days: 14, offers: 5, postedMinutesAgo: 230 },
+  { id: "ex-reels", category: "video-editing", title: { en: "Edit 4 short Reels for our travel agency", ne: "हाम्रो ट्राभल एजेन्सीका लागि ४ छोटा Reels सम्पादन" }, city: "Online", days: 4, quantity: 4, offers: 7, postedMinutesAgo: 300 },
   { id: "ex-english", category: "tutoring", title: { en: "Spoken English practice for a job interview abroad", ne: "विदेशको जागिर अन्तर्वार्ताका लागि अंग्रेजी बोल्ने अभ्यास" }, city: "Online", days: 5, offers: 8, postedMinutesAgo: 180 },
 ];
 

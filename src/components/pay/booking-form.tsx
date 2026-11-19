@@ -1,25 +1,29 @@
 "use client";
 
+import { EXAMPLE_FX } from "@/lib/geo";
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Check, LockKeyhole, Wallet, FlaskConical } from "lucide-react";
+import { Check, LockKeyhole, Wallet, FlaskConical, CreditCard } from "lucide-react";
 import { postJson, useI18n } from "@/components/providers";
 import { useReauth } from "@/components/reauth-dialog";
-import { rs, npDate } from "@/lib/format";
+import { rs, npDate, num } from "@/lib/format";
 
 type Plan = "full" | "two" | "milestones";
-type Method = "esewa_sandbox" | "khalti_sandbox";
+type Method = "esewa_sandbox" | "khalti_sandbox" | "card_sandbox";
 type Row = { seq: number; label: "full" | "first" | "second" | "start" | "middle" | "finish"; pct: number; amount: number; dueDate: string };
 
-export function BookingForm({ taskId, total, providerName, feeRate, previews }: {
+export function BookingForm({ taskId, total, providerName, feeRate, previews, abroad = null }: {
   taskId: string; total: number; providerName: string; feeRate: number; previews: Record<Plan, Row[]>;
+  /** country of the person paying from abroad, if this is a family-abroad task */
+  abroad?: string | null;
 }) {
   const { t, lang } = useI18n();
   const b = t.booking;
   const router = useRouter();
   const { ensureFresh, dialog } = useReauth();
   const [plan, setPlan] = useState<Plan>("milestones");
-  const [method, setMethod] = useState<Method>("esewa_sandbox");
+  const [method, setMethod] = useState<Method>(abroad ? "card_sandbox" : "esewa_sandbox");
+  const fx = abroad ? EXAMPLE_FX[abroad as keyof typeof EXAMPLE_FX] : undefined;
   const [sandbox, setSandbox] = useState(false);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
@@ -79,10 +83,11 @@ export function BookingForm({ taskId, total, providerName, feeRate, previews }: 
         <fieldset>
           <legend className="font-display text-xl font-bold">{b.method}</legend>
           <div className="mt-3 flex flex-wrap gap-2">
-            {(["esewa_sandbox", "khalti_sandbox"] as const).map((m) => (
+            {(abroad ? (["card_sandbox", "esewa_sandbox", "khalti_sandbox"] as const) : (["esewa_sandbox", "khalti_sandbox", "card_sandbox"] as const)).map((m) => (
               <label key={m} className={`inline-flex min-h-12 cursor-pointer items-center gap-2 rounded-[4px] border-[1.5px] px-4 font-semibold ${method === m ? "border-accent bg-accent-soft text-accent" : "border-line-strong"}`}>
                 <input type="radio" name="method" checked={method === m} onChange={() => setMethod(m)} className="accent-[var(--accent)]" />
-                <Wallet size={17} aria-hidden /> {b.methods[m]} <span className="demo-tag">{t.common.sandbox}</span>
+                {m === "card_sandbox" ? <CreditCard size={17} aria-hidden /> : <Wallet size={17} aria-hidden />} {b.methods[m]} <span className="demo-tag">{t.common.sandbox}</span>
+                {m === "card_sandbox" && abroad && <span className="text-xs font-semibold text-accent">· {b.cardFor}</span>}
               </label>
             ))}
           </div>
@@ -114,16 +119,19 @@ export function BookingForm({ taskId, total, providerName, feeRate, previews }: 
       {dialog}
       {sandbox && (
         <SandboxSheet title={b.sandboxTitle(b.methods[method])} body={b.sandboxBody} amount={rs(first.amount, lang)} payLabel={busy ? b.paying : b.sandboxPay}
-          cancel={t.common.cancel} busy={busy} onPay={() => void pay()} onClose={() => setSandbox(false)} />
+          cancel={t.common.cancel} busy={busy} onPay={() => void pay()} onClose={() => setSandbox(false)}
+          card={method === "card_sandbox"} approx={fx ? b.approx(fx.code, num(Math.max(1, Math.round(first.amount / fx.nprPer)), lang)) : undefined} />
       )}
     </div>
   );
 }
 
 /** Stand-in for the wallet's payment screen. Clearly a sandbox: no credentials are asked for, nothing is charged. */
-export function SandboxSheet({ title, body, amount, payLabel, cancel, busy, onPay, onClose }: {
+export function SandboxSheet({ title, body, amount, payLabel, cancel, busy, onPay, onClose, card = false, approx }: {
   title: string; body: string; amount: string; payLabel: string; cancel: string; busy: boolean; onPay: () => void; onClose: () => void;
+  card?: boolean; approx?: string;
 }) {
+  const { t } = useI18n();
   const ref = useRef<HTMLDialogElement>(null);
   useEffect(() => { ref.current?.showModal(); }, []);
   return (
@@ -134,6 +142,18 @@ export function SandboxSheet({ title, body, amount, payLabel, cancel, busy, onPa
         <h2 id="sbx-h" className="font-display mt-3 text-2xl font-bold">{title}</h2>
         <p className="mt-1 text-sm text-muted">{body}</p>
         <p className="font-display mt-4 text-4xl font-extrabold text-accent">{amount}</p>
+        {approx && <p className="mt-1 text-sm font-semibold">{approx}</p>}
+        {card && (
+          <div className="mt-4 text-left">
+            {/* Read-only test card: no real card number is ever typed or stored here. */}
+            <div aria-label={t.booking.testCard} className="rounded-[12px] bg-gradient-to-br from-forest to-accent p-4 font-mono text-white shadow">
+              <p className="text-[0.7rem] uppercase tracking-widest text-white/70">{t.booking.testCard}</p>
+              <p className="mt-3 text-lg tracking-[0.18em]">4242 4242 4242 4242</p>
+              <div className="mt-3 flex justify-between text-xs"><span>12 / 30</span><span>CVC •••</span><span>VISA</span></div>
+            </div>
+            <p className="mt-2 text-xs text-muted">{t.booking.cardNote}</p>
+          </div>
+        )}
         <div className="mt-6 flex justify-center gap-2">
           <button type="button" className="btn btn-ghost" onClick={onClose} disabled={busy}>{cancel}</button>
           <button type="button" className="btn btn-primary" onClick={onPay} disabled={busy}><Check size={17} aria-hidden /> {payLabel}</button>

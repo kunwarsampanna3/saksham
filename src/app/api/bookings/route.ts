@@ -8,7 +8,7 @@ import { createBooking } from "@/lib/escrow";
 const Body = z.object({
   taskId: z.string().min(3).max(64),
   plan: z.enum(["full", "two", "milestones"]),
-  method: z.enum(["esewa_sandbox", "khalti_sandbox"]),
+  method: z.enum(["esewa_sandbox", "khalti_sandbox", "card_sandbox"]),
 });
 
 /** Book the accepted offer: choose a plan and pay the first installment into escrow (sandbox). Needs a fresh MPIN. */

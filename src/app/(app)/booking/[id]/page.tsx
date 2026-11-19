@@ -46,6 +46,7 @@ export default async function BookingPage({ params }: { params: Promise<{ id: st
             total={task.agreedPrice}
             providerName={bid.providerName}
             feeRate={FEE_RATE}
+            abroad={task.forFamilyAbroad?.country ?? null}
             previews={{
               full: planPreview(task.agreedPrice, "full", task),
               two: planPreview(task.agreedPrice, "two", task),

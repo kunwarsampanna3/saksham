@@ -183,7 +183,7 @@ export interface Question {
 /* ------------------------------------------------------------------ money */
 export type PlanKind = "full" | "two" | "milestones";
 export type EscrowState = "scheduled" | "held" | "delivered" | "released" | "refunded";
-export type PayMethod = "esewa_sandbox" | "khalti_sandbox";
+export type PayMethod = "esewa_sandbox" | "khalti_sandbox" | "card_sandbox";
 
 export interface Installment {
   id: string;

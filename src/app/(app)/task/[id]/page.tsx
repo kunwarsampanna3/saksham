@@ -99,6 +99,7 @@ export default async function TaskPage({ params }: { params: Params }) {
             fairLow={task.fairLow}
             fairHigh={task.fairHigh}
             taskDays={task.days}
+            budget={task.budget}
             scheduleHref={party ? `/payments/${booking!.id}` : null}
           />
         </div>

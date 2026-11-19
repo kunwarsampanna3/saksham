@@ -13,7 +13,7 @@ type State = "scheduled" | "held" | "delivered" | "released" | "refunded";
 export interface Inst { id: string; seq: number; label: "full" | "first" | "second" | "start" | "middle" | "finish"; pct: number; amount: number; dueDate: string; state: State }
 export interface ScheduleProps {
   bookingId: string; role: "client" | "provider" | "admin"; status: "active" | "completed" | "disputed" | "refunded";
-  providerName: string; providerIsExample: boolean; method: "esewa_sandbox" | "khalti_sandbox"; demoMode: boolean;
+  providerName: string; providerIsExample: boolean; method: "esewa_sandbox" | "khalti_sandbox" | "card_sandbox"; demoMode: boolean;
   installments: Inst[];
   receipts: { id: string; kind: "hold" | "release" | "refund"; amount: number; fee: number; receiptNo: string; createdAt: string }[];
   dispute: { status: string; reason: string; wanted: "redo" | "refund"; resolution?: string } | null;
@@ -143,7 +143,7 @@ export function PaymentSchedule(p: ScheduleProps) {
 
       {dialog}
       {sandboxFor && (
-        <SandboxSheet title={t.booking.sandboxTitle(t.booking.methods[p.method])} body={t.booking.sandboxBody} amount={rs(sandboxFor.amount, lang)}
+        <SandboxSheet title={t.booking.sandboxTitle(t.booking.methods[p.method])} body={t.booking.sandboxBody} amount={rs(sandboxFor.amount, lang)} card={p.method === "card_sandbox"}
           payLabel={busy ? t.booking.paying : t.booking.sandboxPay} cancel={t.common.cancel} busy={busy !== null}
           onPay={() => void act("pay", sandboxFor)} onClose={() => setSandboxFor(null)} />
       )}

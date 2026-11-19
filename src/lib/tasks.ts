@@ -83,13 +83,18 @@ function exampleOffers(task: Task, count: number, firstDelaySec: number): Bid[] 
     .filter((p) => !task.womenOnly || p.womenLed)
     .map((p) => ({ p, km: coords ? haversineKm(coords, providerCoords(p)) : p.onlineOk ? 0 : 999 }))
     // In-person work: within ~60 km, or anywhere if the provider also works online and the task is online.
-    .filter((x) => (coords ? x.km <= 60 || x.p.onlineOk && task.online : x.p.onlineOk))
+    // Work that can be done online (websites, coding, design) can come from providers anywhere who work online.
+    .filter((x) => (coords ? x.km <= 60 || x.p.onlineOk && (task.online || category(task.category).online) : x.p.onlineOk))
     .sort((a, b) => a.km - b.km)
     .slice(0, Math.max(0, count));
   const delays = [firstDelaySec, firstDelaySec + 25, firstDelaySec + 70, firstDelaySec + 140];
   return pool.map(({ p }, i) => {
     const f = 0.12 + unit(`${task.id}:${p.id}`) * 0.85; // where in the fair range this provider bids
-    const amount = Math.max(100, round100(task.fairLow + (task.fairHigh - task.fairLow) * f));
+    // inDrive-style: when the client set a price, the first provider accepts it and the others raise it a little.
+    const raise = [0, 0.05, 0.1, 0.15][i] ?? 0.1;
+    const amount = task.budget !== null
+      ? Math.max(100, i === 0 ? task.budget : Math.round((task.budget * (1 + raise)) / 50) * 50)
+      : Math.max(100, round100(task.fairLow + (task.fairHigh - task.fairLow) * f));
     const days = Math.max(1, task.days + (unit(`${p.id}:${task.id}:d`) > 0.6 ? 1 : 0));
     const whenEn = days === 1 ? "today or tomorrow" : `within ${days} days`;
     const whenNe = days === 1 ? "आज वा भोलि" : `${days} दिनभित्र`;
@@ -126,6 +131,11 @@ export async function createTask(user: User, input: NewTask): Promise<Task> {
   await store.putTask(t);
   // Example offers only for the demo accounts; a real task waits for real offers.
   if (config.demoMode && user.isDemo) for (const b of exampleOffers(t, 4, 15)) await store.putBid(b);
+  // Like a ride request: real providers with this skill (same city, or any city for online work) hear about it.
+  if (!user.isDemo) {
+    const pros = (await store.listProviderUsers()).filter((p) => p.id !== user.id && (p.categories ?? []).includes(t.category) && (t.online || p.city === t.city));
+    for (const p of pros.slice(0, 50)) await notify(p.id, "bid", "task_new", { task: t.title, amount: t.budget ?? 0 }, `/task/${t.id}`);
+  }
   return t;
 }
 

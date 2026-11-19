@@ -36,6 +36,23 @@ export function toResult(t: Task, offers: number): TaskResult {
   };
 }
 
+/** Open IT jobs for a job seeker's feed (not their own tasks), with the details a job card needs. */
+export async function jobFeed(viewer: User, cats: readonly string[]): Promise<import("@/components/home/job-feed").Job[]> {
+  const skills = new Set(viewer.categories ?? []);
+  const open = (await openTasksFor(viewer)).filter((r) => cats.includes(r.category));
+  const out = await Promise.all(open.map(async (r) => {
+    const t = await store.getTask(r.id);
+    if (!t || t.clientId === viewer.id) return null;
+    const client = t.clientId ? await store.getUserById(t.clientId) : null;
+    return {
+      id: r.id, category: r.category, title: r.title, details: t.details, city: r.city, area: r.area, online: t.online,
+      days: t.days, budget: t.budget, range: r.range, offers: r.offers, postedMinutesAgo: r.postedMinutesAgo,
+      clientVerified: !!client?.verified, isExample: r.isExample, match: skills.has(r.category),
+    };
+  }));
+  return out.filter((x): x is NonNullable<typeof x> => x !== null);
+}
+
 export async function searchTasks(f: Filters, viewer: User): Promise<TaskResult[]> {
   const o = originFor(f.city);
   return (await openTasksFor(viewer))

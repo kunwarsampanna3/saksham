@@ -35,7 +35,7 @@ export function planPreview(total: number, plan: PlanKind, task: Pick<Task, "day
 }
 
 const receiptNo = () => `SK-${ymd(new Date()).replace(/-/g, "")}-${randomBytes(3).toString("hex").toUpperCase()}`;
-const sandboxRef = (m: PayMethod) => `${m === "esewa_sandbox" ? "ESEWA" : "KHALTI"}-SBX-${randomBytes(5).toString("hex").toUpperCase()}`;
+const sandboxRef = (m: PayMethod) => `${m === "esewa_sandbox" ? "ESEWA" : m === "card_sandbox" ? "CARD" : "KHALTI"}-SBX-${randomBytes(5).toString("hex").toUpperCase()}`;
 
 async function receipt(b: Booking, inst: Installment, kind: Receipt["kind"]): Promise<Receipt> {
   return store.putReceipt({

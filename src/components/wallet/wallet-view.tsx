@@ -16,7 +16,7 @@ export interface WalletData {
   provider: { releasedGross: number; fees: number; earnedNet: number; inEscrow: number; scheduled: number; paidOut: number; available: number };
   client: { paidIn: number; inEscrow: number; released: number; refunded: number };
   receipts: { id: string; bookingId: string; taskTitle: string; kind: "hold" | "release" | "refund"; amount: number; fee: number; receiptNo: string; createdAt: string; role: "client" | "provider" }[];
-  payouts: { id: string; amount: number; method: "esewa_sandbox" | "khalti_sandbox"; ref: string; createdAt: string }[];
+  payouts: { id: string; amount: number; method: "esewa_sandbox" | "khalti_sandbox" | "card_sandbox"; ref: string; createdAt: string }[];
   passport: Passport; examplePassport: Passport | null; credit: CreditOffer; exampleCredit: CreditOffer | null;
   applications: { id: string; amount: number; months: number; createdAt: string }[];
 }
@@ -142,7 +142,20 @@ export function WalletView({ data, isProvider, qrSvg, passportUrl }: { data: Wal
               <h2 id="cr-h" className="font-display text-2xl font-bold">{t.credit.title}</h2>
               <span className="inline-flex items-center gap-1.5 text-sm font-semibold"><Landmark size={16} aria-hidden /> {t.credit.partner} <span className="demo-tag">{t.common.demo}</span></span>
             </div>
-            <p className="mt-1 text-sm text-muted">{t.credit.lead}</p>
+            <p className="mt-1 text-[0.95rem]">{t.credit.simple.what}</p>
+            <ol className="mt-3 grid gap-2 sm:grid-cols-3">
+              {t.credit.simple.steps.map((st, i) => (
+                <li key={st} className="flex gap-2 rounded-[10px] bg-surface-2 p-3 text-sm">
+                  <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-accent text-xs font-bold text-accent-contrast">{i + 1}</span> {st}
+                </li>
+              ))}
+            </ol>
+            <div className="mt-3">
+              <p className="text-sm font-semibold">{t.credit.simple.progress(passport.completedJobs)}</p>
+              <div className="mt-1 h-2.5 max-w-sm overflow-hidden rounded-full bg-line"><div className="h-full rounded-full bg-accent" style={{ width: `${Math.min(100, Math.round((passport.completedJobs / 3) * 100))}%` }} /></div>
+            </div>
+            <p className="mt-3 rounded-[10px] border-l-4 border-accent bg-accent-soft p-3 text-sm"><strong>{t.credit.simple.exampleTitle}: </strong>{t.credit.simple.example}</p>
+            <p className="mt-2 text-xs text-muted">{t.credit.lead} {t.credit.simple.partnerNote}</p>
             <p className="mt-4 text-xs font-semibold uppercase tracking-wider text-muted">{t.credit.limit}{passport.isExample ? ` · ${t.passport.example}` : ""}</p>
             <p className="font-display text-4xl font-extrabold text-accent">{credit.eligible ? rs(credit.limit, lang) : t.credit.notYet}</p>
             {credit.jobsNeeded > 0 && <p className="mt-1 text-sm font-semibold">{t.credit.jobsNeeded(credit.jobsNeeded)}</p>}

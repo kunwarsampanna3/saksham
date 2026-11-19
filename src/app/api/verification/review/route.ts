@@ -16,7 +16,8 @@ const Body = z.object({
 /**
  * Decide on a pending verification.
  *  - Admins: any other user (the /admin queue in step 9 uses this).
- *  - DEMO_MODE only: a user may approve their OWN pending item as the "demo reviewer".
+ *  - DEMO_MODE, demo accounts only: approve their OWN pending item as the "demo reviewer".
+ *    Real accounts always wait for a real reviewer (an admin).
  *    That decision is stored as simulated and labelled so on screen.
  */
 export async function POST(req: NextRequest) {
@@ -27,7 +28,7 @@ export async function POST(req: NextRequest) {
 
   const targetId = g.data.userId ?? me.id;
   const own = targetId === me.id;
-  if (own && !config.demoMode) return fail(403, "no_self_review");
+  if (own && !(config.demoMode && me.isDemo)) return fail(403, "no_self_review");
   if (!own && !me.isAdmin) return fail(403, "forbidden");
 
   const v = await decide(targetId, g.data.kind, g.data.decision, own ? null : me.id, g.data.note);

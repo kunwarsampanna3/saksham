@@ -20,6 +20,8 @@ const csp = [
 const nextConfig: NextConfig = {
   poweredByHeader: false,
   reactStrictMode: true,
+  // Face matching for KYC runs on the server with WebAssembly; keep these packages out of the bundle.
+  serverExternalPackages: ["@vladmandic/face-api", "@tensorflow/tfjs", "@tensorflow/tfjs-core", "@tensorflow/tfjs-backend-wasm"],
   // Lets the dev server be opened through GitHub Codespaces' forwarded address.
   allowedDevOrigins: ["*.app.github.dev"],
   images: {

@@ -8,7 +8,11 @@ import { TaskRow } from "@/components/browse/cards";
 import { CATEGORY_ICONS } from "@/components/category-icons";
 import { CATEGORY_IDS, type CategoryId } from "@/lib/pricing";
 import { parseFilters } from "@/lib/search";
-import { searchTasks } from "@/lib/task-search";
+import { jobFeed, searchTasks } from "@/lib/task-search";
+import { JobFeed } from "@/components/home/job-feed";
+import { IT_CATEGORIES, isItWorker } from "@/lib/it";
+import { statusFor } from "@/lib/verification";
+import { profileItems } from "@/components/verify/profile-progress";
 import { ANYWHERE } from "@/lib/geo";
 import type { Dict, Lang } from "@/lib/i18n/dict";
 import type { User } from "@/lib/store/types";
@@ -29,6 +33,11 @@ export async function Dashboard({ t, lang, user, city }: { t: Dict; lang: Lang; 
   const skills = (user.categories ?? []).filter((c): c is CategoryId => (CATEGORY_IDS as string[]).includes(c));
   const all = await searchTasks(parseFilters({}, city, "tasks"), user);
   const tasks = (working && skills.length ? all.filter((x) => skills.includes(x.category as CategoryId)) : all).slice(0, 4);
+  const itHome = working && isItWorker(user.categories);
+  const jobs = itHome ? await jobFeed(user, IT_CATEGORIES) : [];
+  const items = itHome ? profileItems(user, await statusFor(user)) : [];
+  const pct = items.length ? Math.round((items.filter((i) => i.done).length / items.length) * 100) : 0;
+  const it = t.home.jobs;
 
   return (
     <div className="mx-auto max-w-[72rem] space-y-4 px-3 py-5 sm:px-6 sm:py-8">
@@ -59,7 +68,39 @@ export async function Dashboard({ t, lang, user, city }: { t: Dict; lang: Lang; 
         </div>
       </section>
 
-      {working ? (
+      {itHome ? (
+        <div className="grid gap-4 lg:grid-cols-[1fr_19rem]">
+          <JobFeed jobs={jobs} />
+          <aside className="space-y-4">
+            <section className="rounded-[14px] border border-line bg-surface p-4">
+              <h2 className="font-display font-bold">{it.profile}: <span className="text-accent">{t.verify.profilePct(pct)}</span></h2>
+              <div className="mt-2 h-2.5 overflow-hidden rounded-full bg-line"><div className="h-full rounded-full bg-accent" style={{ width: `${pct}%` }} /></div>
+              {pct < 100 && <Link href="/verification" className="mt-3 inline-flex items-center gap-1 text-sm font-semibold text-accent hover:underline">{it.completeIt} <ArrowRight size={14} aria-hidden /></Link>}
+            </section>
+            <section className="rounded-[14px] border border-line bg-surface p-4">
+              <h2 className="font-display font-bold">{it.skills}</h2>
+              <ul className="mt-2 flex flex-wrap gap-1.5">
+                {skills.map((id) => <li key={id}><Link href={`/explore?category=${id}`} className="inline-block rounded-full bg-accent-soft px-3 py-1 text-xs font-semibold text-accent hover:underline">{q.short[id]}</Link></li>)}
+              </ul>
+            </section>
+            <section className="rounded-[14px] border border-line bg-surface p-2">
+              <h2 className="px-2 pt-2 font-display font-bold">{it.shortcuts}</h2>
+              <ul className="mt-1">
+                {[
+                  { href: "/my-tasks", label: q.myOffers, Icon: ClipboardList },
+                  { href: "/messages", label: q.messages, Icon: MessageSquare },
+                  { href: "/wallet", label: q.earnings, Icon: Wallet },
+                  { href: `/passport/${user.id}`, label: q.passport, Icon: FileBadge2 },
+                  { href: "/verification", label: q.verify, Icon: ShieldCheck },
+                ].map(({ href, label, Icon }) => (
+                  <li key={href}><Link href={href} className="flex items-center gap-3 rounded-md px-2 py-2.5 text-[0.95rem] font-semibold hover:bg-accent-soft"><Icon size={18} aria-hidden className="text-accent" /> {label}</Link></li>
+                ))}
+              </ul>
+            </section>
+            <Link href="/explore" className="block text-sm font-semibold text-accent hover:underline">{it.allWork} →</Link>
+          </aside>
+        </div>
+      ) : working ? (
         <>
           <Group id="q-work" title={q.yourWork} wide tiles={[
             { href: "/explore", label: q.findTasks, Icon: Search, accent: true },
@@ -82,7 +123,7 @@ export async function Dashboard({ t, lang, user, city }: { t: Dict; lang: Lang; 
       )}
 
       {/* a few tasks: nearby (hiring) or matching your skills (working) */}
-      <section aria-labelledby="near-h" className="rounded-[10px] border border-line bg-surface p-4 sm:p-5">
+      {!itHome && <section aria-labelledby="near-h" className="rounded-[10px] border border-line bg-surface p-4 sm:p-5">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <h2 id="near-h" className="font-display text-lg font-bold sm:text-xl">{working && skills.length ? q.forYou : near}</h2>
           <Link href="/explore" className="inline-flex items-center gap-1 font-semibold text-accent hover:underline">{q.seeMap} <ArrowRight size={16} aria-hidden /></Link>
@@ -94,7 +135,7 @@ export async function Dashboard({ t, lang, user, city }: { t: Dict; lang: Lang; 
         ) : (
           <p className="mt-3 text-muted">{working ? q.noSkillTasks : t.explore.empty}</p>
         )}
-      </section>
+      </section>}
     </div>
   );
 }

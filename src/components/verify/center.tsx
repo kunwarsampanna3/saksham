@@ -131,7 +131,10 @@ export function VerificationCenter({
                   )}
 
                   {/* demo reviewer */}
-                  {demoMode && s.status === "pending" && (
+                  {s.status === "pending" && !user?.isDemo && k !== "phone" && (
+                    <p className="mt-3 flex items-start gap-2 pl-2 text-sm text-muted"><Clock size={15} aria-hidden className="mt-0.5 shrink-0 text-marigold" /> {v.pendingReal}</p>
+                  )}
+                  {demoMode && user?.isDemo && s.status === "pending" && (
                     <div className="mt-4 rounded-[4px] border border-dashed border-[#c58a00] bg-[#fff8e6] p-3 text-[#4d3500] dark:bg-[#2c2208] dark:text-[#f6d27a]">
                       <p className="flex items-center gap-2 text-sm"><span className="demo-tag">{t.common.demo}</span> {v.demoNote}</p>
                       <div className="mt-2 flex flex-wrap gap-2">
@@ -267,6 +270,7 @@ function IdForm({ onDone, errText, docs }: FormProps & { docs: readonly DocType[
 function SelfieForm({ onDone, errText, demoMode }: FormProps & { demoMode: boolean }) {
   const { t } = useI18n();
   const v = t.verify;
+  const isDemo = !!useUser().user?.isDemo;
   const [selfie, setSelfie] = useState<Blob | null>(null);
   const [camera, setCamera] = useState(false);
   const [denied, setDenied] = useState(false);
@@ -293,7 +297,9 @@ function SelfieForm({ onDone, errText, demoMode }: FormProps & { demoMode: boole
   return (
     <form className="space-y-5" onSubmit={(e) => { e.preventDefault(); void send(); }} noValidate>
       <p className="text-sm text-muted">{v.selfieTips}</p>
-      {demoMode && <p className="flex items-center gap-2 text-sm"><span className="demo-tag">{v.simulated}</span> {v.selfieSim}</p>}
+      {demoMode && isDemo
+        ? <p className="flex items-center gap-2 text-sm"><span className="demo-tag">{v.simulated}</span> {v.selfieSim}</p>
+        : <p className="flex items-start gap-2 text-sm"><ScanFace size={16} aria-hidden className="mt-0.5 shrink-0 text-accent" /> {v.selfieReal}</p>}
       {camera ? (
         <SelfieCamera labels={{ capture: v.capture, close: v.closeCamera }} onCapture={setSelfie} onClose={() => setCamera(false)} onDenied={onDenied} />
       ) : (

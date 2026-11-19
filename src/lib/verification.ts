@@ -155,7 +155,7 @@ export async function ensureDemoVerifications(user: User) {
   const plan: Partial<Record<VerificationKind, VerificationStatus>> =
     user.phone === "9800000002" ? { id: "verified", selfie: "verified" }
     : user.phone === "9800000003" ? { id: "verified", selfie: "verified", address: "verified", womenGroup: "verified" }
-    : user.phone === "9800000001" ? { id: "verified", selfie: "verified" }
+    : user.phone === "9800000001" || user.phone === "9800000004" ? { id: "verified", selfie: "verified" }
     : {};
   for (const [kind, status] of Object.entries(plan) as [VerificationKind, VerificationStatus][]) {
     await store.putVerification({

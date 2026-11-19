@@ -21,8 +21,8 @@ export interface QA { id: string; askerName: string; body: string; answer: strin
 export interface Live { status: string; agreedPrice: number | null; acceptedBidId: string | null; offers: Offer[]; questions: QA[]; owner: boolean }
 
 export function TaskLive({
-  taskId, initial, isProvider, idVerified, fairLow, fairHigh, taskDays, scheduleHref,
-}: { taskId: string; initial: Live; isProvider: boolean; idVerified: boolean; fairLow: number; fairHigh: number; taskDays: number; scheduleHref: string | null }) {
+  taskId, initial, isProvider, idVerified, fairLow, fairHigh, taskDays, budget = null, scheduleHref,
+}: { taskId: string; initial: Live; isProvider: boolean; idVerified: boolean; fairLow: number; fairHigh: number; taskDays: number; budget?: number | null; scheduleHref: string | null }) {
   const { t, lang } = useI18n();
   const k = t.task;
   const router = useRouter();
@@ -56,7 +56,9 @@ export function TaskLive({
 
   const open = live.status === "open";
   const myOffer = live.offers.find((o) => o.mine && o.status !== "withdrawn");
-  const visibleOffers = live.offers.filter((o) => o.status !== "withdrawn");
+  const [sort, setSort] = useState<"best" | "low" | "top">("best");
+  const visibleOffers = live.offers.filter((o) => o.status !== "withdrawn").slice().sort((a, b) =>
+    sort === "low" ? a.amount - b.amount : sort === "top" ? b.rating - a.rating || b.ratingCount - a.ratingCount : b.score - a.score);
 
   return (
     <div className="space-y-10">
@@ -74,7 +76,7 @@ export function TaskLive({
 
       {/* Provider: make or update an offer */}
       {!live.owner && open && (
-        <OfferForm taskId={taskId} isProvider={isProvider} idVerified={idVerified} existing={myOffer} fairLow={fairLow} fairHigh={fairHigh} taskDays={taskDays}
+        <OfferForm taskId={taskId} isProvider={isProvider} idVerified={idVerified} existing={myOffer} fairLow={fairLow} fairHigh={fairHigh} taskDays={taskDays} budget={budget}
           onDone={refresh} onWithdraw={myOffer ? () => act(myOffer.id, { action: "withdraw" }) : undefined} />
       )}
 
@@ -91,6 +93,14 @@ export function TaskLive({
           {open && <span className="inline-flex items-center gap-1.5 text-sm text-muted"><Loader2 size={14} aria-hidden className="animate-spin" /> {k.waiting}</span>}
         </div>
         <p className="mt-1 text-sm text-muted">{k.offersLead}</p>
+        {visibleOffers.length > 1 && (
+          <div role="radiogroup" aria-label={k.sortBy} className="mt-3 inline-flex rounded-full border border-line bg-surface p-1">
+            {(["best", "low", "top"] as const).map((s) => (
+              <button key={s} type="button" role="radio" aria-checked={sort === s} onClick={() => setSort(s)}
+                className={`min-h-9 rounded-full px-4 text-sm font-semibold transition-colors ${sort === s ? "bg-accent text-accent-contrast" : "text-muted hover:text-text"}`}>{k.sorts[s]}</button>
+            ))}
+          </div>
+        )}
         {err && <p role="alert" className="field-error mt-3">{err}</p>}
         <div aria-live="polite">
           {visibleOffers.length === 0 ? (
@@ -234,14 +244,14 @@ function OfferTicket({ o, owner, open, onAct, taskId }: { o: Offer; owner: boole
 }
 
 /* ---------------------------------------------------------------- provider offer form */
-function OfferForm({ taskId, isProvider, idVerified, existing, fairLow, fairHigh, taskDays, onDone, onWithdraw }: {
-  taskId: string; isProvider: boolean; idVerified: boolean; existing?: Offer; fairLow: number; fairHigh: number; taskDays: number;
+function OfferForm({ taskId, isProvider, idVerified, existing, fairLow, fairHigh, taskDays, budget, onDone, onWithdraw }: {
+  taskId: string; isProvider: boolean; idVerified: boolean; existing?: Offer; fairLow: number; fairHigh: number; taskDays: number; budget: number | null;
   onDone: () => Promise<void>; onWithdraw?: () => Promise<boolean>;
 }) {
   const { t, lang } = useI18n();
   const k = t.task;
   const mid = Math.round((fairLow + fairHigh) / 2 / 100) * 100;
-  const [amount, setAmount] = useState(existing?.amount ?? mid);
+  const [amount, setAmount] = useState(existing?.amount ?? budget ?? mid);
   const [days, setDays] = useState(existing?.days ?? taskDays);
   const [message, setMessage] = useState(existing?.message ?? "");
   const [busy, setBusy] = useState<"send" | "ai" | null>(null);
@@ -266,9 +276,9 @@ function OfferForm({ taskId, isProvider, idVerified, existing, fairLow, fairHigh
     if (r.ok && r.text) setMessage(r.text); else setErr(t.errors.generic);
   };
 
-  const send = async () => {
+  const send = async (quick?: { amount: number; days: number; message: string }) => {
     setBusy("send"); setErr(null);
-    const r = await postJson(`/api/tasks/${taskId}/bids`, { amount, days, message });
+    const r = await postJson(`/api/tasks/${taskId}/bids`, quick ?? { amount, days, message });
     setBusy(null);
     if (!r.ok) { setErr(r.error && r.error in k.errors ? k.errors[r.error as keyof typeof k.errors] : t.errors.generic); return; }
     setSent(true);
@@ -279,6 +289,30 @@ function OfferForm({ taskId, isProvider, idVerified, existing, fairLow, fairHigh
     <section aria-labelledby="offer-h" className="notch-frame">
       <form className="notch-card terrace-edge space-y-4 p-5" onSubmit={(e) => { e.preventDefault(); void send(); }}>
         <h2 id="offer-h" className="font-display text-xl font-bold">{existing ? k.yourOffer : k.makeOffer}</h2>
+        {/* inDrive-style: accept the client's price in one tap, or raise it */}
+        {budget !== null && !existing && (
+          <div className="rounded-[12px] border-2 border-accent bg-accent-soft p-4">
+            <p className="text-xs font-bold uppercase tracking-wider text-accent">{k.clientPrice}</p>
+            <p className="font-display text-3xl font-extrabold">{rs(budget, lang)}</p>
+            <button type="button" className="btn btn-primary mt-3 w-full sm:w-auto" disabled={busy !== null}
+              onClick={() => void send({ amount: budget, days: taskDays, message: k.acceptPriceMsg(taskDays) })}>
+              <CheckCircle2 size={17} aria-hidden /> {k.acceptPrice(rs(budget, lang))}
+            </button>
+            <p className="mt-2 text-xs text-muted">{k.acceptPriceNote}</p>
+            <p className="mt-4 text-sm font-semibold">{k.orOwn}</p>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {[5, 10, 20].map((pct) => {
+                const v = Math.round((budget * (1 + pct / 100)) / 50) * 50;
+                return (
+                  <button key={pct} type="button" onClick={() => setAmount(v)}
+                    className={`min-h-10 rounded-full border-[1.5px] px-4 text-sm font-bold ${amount === v ? "border-accent bg-surface text-accent" : "border-line-strong bg-surface"}`}>
+                    +{pct}% · {rs(v, lang)}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
         <div className="grid gap-3 sm:grid-cols-2">
           <label className="block"><span className="field-label">{k.amount}</span>
             <input type="number" min={100} step={50} inputMode="numeric" value={amount} onChange={(e) => setAmount(Number(e.target.value) || 0)} className="input font-display text-lg font-bold" />
