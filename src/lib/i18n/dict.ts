@@ -361,6 +361,10 @@ export const en = {
     stampTitle: "The Verified stamp",
     stampLead: "Phone + ID + selfie earns the Verified stamp on your profile, offers and messages.",
     stampOn: "You have the Verified stamp", stampOff: (n: number) => `${n} of 3 steps done`,
+    profileTitle: "Your profile", profilePct: (n: number) => `${n}% complete`,
+    profileItems: { account: "Account", contact: "Phone or email", region: "Region", skills: "Skills", id: "ID card", selfie: "Selfie", address: "Address" },
+    inReview: "in review",
+    skip: "Skip for now", skipNote: "You can verify later from your account menu. You need ID and selfie before you send offers.",
     status: { not_started: "Not started", pending: "Pending review", verified: "Verified", rejected: "Needs another try" },
     simulated: "Simulated", unlocks: "Unlocks",
     steps: {
@@ -1021,6 +1025,10 @@ export const ne: Dict = {
     stampTitle: "प्रमाणित छाप",
     stampLead: "फोन + परिचयपत्र + सेल्फी पूरा भएपछि तपाईंको प्रोफाइल, प्रस्ताव र सन्देशमा प्रमाणित छाप लाग्छ।",
     stampOn: "तपाईंसँग प्रमाणित छाप छ", stampOff: (n: number) => `३ मध्ये ${toDeva(n)} चरण पूरा`,
+    profileTitle: "तपाईंको प्रोफाइल", profilePct: (n: number) => `${toDeva(n)}% पूरा`,
+    profileItems: { account: "खाता", contact: "फोन वा इमेल", region: "क्षेत्र", skills: "सीप", id: "परिचयपत्र", selfie: "सेल्फी", address: "ठेगाना" },
+    inReview: "जाँच हुँदै",
+    skip: "अहिलेलाई छोड्नुहोस्", skipNote: "पछि खाता मेनुबाट प्रमाणित गर्न सक्नुहुन्छ। प्रस्ताव पठाउनुअघि परिचयपत्र र सेल्फी चाहिन्छ।",
     status: { not_started: "सुरु भएको छैन", pending: "जाँच हुँदै", verified: "प्रमाणित", rejected: "फेरि पठाउनुहोस्" },
     simulated: "नक्कली (डेमो)", unlocks: "खुल्ने सुविधा",
     steps: {

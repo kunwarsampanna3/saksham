@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Contours } from "@/components/contours";
 import { VerificationCenter } from "@/components/verify/center";
+import { ProfileProgress } from "@/components/verify/profile-progress";
 import { requireUser } from "@/lib/auth/current-user";
 import { getDict } from "@/lib/i18n/server";
 import { statusFor } from "@/lib/verification";
@@ -10,7 +11,7 @@ export const metadata: Metadata = { title: "Verification" };
 export const dynamic = "force-dynamic";
 
 export default async function VerificationPage() {
-  const [user, { t }] = await Promise.all([requireUser("/verification"), getDict()]);
+  const [user, { t, lang }] = await Promise.all([requireUser("/verification"), getDict()]);
   const status = await statusFor(user);
   const v = t.verify;
   return (
@@ -24,6 +25,7 @@ export default async function VerificationPage() {
         </div>
       </div>
       <div className="mx-auto max-w-[88rem] px-4 py-10 sm:px-6">
+        <ProfileProgress user={user} status={status} t={t} lang={lang} />
         <VerificationCenter
           initial={status}
           demoMode={config.demoMode}
