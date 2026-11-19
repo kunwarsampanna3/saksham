@@ -22,9 +22,11 @@ const BRAND: Record<Method, string> = {
  *  3. Success: "Payment held in escrow" with the transaction ID and a receipt.
  * Sandbox only: no real money moves.
  */
-export function PaySheet({ method, amount, amountText, installment, taskTitle, providerName, approx, pay, onDone, onClose }: {
+export function PaySheet({ method, amount, amountText, installment, taskTitle, providerName, approx, pay, onDone, onClose, mode = "pay", fee = 0, money }: {
   method: Method; amount: number; amountText: string; installment: { seq: number; of: number };
   taskTitle: string; providerName: string; approx?: string;
+  /** "release": the client approves and releases a held installment to the provider */
+  mode?: "pay" | "release"; fee?: number; money?: (n: number) => string;
   pay: () => Promise<PayResult>; onDone: (r: PayResult) => void; onClose: () => void;
 }) {
   const { t, lang } = useI18n();
@@ -73,9 +75,11 @@ export function PaySheet({ method, amount, amountText, installment, taskTitle, p
   });
 
   const close = () => { if (busy) return; if (step === "done" && result) onDone(result); else onClose(); };
-  const rows: [string, string][] = [
-    [s.for, taskTitle], [s.heldFor, providerName], [s.amount, amountText], [s.method, b.methods[method]], [s.serviceCharge, s.serviceFree],
-  ];
+  const release = mode === "release";
+  const fmt = money ?? ((n: number) => String(n));
+  const rows: [string, string][] = release
+    ? [[s.for, taskTitle], [s.releaseTo, providerName], [s.amount, amountText], [s.fee, fmt(fee)], [s.receives, fmt(amount - fee)]]
+    : [[s.for, taskTitle], [s.heldFor, providerName], [s.amount, amountText], [s.method, b.methods[method]], [s.serviceCharge, s.serviceFree]];
 
   return (
     <dialog ref={ref} onCancel={(e) => { e.preventDefault(); close(); }} aria-labelledby="pay-h"
@@ -83,7 +87,7 @@ export function PaySheet({ method, amount, amountText, installment, taskTitle, p
       {/* brand header */}
       <div className={`${BRAND[method]} px-5 pb-5 pt-4 text-white`}>
         <div className="flex items-center justify-between gap-2">
-          <span className="inline-flex items-center gap-1.5 text-sm font-semibold"><LockKeyhole size={15} aria-hidden /> {b.methods[method]} · {s.secure}</span>
+          <span className="inline-flex items-center gap-1.5 text-sm font-semibold"><LockKeyhole size={15} aria-hidden /> {release ? s.releaseHeader : `${b.methods[method]} · ${s.secure}`}</span>
           <button type="button" onClick={close} aria-label={t.common.cancel} className="grid h-8 w-8 place-items-center rounded-full bg-white/15 hover:bg-white/25"><X size={16} aria-hidden /></button>
         </div>
         <p className="mt-3 text-sm text-white/85">{s.installmentOf(installment.seq, installment.of)}</p>
@@ -99,17 +103,17 @@ export function PaySheet({ method, amount, amountText, installment, taskTitle, p
               <div key={k} className="flex justify-between gap-4 py-2.5"><dt className="text-muted">{k}</dt><dd className="text-right font-semibold">{v}</dd></div>
             ))}
           </dl>
-          {method === "card_sandbox" && (
+          {!release && method === "card_sandbox" && (
             <div aria-label={b.testCard} className="mt-3 rounded-[12px] bg-gradient-to-br from-forest to-accent p-4 font-mono text-white">
               <p className="text-[0.7rem] uppercase tracking-widest text-white/70">{b.testCard}</p>
               <p className="mt-2 text-lg tracking-[0.18em]">4242 4242 4242 4242</p>
               <div className="mt-2 flex justify-between text-xs"><span>12 / 30</span><span>CVC •••</span><span>VISA</span></div>
             </div>
           )}
-          <p className="mt-3 flex gap-2 rounded-[10px] bg-accent-soft p-3 text-xs"><LockKeyhole size={14} aria-hidden className="mt-0.5 shrink-0 text-accent" /> {method === "card_sandbox" ? b.cardNote : s.escrowNote}</p>
+          <p className="mt-3 flex gap-2 rounded-[10px] bg-accent-soft p-3 text-xs"><LockKeyhole size={14} aria-hidden className="mt-0.5 shrink-0 text-accent" /> {release ? s.releaseNote : method === "card_sandbox" ? b.cardNote : s.escrowNote}</p>
           {err && <p role="alert" className="field-error mt-3">{err}</p>}
           <button type="button" onClick={() => { setErr(null); setPin(""); setStep("mpin"); }} className="btn btn-primary mt-4 w-full !min-h-12">
-            {s.confirmMpin} <ArrowRight size={17} aria-hidden />
+            {release ? s.approveMpin : s.confirmMpin} <ArrowRight size={17} aria-hidden />
           </button>
         </div>
       )}
@@ -140,14 +144,14 @@ export function PaySheet({ method, amount, amountText, installment, taskTitle, p
       {step === "done" && result && (
         <div className="p-5 text-center">
           <span className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-accent text-white"><Check size={34} aria-hidden /></span>
-          <p className="font-display mt-3 text-xl font-bold">{s.heldTitle}</p>
+          <p className="font-display mt-3 text-xl font-bold">{release ? s.releasedTitle : s.heldTitle}</p>
           <p className="text-sm text-muted">{at ? npDate(at, lang) : ""} · {new Date(at || Date.now()).toLocaleTimeString(lang === "ne" ? "ne-NP" : "en-GB", { hour: "2-digit", minute: "2-digit" })}</p>
           <dl className="mt-4 divide-y divide-line rounded-[12px] border border-line text-left text-sm">
             {result.ref && <div className="flex justify-between gap-3 px-3 py-2.5"><dt className="text-muted">{s.txn}</dt><dd className="font-mono font-semibold">{result.ref}</dd></div>}
             <div className="flex justify-between gap-3 px-3 py-2.5"><dt className="text-muted">{s.amount}</dt><dd className="font-semibold">{amountText}</dd></div>
             <div className="flex justify-between gap-3 px-3 py-2.5"><dt className="text-muted">{s.method}</dt><dd className="font-semibold">{b.methods[method]}</dd></div>
           </dl>
-          <p className="mt-3 inline-flex items-center gap-1.5 text-xs text-muted"><CheckCircle2 size={14} aria-hidden className="text-accent" /> {s.heldNote(providerName)}</p>
+          <p className="mt-3 inline-flex items-center gap-1.5 text-xs text-muted"><CheckCircle2 size={14} aria-hidden className="text-accent" /> {release ? s.releasedNote(providerName, fmt(amount - fee)) : s.heldNote(providerName)}</p>
           <div className="mt-4 grid grid-cols-2 gap-2">
             {result.receiptHref
               ? <Link href={result.receiptHref} className="btn btn-ghost !min-h-12"><FileText size={16} aria-hidden /> {s.receipt}</Link>

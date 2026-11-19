@@ -13,7 +13,7 @@ type State = "scheduled" | "held" | "delivered" | "released" | "refunded";
 export interface Inst { id: string; seq: number; label: "full" | "first" | "second" | "start" | "middle" | "finish"; pct: number; amount: number; dueDate: string; state: State }
 export interface ScheduleProps {
   bookingId: string; role: "client" | "provider" | "admin"; status: "active" | "completed" | "disputed" | "refunded";
-  providerName: string; taskTitle?: string; providerIsExample: boolean; method: "esewa_sandbox" | "khalti_sandbox" | "card_sandbox"; demoMode: boolean;
+  providerName: string; taskTitle?: string; feeRate?: number; providerIsExample: boolean; method: "esewa_sandbox" | "khalti_sandbox" | "card_sandbox"; demoMode: boolean;
   installments: Inst[];
   receipts: { id: string; kind: "hold" | "release" | "refund"; amount: number; fee: number; receiptNo: string; createdAt: string }[];
   dispute: { status: string; reason: string; wanted: "redo" | "refund"; resolution?: string } | null;
@@ -29,6 +29,7 @@ export function PaymentSchedule(p: ScheduleProps) {
   const [busy, setBusy] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [sandboxFor, setSandboxFor] = useState<Inst | null>(null);
+  const [releaseFor, setReleaseFor] = useState<Inst | null>(null);
 
   const fmt = (d: string) => npDate(d, lang);
   const errText = (e?: string) => (e && e in k.errors ? k.errors[e as keyof typeof k.errors] : e === "offline" ? t.errors.offline : t.errors.generic);
@@ -103,7 +104,7 @@ export function PaymentSchedule(p: ScheduleProps) {
                       )}
                       {canRelease && (
                         <button type="button" className="btn btn-primary !min-h-10" disabled={busy !== null}
-                          onClick={() => { if (window.confirm(k.releaseConfirm(rs(i.amount, lang), p.providerName))) void act("release", i); }}>
+                          onClick={() => setReleaseFor(i)}>
                           <Unlock size={16} aria-hidden /> {k.release}
                         </button>
                       )}
@@ -151,6 +152,16 @@ export function PaymentSchedule(p: ScheduleProps) {
             return { ok: true, ref: r.ref, receiptHref: r.receiptId ? `/payments/${p.bookingId}/receipt/${r.receiptId}` : undefined };
           }}
           onClose={() => setSandboxFor(null)} onDone={() => { setSandboxFor(null); router.refresh(); }} />
+      )}
+      {releaseFor && (
+        <PaySheet mode="release" method={p.method} amount={releaseFor.amount} amountText={rs(releaseFor.amount, lang)} installment={{ seq: releaseFor.seq, of: p.installments.length }}
+          taskTitle={p.taskTitle ?? ""} providerName={p.providerName} fee={Math.round(releaseFor.amount * (p.feeRate ?? 0.07))} money={(n) => rs(n, lang)}
+          pay={async () => {
+            const r = await postJson<{ ref?: string; receiptId?: string }>(`/api/bookings/${p.bookingId}`, { action: "release", installmentId: releaseFor.id });
+            if (!r.ok) return { ok: false, error: errText(r.error) };
+            return { ok: true, ref: r.ref, receiptHref: r.receiptId ? `/payments/${p.bookingId}/receipt/${r.receiptId}` : undefined };
+          }}
+          onClose={() => setReleaseFor(null)} onDone={() => { setReleaseFor(null); router.refresh(); }} />
       )}
     </div>
   );
