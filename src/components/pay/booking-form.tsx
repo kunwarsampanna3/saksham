@@ -6,14 +6,15 @@ import { useRouter } from "next/navigation";
 import { Check, LockKeyhole, Wallet, FlaskConical, CreditCard } from "lucide-react";
 import { postJson, useI18n } from "@/components/providers";
 import { useReauth } from "@/components/reauth-dialog";
+import { PaySheet, type PayResult } from "./pay-sheet";
 import { rs, npDate, num } from "@/lib/format";
 
 type Plan = "full" | "two" | "milestones";
 type Method = "esewa_sandbox" | "khalti_sandbox" | "card_sandbox";
 type Row = { seq: number; label: "full" | "first" | "second" | "start" | "middle" | "finish"; pct: number; amount: number; dueDate: string };
 
-export function BookingForm({ taskId, total, providerName, feeRate, previews, abroad = null }: {
-  taskId: string; total: number; providerName: string; feeRate: number; previews: Record<Plan, Row[]>;
+export function BookingForm({ taskId, taskTitle = "", total, providerName, feeRate, previews, abroad = null }: {
+  taskId: string; taskTitle?: string; total: number; providerName: string; feeRate: number; previews: Record<Plan, Row[]>;
   /** country of the person paying from abroad, if this is a family-abroad task */
   abroad?: string | null;
 }) {
@@ -31,22 +32,18 @@ export function BookingForm({ taskId, total, providerName, feeRate, previews, ab
   const fmtDate = (d: string) => npDate(d, lang, { year: false });
   const first = previews[plan][0];
 
-  const start = async () => {
-    setErr(null);
-    if (!(await ensureFresh())) return; // MPIN again after 5 minutes idle
-    setSandbox(true);
-  };
+  // The sheet asks for the MPIN itself (review → MPIN → done), so no separate MPIN dialog first.
+  const start = async () => { setErr(null); setSandbox(true); };
+  const [bookingId, setBookingId] = useState<string | null>(null);
 
-  const pay = async () => {
+  const pay = async (): Promise<PayResult> => {
     setBusy(true); setErr(null);
-    let r = await postJson<{ id: string }>("/api/bookings", { taskId, plan, method });
-    if (!r.ok && r.error === "reauth_required" && (await ensureFresh())) r = await postJson<{ id: string }>("/api/bookings", { taskId, plan, method });
+    const r = await postJson<{ id: string; ref?: string; receiptId?: string }>("/api/bookings", { taskId, plan, method });
     setBusy(false);
-    if (r.ok && r.id) { router.push(`/payments/${r.id}`); return; }
-    setSandbox(false);
+    if (r.ok && r.id) { setBookingId(r.id); return { ok: true, ref: r.ref, receiptHref: r.receiptId ? `/payments/${r.id}/receipt/${r.receiptId}` : undefined }; }
     const errs = t.payments.errors;
-    setErr(r.error && r.error in errs ? errs[r.error as keyof typeof errs] : t.errors.generic);
     if (r.error === "already_booked") router.refresh();
+    return { ok: false, error: r.error && r.error in errs ? errs[r.error as keyof typeof errs] : t.errors.generic };
   };
 
   return (
@@ -118,9 +115,10 @@ export function BookingForm({ taskId, total, providerName, feeRate, previews, ab
 
       {dialog}
       {sandbox && (
-        <SandboxSheet title={b.sandboxTitle(b.methods[method])} body={b.sandboxBody} amount={rs(first.amount, lang)} payLabel={busy ? b.paying : b.sandboxPay}
-          cancel={t.common.cancel} busy={busy} onPay={() => void pay()} onClose={() => setSandbox(false)}
-          card={method === "card_sandbox"} approx={fx ? b.approx(fx.code, num(Math.max(1, Math.round(first.amount / fx.nprPer)), lang)) : undefined} />
+        <PaySheet method={method} amount={first.amount} amountText={rs(first.amount, lang)} installment={{ seq: 1, of: previews[plan].length }}
+          taskTitle={taskTitle} providerName={providerName} pay={pay}
+          approx={fx ? b.approx(fx.code, num(Math.max(1, Math.round(first.amount / fx.nprPer)), lang)) : undefined}
+          onClose={() => setSandbox(false)} onDone={() => { if (bookingId) router.push(`/payments/${bookingId}`); }} />
       )}
     </div>
   );

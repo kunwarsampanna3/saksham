@@ -6,14 +6,14 @@ import { useRouter } from "next/navigation";
 import { Lock, PackageCheck, Unlock, Undo2, CalendarClock, FileText, ShieldCheck, AlertTriangle, CheckCircle2, FlaskConical, Ban } from "lucide-react";
 import { postJson, useI18n } from "@/components/providers";
 import { useReauth } from "@/components/reauth-dialog";
-import { SandboxSheet } from "./booking-form";
+import { PaySheet } from "./pay-sheet";
 import { rs, npDate } from "@/lib/format";
 
 type State = "scheduled" | "held" | "delivered" | "released" | "refunded";
 export interface Inst { id: string; seq: number; label: "full" | "first" | "second" | "start" | "middle" | "finish"; pct: number; amount: number; dueDate: string; state: State }
 export interface ScheduleProps {
   bookingId: string; role: "client" | "provider" | "admin"; status: "active" | "completed" | "disputed" | "refunded";
-  providerName: string; providerIsExample: boolean; method: "esewa_sandbox" | "khalti_sandbox" | "card_sandbox"; demoMode: boolean;
+  providerName: string; taskTitle?: string; providerIsExample: boolean; method: "esewa_sandbox" | "khalti_sandbox" | "card_sandbox"; demoMode: boolean;
   installments: Inst[];
   receipts: { id: string; kind: "hold" | "release" | "refund"; amount: number; fee: number; receiptNo: string; createdAt: string }[];
   dispute: { status: string; reason: string; wanted: "redo" | "refund"; resolution?: string } | null;
@@ -95,7 +95,7 @@ export function PaymentSchedule(p: ScheduleProps) {
                   </div>
                   {(canPay || canRelease || canDeliver) && (
                     <div className="mt-4 flex flex-wrap gap-2 pl-2">
-                      {canPay && <button type="button" className="btn btn-primary !min-h-10" disabled={busy !== null} onClick={async () => { if (await ensureFresh()) setSandboxFor(i); }}><Lock size={16} aria-hidden /> {k.pay}</button>}
+                      {canPay && <button type="button" className="btn btn-primary !min-h-10" disabled={busy !== null} onClick={() => setSandboxFor(i)}><Lock size={16} aria-hidden /> {k.pay}</button>}
                       {canDeliver && (
                         <button type="button" className="btn btn-ghost !min-h-10" disabled={busy !== null} onClick={() => void act("deliver", i)}>
                           <PackageCheck size={16} aria-hidden /> {p.role === "client" ? k.deliverDemo : k.deliver}
@@ -143,9 +143,14 @@ export function PaymentSchedule(p: ScheduleProps) {
 
       {dialog}
       {sandboxFor && (
-        <SandboxSheet title={t.booking.sandboxTitle(t.booking.methods[p.method])} body={t.booking.sandboxBody} amount={rs(sandboxFor.amount, lang)} card={p.method === "card_sandbox"}
-          payLabel={busy ? t.booking.paying : t.booking.sandboxPay} cancel={t.common.cancel} busy={busy !== null}
-          onPay={() => void act("pay", sandboxFor)} onClose={() => setSandboxFor(null)} />
+        <PaySheet method={p.method} amount={sandboxFor.amount} amountText={rs(sandboxFor.amount, lang)} installment={{ seq: sandboxFor.seq, of: p.installments.length }}
+          taskTitle={p.taskTitle ?? ""} providerName={p.providerName}
+          pay={async () => {
+            const r = await postJson<{ ref?: string; receiptId?: string }>(`/api/bookings/${p.bookingId}`, { action: "pay", installmentId: sandboxFor.id });
+            if (!r.ok) return { ok: false, error: errText(r.error) };
+            return { ok: true, ref: r.ref, receiptHref: r.receiptId ? `/payments/${p.bookingId}/receipt/${r.receiptId}` : undefined };
+          }}
+          onClose={() => setSandboxFor(null)} onDone={() => { setSandboxFor(null); router.refresh(); }} />
       )}
     </div>
   );

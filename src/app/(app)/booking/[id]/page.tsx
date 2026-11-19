@@ -43,6 +43,7 @@ export default async function BookingPage({ params }: { params: Promise<{ id: st
         ) : (
           <BookingForm
             taskId={task.id}
+            taskTitle={task.title}
             total={task.agreedPrice}
             providerName={bid.providerName}
             feeRate={FEE_RATE}

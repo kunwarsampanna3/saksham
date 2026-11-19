@@ -50,6 +50,7 @@ export default async function PaymentsPage({ params }: { params: Promise<{ id: s
           role={role}
           status={booking.status}
           providerName={booking.providerName}
+          taskTitle={task?.title}
           providerIsExample={booking.providerIsExample}
           method={booking.method}
           demoMode={config.demoMode}
