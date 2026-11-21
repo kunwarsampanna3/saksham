@@ -16,15 +16,28 @@ export interface Pin {
 }
 
 /** Escape text for Leaflet popup HTML (popups are HTML strings). */
-const esc = (s: string) => s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
+const esc = (s: string) =>
+  s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
 
 /**
  * Leaflet map with OpenStreetMap tiles. Client-only (loaded via next/dynamic).
  * Pins mark area centroids only. The list next to the map is the accessible primary view.
  */
 export default function LeafletMap({
-  pins, center, zoom, radiusKm, label, fit = true,
-}: { pins: Pin[]; center?: [number, number]; zoom?: number; radiusKm?: number; label: string; fit?: boolean }) {
+  pins,
+  center,
+  zoom,
+  radiusKm,
+  label,
+  fit = true,
+}: {
+  pins: Pin[];
+  center?: [number, number];
+  zoom?: number;
+  radiusKm?: number;
+  label: string;
+  fit?: boolean;
+}) {
   const el = useRef<HTMLDivElement>(null);
   const map = useRef<L.Map | null>(null);
   const layer = useRef<L.LayerGroup | null>(null);
@@ -50,14 +63,22 @@ export default function LeafletMap({
     const ro = new ResizeObserver(() => {
       if (!map.current || !el.current) return;
       map.current.invalidateSize();
-      if (wasEmpty && el.current.clientWidth > 0) { wasEmpty = false; refit.current(); }
+      if (wasEmpty && el.current.clientWidth > 0) {
+        wasEmpty = false;
+        refit.current();
+      }
     });
     ro.observe(el.current);
-    return () => { ro.disconnect(); map.current?.remove(); map.current = null; };
+    return () => {
+      ro.disconnect();
+      map.current?.remove();
+      map.current = null;
+    };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
-    const m = map.current, g = layer.current;
+    const m = map.current,
+      g = layer.current;
     if (!m || !g) return;
     g.clearLayers();
     const pts: L.LatLngExpression[] = [];
@@ -75,7 +96,15 @@ export default function LeafletMap({
       g.addLayer(mk);
       pts.push([p.lat, p.lng]);
       if (p.kind === "you" && radiusKm) {
-        g.addLayer(L.circle([p.lat, p.lng], { radius: radiusKm * 1000, color: "#1E8E4E", weight: 1.5, fillColor: "#6CC36A", fillOpacity: 0.12 }));
+        g.addLayer(
+          L.circle([p.lat, p.lng], {
+            radius: radiusKm * 1000,
+            color: "#1E8E4E",
+            weight: 1.5,
+            fillColor: "#6CC36A",
+            fillOpacity: 0.12,
+          }),
+        );
       }
     }
     refit.current = () => {

@@ -8,7 +8,9 @@ import type { Booking, User } from "@/lib/store/types";
 import { roleIn } from "@/lib/escrow";
 
 /** Signed-in user who is a party to the booking (or an admin). Others get 404. */
-export async function loadBooking(id: string): Promise<{ user: User; booking: Booking } | { res: NextResponse }> {
+export async function loadBooking(
+  id: string,
+): Promise<{ user: User; booking: Booking } | { res: NextResponse }> {
   const user = await currentUser();
   if (!user) return { res: fail(401, "signed_out") };
   if (!/^[0-9a-f-]{36}$/.test(id)) return { res: fail(404, "not_found") };

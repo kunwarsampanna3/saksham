@@ -2,7 +2,27 @@ import "server-only";
 import { promises as fs } from "node:fs";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
-import type { Bid, Block, Booking, Conversation, CreditApplication, Dispute, Message, Notification, OtpRecord, Payout, PriceOverride, Question, Rating, Receipt, Report, Store, Task, User, Verification } from "./types";
+import type {
+  Bid,
+  Block,
+  Booking,
+  Conversation,
+  CreditApplication,
+  Dispute,
+  Message,
+  Notification,
+  OtpRecord,
+  Payout,
+  PriceOverride,
+  Question,
+  Rating,
+  Receipt,
+  Report,
+  Store,
+  Task,
+  User,
+  Verification,
+} from "./types";
 
 /**
  * Development store: a single JSON file in .data/ (git-ignored).
@@ -91,7 +111,9 @@ export const fileStore: Store = {
   },
   async putBlock(b) {
     const db = await load();
-    db.blocks = (db.blocks ?? []).filter((x) => !(x.blockerId === b.blockerId && x.blockedId === b.blockedId));
+    db.blocks = (db.blocks ?? []).filter(
+      (x) => !(x.blockerId === b.blockerId && x.blockedId === b.blockedId),
+    );
     db.blocks.push(b);
     await persist(db);
     return b;
@@ -113,12 +135,21 @@ export const fileStore: Store = {
   async purgeDemoData(demoIds) {
     const db = await load();
     const demo = new Set(demoIds);
-    const tasks = new Set((db.tasks ?? []).filter((t) => t.isExample || (t.clientId && demo.has(t.clientId))).map((t) => t.id));
+    const tasks = new Set(
+      (db.tasks ?? []).filter((t) => t.isExample || (t.clientId && demo.has(t.clientId))).map((t) => t.id),
+    );
     for (const b of db.bids ?? []) if (demo.has(b.providerId)) tasks.add(b.taskId); // tasks a demo provider bid on stay only if real client
-    const realClientTask = (id: string) => (db.tasks ?? []).some((t) => t.id === id && t.clientId && !demo.has(t.clientId) && !t.isExample);
+    const realClientTask = (id: string) =>
+      (db.tasks ?? []).some((t) => t.id === id && t.clientId && !demo.has(t.clientId) && !t.isExample);
     const dropTask = (id: string) => tasks.has(id) && !realClientTask(id);
-    const bookings = new Set((db.bookings ?? []).filter((b) => dropTask(b.taskId) || demo.has(b.clientId) || demo.has(b.providerId)).map((b) => b.id));
-    const convs = new Set((db.conversations ?? []).filter((c) => demo.has(c.clientId) || demo.has(c.providerId)).map((c) => c.id));
+    const bookings = new Set(
+      (db.bookings ?? [])
+        .filter((b) => dropTask(b.taskId) || demo.has(b.clientId) || demo.has(b.providerId))
+        .map((b) => b.id),
+    );
+    const convs = new Set(
+      (db.conversations ?? []).filter((c) => demo.has(c.clientId) || demo.has(c.providerId)).map((c) => c.id),
+    );
     db.tasks = (db.tasks ?? []).filter((t) => !dropTask(t.id));
     db.bids = (db.bids ?? []).filter((b) => !dropTask(b.taskId) && !demo.has(b.providerId));
     db.questions = (db.questions ?? []).filter((q) => !dropTask(q.taskId) && !demo.has(q.askerId));
@@ -136,9 +167,12 @@ export const fileStore: Store = {
     db.verifications = (db.verifications ?? []).filter((v) => !demo.has(v.userId));
     await persist(db);
     // Uploaded demo files (ID photos, chat media, task photos)
-    for (const id of demoIds) await fs.rm(safePath(id), { recursive: true, force: true }).catch(() => undefined);
-    for (const t of tasks) await fs.rm(safePath(`tasks/${t}`), { recursive: true, force: true }).catch(() => undefined);
-    for (const c of convs) await fs.rm(safePath(`chat/${c}`), { recursive: true, force: true }).catch(() => undefined);
+    for (const id of demoIds)
+      await fs.rm(safePath(id), { recursive: true, force: true }).catch(() => undefined);
+    for (const t of tasks)
+      await fs.rm(safePath(`tasks/${t}`), { recursive: true, force: true }).catch(() => undefined);
+    for (const c of convs)
+      await fs.rm(safePath(`chat/${c}`), { recursive: true, force: true }).catch(() => undefined);
   },
   async listPayouts(userId) {
     return ((await load()).payouts ?? []).filter((p) => p.userId === userId);
@@ -171,13 +205,19 @@ export const fileStore: Store = {
     return a;
   },
   async listConversations(userId) {
-    return ((await load()).conversations ?? []).filter((c) => c.clientId === userId || c.providerId === userId);
+    return ((await load()).conversations ?? []).filter(
+      (c) => c.clientId === userId || c.providerId === userId,
+    );
   },
   async getConversation(id) {
     return ((await load()).conversations ?? []).find((c) => c.id === id) ?? null;
   },
   async findConversation(clientId, providerId, taskId) {
-    return ((await load()).conversations ?? []).find((c) => c.clientId === clientId && c.providerId === providerId && c.taskId === taskId) ?? null;
+    return (
+      ((await load()).conversations ?? []).find(
+        (c) => c.clientId === clientId && c.providerId === providerId && c.taskId === taskId,
+      ) ?? null
+    );
   },
   async putConversation(c) {
     const db = await load();
@@ -317,7 +357,9 @@ export const fileStore: Store = {
   },
   async resetDemo(seed) {
     const db = await load();
-    const gone = new Set(db.users.filter((u) => u.isDemo || seed.some((s) => s.phone === u.phone)).map((u) => u.id));
+    const gone = new Set(
+      db.users.filter((u) => u.isDemo || seed.some((s) => s.phone === u.phone)).map((u) => u.id),
+    );
     db.users = db.users.filter((u) => !gone.has(u.id));
     db.verifications = (db.verifications ?? []).filter((v) => !gone.has(v.userId));
     for (const s of seed) db.users.push({ ...s, id: randomUUID(), createdAt: now(), updatedAt: now() });
@@ -347,7 +389,11 @@ export const fileStore: Store = {
     await fs.writeFile(full, data);
   },
   async getFile(p) {
-    try { return await fs.readFile(safePath(p)); } catch { return null; }
+    try {
+      return await fs.readFile(safePath(p));
+    } catch {
+      return null;
+    }
   },
   async deleteFile(p) {
     await fs.rm(safePath(p), { force: true });

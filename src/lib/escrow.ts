@@ -2,7 +2,16 @@ import "server-only";
 import { randomBytes, randomUUID } from "node:crypto";
 import { config } from "@/lib/config";
 import { store } from "@/lib/store";
-import type { Booking, Dispute, Installment, PayMethod, PlanKind, Receipt, Task, User } from "@/lib/store/types";
+import type {
+  Booking,
+  Dispute,
+  Installment,
+  PayMethod,
+  PlanKind,
+  Receipt,
+  Task,
+  User,
+} from "@/lib/store/types";
 import { canMoveEscrow, splitPlan } from "@/lib/rules";
 import { FEE_RATE } from "@/lib/pricing";
 import { RuleError } from "@/lib/tasks";
@@ -15,7 +24,8 @@ import { notify, systemMessage } from "@/lib/chat";
  */
 const now = () => new Date().toISOString();
 const ymd = (d: Date) => new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Kathmandu" }).format(d); // YYYY-MM-DD in Nepal
-const addDays = (iso: string, n: number) => ymd(new Date(new Date(`${iso}T12:00:00Z`).getTime() + n * 86_400_000));
+const addDays = (iso: string, n: number) =>
+  ymd(new Date(new Date(`${iso}T12:00:00Z`).getTime() + n * 86_400_000));
 
 const LABELS: Record<PlanKind, Installment["label"][]> = {
   full: ["full"],
@@ -25,23 +35,52 @@ const LABELS: Record<PlanKind, Installment["label"][]> = {
 const PCTS: Record<PlanKind, number[]> = { full: [100], two: [50, 50], milestones: [30, 40, 30] };
 
 /** Installment amounts (always summing to the total) and due dates from the task timeline. */
-export function planPreview(total: number, plan: PlanKind, task: Pick<Task, "days" | "dueDate">): Omit<Installment, "id" | "state">[] {
+export function planPreview(
+  total: number,
+  plan: PlanKind,
+  task: Pick<Task, "days" | "dueDate">,
+): Omit<Installment, "id" | "state">[] {
   const start = ymd(new Date());
   const end = task.dueDate && task.dueDate > start ? task.dueDate : addDays(start, Math.max(1, task.days));
-  const span = Math.max(1, Math.round((new Date(`${end}T12:00:00Z`).getTime() - new Date(`${start}T12:00:00Z`).getTime()) / 86_400_000));
-  const dates = plan === "full" ? [start] : plan === "two" ? [start, end] : [start, addDays(start, Math.max(1, Math.floor(span / 2))), end];
+  const span = Math.max(
+    1,
+    Math.round(
+      (new Date(`${end}T12:00:00Z`).getTime() - new Date(`${start}T12:00:00Z`).getTime()) / 86_400_000,
+    ),
+  );
+  const dates =
+    plan === "full"
+      ? [start]
+      : plan === "two"
+        ? [start, end]
+        : [start, addDays(start, Math.max(1, Math.floor(span / 2))), end];
   const amounts = splitPlan(total, plan);
-  return amounts.map((amount, i) => ({ seq: i + 1, label: LABELS[plan][i], pct: PCTS[plan][i], amount, dueDate: dates[i] }));
+  return amounts.map((amount, i) => ({
+    seq: i + 1,
+    label: LABELS[plan][i],
+    pct: PCTS[plan][i],
+    amount,
+    dueDate: dates[i],
+  }));
 }
 
-const receiptNo = () => `SK-${ymd(new Date()).replace(/-/g, "")}-${randomBytes(3).toString("hex").toUpperCase()}`;
-const sandboxRef = (m: PayMethod) => `${m === "esewa_sandbox" ? "ESEWA" : m === "card_sandbox" ? "CARD" : "KHALTI"}-SBX-${randomBytes(5).toString("hex").toUpperCase()}`;
+const receiptNo = () =>
+  `SK-${ymd(new Date()).replace(/-/g, "")}-${randomBytes(3).toString("hex").toUpperCase()}`;
+const sandboxRef = (m: PayMethod) =>
+  `${m === "esewa_sandbox" ? "ESEWA" : m === "card_sandbox" ? "CARD" : "KHALTI"}-SBX-${randomBytes(5).toString("hex").toUpperCase()}`;
 
 async function receipt(b: Booking, inst: Installment, kind: Receipt["kind"]): Promise<Receipt> {
   return store.putReceipt({
-    id: randomUUID(), bookingId: b.id, installmentId: inst.id, kind, amount: inst.amount,
+    id: randomUUID(),
+    bookingId: b.id,
+    installmentId: inst.id,
+    kind,
+    amount: inst.amount,
     fee: kind === "release" ? Math.round(inst.amount * b.feeRate) : 0,
-    method: b.method, ref: sandboxRef(b.method), receiptNo: receiptNo(), createdAt: now(),
+    method: b.method,
+    ref: sandboxRef(b.method),
+    receiptNo: receiptNo(),
+    createdAt: now(),
   });
 }
 
@@ -49,20 +88,42 @@ export const roleIn = (b: Booking, u: User): "client" | "provider" | null =>
   b.clientId === u.id ? "client" : b.providerId === u.id ? "provider" : null;
 
 /* ------------------------------------------------------------------ create */
-export async function createBooking(task: Task, client: User, plan: PlanKind, method: PayMethod): Promise<Booking> {
+export async function createBooking(
+  task: Task,
+  client: User,
+  plan: PlanKind,
+  method: PayMethod,
+): Promise<Booking> {
   if (task.clientId !== client.id) throw new RuleError("forbidden", 403);
   if (await store.getBookingByTask(task.id)) throw new RuleError("already_booked");
-  if (task.status !== "assigned" || !task.acceptedBidId || !task.agreedPrice) throw new RuleError("not_assigned");
+  if (task.status !== "assigned" || !task.acceptedBidId || !task.agreedPrice)
+    throw new RuleError("not_assigned");
   const bid = (await store.listBids(task.id)).find((b) => b.id === task.acceptedBidId);
   if (!bid) throw new RuleError("not_assigned");
 
-  const installments: Installment[] = planPreview(task.agreedPrice, plan, task).map((p) => ({ ...p, id: randomUUID(), state: "scheduled" }));
+  const installments: Installment[] = planPreview(task.agreedPrice, plan, task).map((p) => ({
+    ...p,
+    id: randomUUID(),
+    state: "scheduled",
+  }));
   // The first installment is paid into escrow now.
   installments[0] = { ...installments[0], state: "held", heldAt: now() };
   const b: Booking = {
-    id: randomUUID(), taskId: task.id, bidId: bid.id, clientId: client.id, providerId: bid.providerId, providerName: bid.providerName,
-    providerIsExample: bid.isExample, total: task.agreedPrice, feeRate: FEE_RATE, plan, method, status: "active",
-    installments, createdAt: now(), updatedAt: now(),
+    id: randomUUID(),
+    taskId: task.id,
+    bidId: bid.id,
+    clientId: client.id,
+    providerId: bid.providerId,
+    providerName: bid.providerName,
+    providerIsExample: bid.isExample,
+    total: task.agreedPrice,
+    feeRate: FEE_RATE,
+    plan,
+    method,
+    status: "active",
+    installments,
+    createdAt: now(),
+    updatedAt: now(),
   };
   await store.putBooking(b);
   await receipt(b, installments[0], "hold");
@@ -78,7 +139,11 @@ function inst(b: Booking, id: string) {
   return i;
 }
 async function save(b: Booking, changed: Installment): Promise<Booking> {
-  const updated = { ...b, installments: b.installments.map((x) => (x.id === changed.id ? changed : x)), updatedAt: now() };
+  const updated = {
+    ...b,
+    installments: b.installments.map((x) => (x.id === changed.id ? changed : x)),
+    updatedAt: now(),
+  };
   return store.putBooking(updated);
 }
 
@@ -122,7 +187,10 @@ export async function release(b: Booking, user: User, id: string) {
   const changed = { ...i, state: "released" as const, releasedAt: now() };
   let nb = await save(b, changed);
   await receipt(nb, changed, "release");
-  await event(nb, "provider", "released", { amount: changed.amount, net: changed.amount - Math.round(changed.amount * nb.feeRate) });
+  await event(nb, "provider", "released", {
+    amount: changed.amount,
+    net: changed.amount - Math.round(changed.amount * nb.feeRate),
+  });
   if (nb.installments.every((x) => x.state === "released")) {
     nb = await store.putBooking({ ...nb, status: "completed", updatedAt: now() });
     const task = await store.getTask(nb.taskId);
@@ -136,7 +204,16 @@ export async function openDispute(b: Booking, user: User, reason: string, wanted
   const role = roleIn(b, user);
   if (!role) throw new RuleError("forbidden", 403);
   if (b.status !== "active") throw new RuleError("booking_locked");
-  const d = await store.putDispute({ id: randomUUID(), bookingId: b.id, openedBy: user.id, role, reason, wanted, status: "open", createdAt: now() });
+  const d = await store.putDispute({
+    id: randomUUID(),
+    bookingId: b.id,
+    openedBy: user.id,
+    role,
+    reason,
+    wanted,
+    status: "open",
+    createdAt: now(),
+  });
   await store.putBooking({ ...b, status: "disputed", updatedAt: now() });
   const task = await store.getTask(b.taskId);
   if (task) await store.putTask({ ...task, status: "disputed", updatedAt: now() });
@@ -145,7 +222,12 @@ export async function openDispute(b: Booking, user: User, reason: string, wanted
 }
 
 /** Notify one side and post a system message in their conversation. */
-async function event(b: Booking, to: "client" | "provider", code: string, params: Record<string, string | number>) {
+async function event(
+  b: Booking,
+  to: "client" | "provider",
+  code: string,
+  params: Record<string, string | number>,
+) {
   const task = await store.getTask(b.taskId);
   const p = { ...params, task: task?.title ?? "" };
   await notify(to === "client" ? b.clientId : b.providerId, "payment", code, p, `/payments/${b.id}`);
@@ -164,7 +246,12 @@ export async function resolveDispute(b: Booking, user: User, outcome: "redo" | "
   if (!d) throw new RuleError("no_dispute");
   const task = await store.getTask(b.taskId);
   if (outcome === "redo") {
-    await store.putDispute({ ...d, status: "redo_arranged", resolution: user.isAdmin ? "Redo arranged by Saksham" : "Redo arranged (demo reviewer)", resolvedAt: now() });
+    await store.putDispute({
+      ...d,
+      status: "redo_arranged",
+      resolution: user.isAdmin ? "Redo arranged by Saksham" : "Redo arranged (demo reviewer)",
+      resolvedAt: now(),
+    });
     const nb = await store.putBooking({ ...b, status: "active", updatedAt: now() });
     if (task) await store.putTask({ ...task, status: "in_progress", updatedAt: now() });
     await event(nb, "client", "dispute_redo", {});
@@ -181,7 +268,12 @@ export async function resolveDispute(b: Booking, user: User, outcome: "redo" | "
     // Unpaid (scheduled) installments stay "scheduled" and are shown as cancelled once the booking is refunded.
   }
   nb = await store.putBooking({ ...nb, status: "refunded", updatedAt: now() });
-  await store.putDispute({ ...d, status: "refunded", resolution: user.isAdmin ? "Refunded by Saksham" : "Refunded (demo reviewer)", resolvedAt: now() });
+  await store.putDispute({
+    ...d,
+    status: "refunded",
+    resolution: user.isAdmin ? "Refunded by Saksham" : "Refunded (demo reviewer)",
+    resolvedAt: now(),
+  });
   if (task) await store.putTask({ ...task, status: "cancelled", updatedAt: now() });
   await event(nb, "client", "dispute_refund", {});
   await notify(nb.providerId, "payment", "dispute_refund", { task: task?.title ?? "" }, `/payments/${nb.id}`);
@@ -190,7 +282,8 @@ export async function resolveDispute(b: Booking, user: User, outcome: "redo" | "
 
 /** Totals for the schedule header. */
 export function totals(b: Booking) {
-  const sum = (s: Installment["state"][]) => b.installments.filter((i) => s.includes(i.state)).reduce((a, i) => a + i.amount, 0);
+  const sum = (s: Installment["state"][]) =>
+    b.installments.filter((i) => s.includes(i.state)).reduce((a, i) => a + i.amount, 0);
   const released = sum(["released"]);
   return {
     held: sum(["held", "delivered"]),

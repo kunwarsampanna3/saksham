@@ -23,4 +23,8 @@ export function ruleResponse(e: unknown): NextResponse {
 
 /** Strip control characters and collapse runs of blank lines in user-written text. */
 export const cleanText = (s: string, max: number) =>
-  s.replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, "").replace(/\n{3,}/g, "\n\n").trim().slice(0, max);
+  s
+    .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, "")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim()
+    .slice(0, max);

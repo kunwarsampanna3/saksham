@@ -4,34 +4,50 @@ import { forwardRef, useEffect, useId, useImperativeHandle, useRef, useState } f
 import { Eye, EyeOff } from "lucide-react";
 import { useI18n } from "@/components/providers";
 
-export interface MpinHandle { focus: () => void; clear: () => void }
+export interface MpinHandle {
+  focus: () => void;
+  clear: () => void;
+}
 
 /**
  * Four masked boxes. Supports typing, paste of all four digits, arrow keys and backspace.
  * Each box is labelled for screen readers ("MPIN digit 2 of 4"); the group carries the error.
  */
-export const MpinInput = forwardRef<MpinHandle, {
-  value: string;
-  onChange: (v: string) => void;
-  onComplete?: (v: string) => void;
-  label: string;
-  hint?: string;
-  error?: string | null;
-  shakeKey?: number;
-  autoFocus?: boolean;
-  disabled?: boolean;
-  allowReveal?: boolean;
-}>(function MpinInput({ value, onChange, onComplete, label, hint, error, shakeKey = 0, autoFocus, disabled, allowReveal = true }, ref) {
+export const MpinInput = forwardRef<
+  MpinHandle,
+  {
+    value: string;
+    onChange: (v: string) => void;
+    onComplete?: (v: string) => void;
+    label: string;
+    hint?: string;
+    error?: string | null;
+    shakeKey?: number;
+    autoFocus?: boolean;
+    disabled?: boolean;
+    allowReveal?: boolean;
+  }
+>(function MpinInput(
+  { value, onChange, onComplete, label, hint, error, shakeKey = 0, autoFocus, disabled, allowReveal = true },
+  ref,
+) {
   const { t } = useI18n();
   const id = useId();
   const boxes = useRef<(HTMLInputElement | null)[]>([]);
   const [reveal, setReveal] = useState(false);
   const [shaking, setShaking] = useState(false);
 
-  useImperativeHandle(ref, () => ({
-    focus: () => boxes.current[Math.min(value.length, 3)]?.focus(),
-    clear: () => { onChange(""); boxes.current[0]?.focus(); },
-  }), [value, onChange]);
+  useImperativeHandle(
+    ref,
+    () => ({
+      focus: () => boxes.current[Math.min(value.length, 3)]?.focus(),
+      clear: () => {
+        onChange("");
+        boxes.current[0]?.focus();
+      },
+    }),
+    [value, onChange],
+  );
 
   useEffect(() => {
     if (!shakeKey) return;
@@ -62,9 +78,17 @@ export const MpinInput = forwardRef<MpinHandle, {
       e.preventDefault();
       // Digits are always contiguous, so removing one keeps the rest in order.
       if (value[i]) onChange(value.slice(0, i) + value.slice(i + 1));
-      else if (i > 0) { onChange(value.slice(0, i - 1)); boxes.current[i - 1]?.focus(); }
-    } else if (e.key === "ArrowLeft" && i > 0) { e.preventDefault(); boxes.current[i - 1]?.focus(); }
-    else if (e.key === "ArrowRight" && i < 3) { e.preventDefault(); boxes.current[i + 1]?.focus(); }
+      else if (i > 0) {
+        onChange(value.slice(0, i - 1));
+        boxes.current[i - 1]?.focus();
+      }
+    } else if (e.key === "ArrowLeft" && i > 0) {
+      e.preventDefault();
+      boxes.current[i - 1]?.focus();
+    } else if (e.key === "ArrowRight" && i < 3) {
+      e.preventDefault();
+      boxes.current[i + 1]?.focus();
+    }
   };
 
   return (
@@ -72,19 +96,29 @@ export const MpinInput = forwardRef<MpinHandle, {
       <div className="mb-2 flex items-center justify-between">
         <legend className="field-label mb-0">{label}</legend>
         {allowReveal && (
-          <button type="button" className="btn-quiet btn min-h-8 px-1 text-sm" onClick={() => setReveal((r) => !r)} aria-pressed={reveal}>
+          <button
+            type="button"
+            className="btn-quiet btn min-h-8 px-1 text-sm"
+            onClick={() => setReveal((r) => !r)}
+            aria-pressed={reveal}
+          >
             {reveal ? <EyeOff size={16} aria-hidden /> : <Eye size={16} aria-hidden />}
             {reveal ? t.login.hideMpin : t.login.showMpin}
           </button>
         )}
       </div>
-      <div className={`pin-group flex gap-2.5 sm:gap-3 ${shaking ? "shake" : ""}`} aria-invalid={error ? true : undefined}>
+      <div
+        className={`pin-group flex gap-2.5 sm:gap-3 ${shaking ? "shake" : ""}`}
+        aria-invalid={error ? true : undefined}
+      >
         {[0, 1, 2, 3].map((i) => (
           <input
             key={i}
-            ref={(el) => { boxes.current[i] = el; }}
+            ref={(el) => {
+              boxes.current[i] = el;
+            }}
             className="pin-box"
-            style={reveal ? { WebkitTextSecurity: "none" } as React.CSSProperties : undefined}
+            style={reveal ? ({ WebkitTextSecurity: "none" } as React.CSSProperties) : undefined}
             type={reveal ? "text" : "password"}
             inputMode="numeric"
             pattern="[0-9]*"
@@ -98,12 +132,23 @@ export const MpinInput = forwardRef<MpinHandle, {
             onChange={(e) => handleInput(i, e.target.value)}
             onKeyDown={(e) => handleKey(i, e)}
             onFocus={(e) => e.target.select()}
-            onPaste={(e) => { e.preventDefault(); handleInput(i, e.clipboardData.getData("text")); }}
+            onPaste={(e) => {
+              e.preventDefault();
+              handleInput(i, e.clipboardData.getData("text"));
+            }}
           />
         ))}
       </div>
-      {hint && !error && <p id={`${id}-hint`} className="field-hint">{hint}</p>}
-      {error && <p id={`${id}-err`} role="alert" className="field-error">{error}</p>}
+      {hint && !error && (
+        <p id={`${id}-hint`} className="field-hint">
+          {hint}
+        </p>
+      )}
+      {error && (
+        <p id={`${id}-err`} role="alert" className="field-error">
+          {error}
+        </p>
+      )}
     </fieldset>
   );
 });

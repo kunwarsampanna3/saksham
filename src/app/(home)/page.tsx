@@ -7,7 +7,8 @@ import { currentUser } from "@/lib/auth/current-user";
 import { getCity, getDict } from "@/lib/i18n/server";
 
 export const metadata: Metadata = {
-  description: "Saksham — post any task in Nepal, compare fair offers from verified people, and pay safely in installments. Open to every skill.",
+  description:
+    "Saksham — post any task in Nepal, compare fair offers from verified people, and pay safely in installments. Open to every skill.",
 };
 
 /**

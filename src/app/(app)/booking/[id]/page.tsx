@@ -23,22 +23,29 @@ export default async function BookingPage({ params }: { params: Promise<{ id: st
   if (existing) redirect(`/payments/${existing.id}`);
 
   const b = t.booking;
-  const bid = task.acceptedBidId ? (await store.listBids(task.id)).find((x) => x.id === task.acceptedBidId) : undefined;
+  const bid = task.acceptedBidId
+    ? (await store.listBids(task.id)).find((x) => x.id === task.acceptedBidId)
+    : undefined;
 
   return (
     <div>
-      <div className="relative overflow-hidden border-b border-line">
+      <div className="border-line relative overflow-hidden border-b">
         <Contours seed={27} centers={1} rings={8} />
-        <div className="relative mx-auto max-w-[88rem] px-4 pb-8 pt-6 sm:px-6">
-          <Link href={`/task/${task.id}`} className="btn btn-quiet -ml-2"><ArrowLeft size={16} aria-hidden /> {task.title}</Link>
+        <div className="relative mx-auto max-w-[88rem] px-4 pt-6 pb-8 sm:px-6">
+          <Link href={`/task/${task.id}`} className="btn btn-quiet -ml-2">
+            <ArrowLeft size={16} aria-hidden /> {task.title}
+          </Link>
           <h1 className="font-display mt-2 text-4xl font-extrabold sm:text-5xl">{b.title}</h1>
-          <p className="mt-2 max-w-2xl text-lg text-muted">{b.lead}</p>
+          <p className="text-muted mt-2 max-w-2xl text-lg">{b.lead}</p>
         </div>
       </div>
       <div className="mx-auto max-w-[88rem] px-4 py-10 sm:px-6">
         {task.status !== "assigned" || !task.agreedPrice || !bid ? (
-          <p className="rounded-[4px] border border-dashed border-line-strong p-6">
-            {b.notAssigned} <Link href={`/task/${task.id}`} className="font-semibold text-accent hover:underline">{t.payments.open}</Link>
+          <p className="border-line-strong rounded-[4px] border border-dashed p-6">
+            {b.notAssigned}{" "}
+            <Link href={`/task/${task.id}`} className="text-accent font-semibold hover:underline">
+              {t.payments.open}
+            </Link>
           </p>
         ) : (
           <BookingForm

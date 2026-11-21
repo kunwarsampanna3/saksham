@@ -4,21 +4,43 @@ import { useId } from "react";
 
 /** Nepal mobile input with a fixed +977 prefix. Value is the bare 10 digits. */
 export function PhoneInput({
-  value, onChange, label, hint, error, autoFocus, disabled, id: idProp,
+  value,
+  onChange,
+  label,
+  hint,
+  error,
+  autoFocus,
+  disabled,
+  id: idProp,
 }: {
-  value: string; onChange: (v: string) => void; label: string; hint?: string; error?: string | null;
-  autoFocus?: boolean; disabled?: boolean; id?: string;
+  value: string;
+  onChange: (v: string) => void;
+  label: string;
+  hint?: string;
+  error?: string | null;
+  autoFocus?: boolean;
+  disabled?: boolean;
+  id?: string;
 }) {
   const auto = useId();
   const id = idProp ?? auto;
-  const display = value.length > 6 ? `${value.slice(0, 3)} ${value.slice(3, 6)} ${value.slice(6)}`
-    : value.length > 3 ? `${value.slice(0, 3)} ${value.slice(3)}` : value;
+  const display =
+    value.length > 6
+      ? `${value.slice(0, 3)} ${value.slice(3, 6)} ${value.slice(6)}`
+      : value.length > 3
+        ? `${value.slice(0, 3)} ${value.slice(3)}`
+        : value;
 
   return (
     <div>
-      <label htmlFor={id} className="field-label">{label}</label>
+      <label htmlFor={id} className="field-label">
+        {label}
+      </label>
       <div className="flex items-stretch">
-        <span className="inline-flex select-none items-center rounded-l-[6px] border-[1.5px] border-r-0 border-line-strong bg-surface-2 px-3 font-semibold text-muted" aria-hidden="true">
+        <span
+          className="border-line-strong bg-surface-2 text-muted inline-flex items-center rounded-l-[6px] border-[1.5px] border-r-0 px-3 font-semibold select-none"
+          aria-hidden="true"
+        >
           +977
         </span>
         <input
@@ -40,8 +62,16 @@ export function PhoneInput({
           }}
         />
       </div>
-      {!error && hint && <p id={`${id}-hint`} className="field-hint">{hint}</p>}
-      {error && <p id={`${id}-err`} role="alert" className="field-error">{error}</p>}
+      {!error && hint && (
+        <p id={`${id}-hint`} className="field-hint">
+          {hint}
+        </p>
+      )}
+      {error && (
+        <p id={`${id}-err`} role="alert" className="field-error">
+          {error}
+        </p>
+      )}
     </div>
   );
 }

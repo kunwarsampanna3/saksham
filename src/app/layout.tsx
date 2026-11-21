@@ -20,7 +20,8 @@ const mukta = Mukta({
 
 export const metadata: Metadata = {
   title: { default: "Saksham — Your skill. Your price.", template: "%s · Saksham" },
-  description: "A skills marketplace for all of Nepal. Post a task, get fair offers from verified providers, pay safely in installments.",
+  description:
+    "A skills marketplace for all of Nepal. Post a task, get fair offers from verified providers, pay safely in installments.",
   applicationName: "Saksham",
   manifest: "/manifest.webmanifest",
   icons: { icon: "/icon.svg", apple: "/icon.svg" },

@@ -9,7 +9,9 @@ import { nowSec, setSessionCookie } from "@/lib/auth/session";
 import { rateLimit } from "@/lib/auth/rate-limit";
 import { policy } from "@/lib/config";
 
-const Body = z.object({ ...targetFields, mpin: mpinSchema }).refine(exactlyOne, { message: "target_required" });
+const Body = z
+  .object({ ...targetFields, mpin: mpinSchema })
+  .refine(exactlyOne, { message: "target_required" });
 
 // Unknown numbers/emails get the same response shape as known ones (no account enumeration).
 const ghostAttempts = new Map<string, { n: number; until: number }>();

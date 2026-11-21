@@ -20,9 +20,10 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   const digits = text.replace(/[०-९]/g, (d) => String("०१२३४५६७८९".indexOf(d))).replace(/[\s().-]/g, "");
   if (/9[78]\d{8}/.test(digits)) return fail(422, "no_contacts");
   try {
-    const q = g.data.action === "ask"
-      ? await ask(l.task, l.user, cleanText(text, 500))
-      : await answer(l.task, l.user, g.data.questionId, cleanText(text, 1000));
+    const q =
+      g.data.action === "ask"
+        ? await ask(l.task, l.user, cleanText(text, 500))
+        : await answer(l.task, l.user, g.data.questionId, cleanText(text, 1000));
     return NextResponse.json({ ok: true, id: q.id });
   } catch (e) {
     return ruleResponse(e);

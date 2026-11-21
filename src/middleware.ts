@@ -6,12 +6,22 @@ import { jwtVerify } from "jose";
  * public legal pages and static assets needs a valid session cookie.
  * API routes do their own checks (they return JSON 401 rather than redirecting).
  */
-const PUBLIC = ["/login", "/signup", "/forgot-mpin", "/credits", "/terms", "/privacy", "/offline", "/confirm"];
+const PUBLIC = [
+  "/login",
+  "/signup",
+  "/forgot-mpin",
+  "/credits",
+  "/terms",
+  "/privacy",
+  "/offline",
+  "/confirm",
+];
 
 export async function middleware(req: NextRequest) {
   const { pathname, search } = req.nextUrl;
   // "/" itself is the public front page for visitors (it shows the app home when signed in).
-  if (pathname === "/" || PUBLIC.some((p) => pathname === p || pathname.startsWith(`${p}/`))) return NextResponse.next();
+  if (pathname === "/" || PUBLIC.some((p) => pathname === p || pathname.startsWith(`${p}/`)))
+    return NextResponse.next();
 
   const token = req.cookies.get("sk_session")?.value;
   const secret = process.env.SESSION_SECRET ?? "";
@@ -19,7 +29,9 @@ export async function middleware(req: NextRequest) {
     try {
       await jwtVerify(token, new TextEncoder().encode(secret), { issuer: "saksham", algorithms: ["HS256"] });
       return NextResponse.next();
-    } catch { /* fall through to login */ }
+    } catch {
+      /* fall through to login */
+    }
   }
   const url = req.nextUrl.clone();
   url.pathname = "/login";
@@ -30,5 +42,7 @@ export async function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!api|_next/static|_next/image|photos|icon|manifest.webmanifest|sw.js|favicon.ico|robots.txt).*)"],
+  matcher: [
+    "/((?!api|_next/static|_next/image|photos|icon|manifest.webmanifest|sw.js|favicon.ico|robots.txt).*)",
+  ],
 };

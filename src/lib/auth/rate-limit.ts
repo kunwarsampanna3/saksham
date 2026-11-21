@@ -10,7 +10,11 @@ import "server-only";
 const g = globalThis as unknown as { __sakshamRateBuckets?: Map<string, { count: number; resetAt: number }> };
 const buckets = (g.__sakshamRateBuckets ??= new Map());
 
-export function rateLimit(key: string, limit: number, windowSec: number): { ok: boolean; retryAfter: number } {
+export function rateLimit(
+  key: string,
+  limit: number,
+  windowSec: number,
+): { ok: boolean; retryAfter: number } {
   const now = Date.now();
   const b = buckets.get(key);
   if (!b || b.resetAt <= now) {

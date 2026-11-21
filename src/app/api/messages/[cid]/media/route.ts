@@ -25,7 +25,11 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ cid
       const data = await cleanImage(f);
       const path = `chat/${l.conv.id}/${id}.jpg`;
       await store.putFile(path, data, "image/jpeg");
-      const r = await sendMessage(l.conv, l.user, { kind: "photo", body: "", file: { id, path, mime: "image/jpeg", size: data.length, label: "photo" } });
+      const r = await sendMessage(l.conv, l.user, {
+        kind: "photo",
+        body: "",
+        file: { id, path, mime: "image/jpeg", size: data.length, label: "photo" },
+      });
       return NextResponse.json({ ok: true, id: r.message.id });
     }
     if (kind === "voice") {
@@ -33,10 +37,17 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ cid
       const buf = Buffer.from(await f.arrayBuffer());
       const mime = audioType(buf);
       if (!mime) return fail(422, "file_type");
-      const durationSec = Math.min(MAX_VOICE_SEC, Math.max(1, Math.round(Number(str(g.form, "durationSec", 5)) || 1)));
+      const durationSec = Math.min(
+        MAX_VOICE_SEC,
+        Math.max(1, Math.round(Number(str(g.form, "durationSec", 5)) || 1)),
+      );
       const path = `chat/${l.conv.id}/${id}.${mime.split("/")[1]}`;
       await store.putFile(path, buf, mime);
-      const r = await sendMessage(l.conv, l.user, { kind: "voice", body: "", file: { id, path, mime, size: buf.length, label: "voice", durationSec } });
+      const r = await sendMessage(l.conv, l.user, {
+        kind: "voice",
+        body: "",
+        file: { id, path, mime, size: buf.length, label: "voice", durationSec },
+      });
       return NextResponse.json({ ok: true, id: r.message.id });
     }
     return fail(422, "kind");

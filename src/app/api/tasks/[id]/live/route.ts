@@ -24,9 +24,16 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
       acceptedBidId: task.acceptedBidId ?? null,
       offers,
       // Q&A is public on the task; only the first name of the asker is shown.
-      questions: questions.sort((a, b) => a.createdAt.localeCompare(b.createdAt)).map((q) => ({
-        id: q.id, askerName: q.askerName, body: q.body, answer: q.answer ?? null, mine: q.askerId === user.id, createdAt: q.createdAt,
-      })),
+      questions: questions
+        .sort((a, b) => a.createdAt.localeCompare(b.createdAt))
+        .map((q) => ({
+          id: q.id,
+          askerName: q.askerName,
+          body: q.body,
+          answer: q.answer ?? null,
+          mine: q.askerId === user.id,
+          createdAt: q.createdAt,
+        })),
       owner,
     },
     { headers: { "Cache-Control": "private, no-store" } },

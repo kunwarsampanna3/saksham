@@ -20,9 +20,19 @@ export const KINDS: VerificationKind[] = ["phone", "id", "selfie", "address", "w
 export const RETENTION_DAYS = 90;
 export const MAX_UPLOAD_BYTES = 8 * 1024 * 1024;
 
-export type StatusMap = Record<VerificationKind, Pick<Verification, "status" | "simulated" | "fields" | "note" | "submittedAt" | "decidedAt"> & { fileIds: { id: string; label: string }[] }>;
+export type StatusMap = Record<
+  VerificationKind,
+  Pick<Verification, "status" | "simulated" | "fields" | "note" | "submittedAt" | "decidedAt"> & {
+    fileIds: { id: string; label: string }[];
+  }
+>;
 
-const empty = (): StatusMap[VerificationKind] => ({ status: "not_started", simulated: false, fields: {}, fileIds: [] });
+const empty = (): StatusMap[VerificationKind] => ({
+  status: "not_started",
+  simulated: false,
+  fields: {},
+  fileIds: [],
+});
 
 export async function statusFor(user: User): Promise<StatusMap> {
   await purgeExpired(user.id);
@@ -30,13 +40,19 @@ export async function statusFor(user: User): Promise<StatusMap> {
   const map = Object.fromEntries(KINDS.map((k) => [k, empty()])) as StatusMap;
   for (const v of list) {
     map[v.kind] = {
-      status: v.status, simulated: v.simulated, fields: v.fields, note: v.note, submittedAt: v.submittedAt, decidedAt: v.decidedAt,
+      status: v.status,
+      simulated: v.simulated,
+      fields: v.fields,
+      note: v.note,
+      submittedAt: v.submittedAt,
+      decidedAt: v.decidedAt,
       fileIds: v.files.map((f) => ({ id: f.id, label: f.label })),
     };
   }
   // Phone accounts proved their number with an OTP at sign-up (demo accounts are pre-verified).
   // Email-only accounts proved their email instead, so the phone check stays open for them.
-  if (map.phone.status === "not_started" && user.phone) map.phone = { ...empty(), status: "verified", simulated: user.isDemo };
+  if (map.phone.status === "not_started" && user.phone)
+    map.phone = { ...empty(), status: "verified", simulated: user.isDemo };
   return map;
 }
 
@@ -55,20 +71,30 @@ export async function cleanImage(file: File): Promise<Buffer> {
   if (file.size > MAX_UPLOAD_BYTES) throw new UploadError("file_too_big");
   const raw = Buffer.from(await file.arrayBuffer());
   const kind = MAGIC.find(([, sig]) => sig.every((b, i) => raw[i] === b));
-  if (!kind || (kind[0] === "image/webp" && raw.toString("ascii", 8, 12) !== "WEBP")) throw new UploadError("file_type");
+  if (!kind || (kind[0] === "image/webp" && raw.toString("ascii", 8, 12) !== "WEBP"))
+    throw new UploadError("file_type");
   try {
     const img = sharp(raw, { failOn: "error", limitInputPixels: 50_000_000 });
     const meta = await img.metadata();
-    if (!meta.width || !meta.height || meta.width < 320 || meta.height < 240) throw new UploadError("file_small");
+    if (!meta.width || !meta.height || meta.width < 320 || meta.height < 240)
+      throw new UploadError("file_small");
     // .rotate() applies EXIF orientation; sharp drops all metadata unless .withMetadata() is called.
-    return await img.rotate().resize({ width: 1800, height: 1800, fit: "inside", withoutEnlargement: true }).jpeg({ quality: 82, mozjpeg: true }).toBuffer();
+    return await img
+      .rotate()
+      .resize({ width: 1800, height: 1800, fit: "inside", withoutEnlargement: true })
+      .jpeg({ quality: 82, mozjpeg: true })
+      .toBuffer();
   } catch (e) {
     if (e instanceof UploadError) throw e;
     throw new UploadError("file_unreadable");
   }
 }
 
-export async function saveFiles(userId: string, kind: VerificationKind, items: { label: string; data: Buffer }[]): Promise<StoredFile[]> {
+export async function saveFiles(
+  userId: string,
+  kind: VerificationKind,
+  items: { label: string; data: Buffer }[],
+): Promise<StoredFile[]> {
   const out: StoredFile[] = [];
   for (const it of items) {
     const id = randomUUID();
@@ -80,7 +106,17 @@ export async function saveFiles(userId: string, kind: VerificationKind, items: {
 }
 
 /** Replace a verification (deleting any old documents first). */
-export async function submit(user: User, kind: VerificationKind, data: { files?: StoredFile[]; fields?: Record<string, string>; status?: VerificationStatus; simulated?: boolean; note?: string }) {
+export async function submit(
+  user: User,
+  kind: VerificationKind,
+  data: {
+    files?: StoredFile[];
+    fields?: Record<string, string>;
+    status?: VerificationStatus;
+    simulated?: boolean;
+    note?: string;
+  },
+) {
   const prev = (await store.listVerifications(user.id)).find((v) => v.kind === kind);
   for (const f of prev?.files ?? []) await store.deleteFile(f.path);
   const now = new Date().toISOString();
@@ -105,12 +141,23 @@ export async function submit(user: User, kind: VerificationKind, data: { files?:
 const purgeDate = () => new Date(Date.now() + RETENTION_DAYS * 86_400_000).toISOString();
 
 /** A reviewer (or, in DEMO_MODE only, the simulated demo reviewer) decides on a pending item. */
-export async function decide(userId: string, kind: VerificationKind, decision: "verified" | "rejected", reviewerId: string | null, note?: string) {
+export async function decide(
+  userId: string,
+  kind: VerificationKind,
+  decision: "verified" | "rejected",
+  reviewerId: string | null,
+  note?: string,
+) {
   const v = (await store.listVerifications(userId)).find((x) => x.kind === kind);
   if (!v || v.status !== "pending") return null;
   const updated: Verification = {
-    ...v, status: decision, decidedAt: new Date().toISOString(), purgeAfter: purgeDate(),
-    reviewerId: reviewerId ?? undefined, simulated: reviewerId === null, note,
+    ...v,
+    status: decision,
+    decidedAt: new Date().toISOString(),
+    purgeAfter: purgeDate(),
+    reviewerId: reviewerId ?? undefined,
+    simulated: reviewerId === null,
+    note,
   };
   await store.putVerification(updated);
   await recomputeBadges(userId);
@@ -153,14 +200,24 @@ export async function ensureDemoVerifications(user: User) {
   if (!config.demoMode || !user.isDemo) return;
   if ((await store.listVerifications(user.id)).length) return;
   const plan: Partial<Record<VerificationKind, VerificationStatus>> =
-    user.phone === "9800000002" ? { id: "verified", selfie: "verified" }
-    : user.phone === "9800000003" ? { id: "verified", selfie: "verified", address: "verified", womenGroup: "verified" }
-    : user.phone === "9800000001" || user.phone === "9800000004" ? { id: "verified", selfie: "verified" }
-    : {};
+    user.phone === "9800000002"
+      ? { id: "verified", selfie: "verified" }
+      : user.phone === "9800000003"
+        ? { id: "verified", selfie: "verified", address: "verified", womenGroup: "verified" }
+        : user.phone === "9800000001" || user.phone === "9800000004"
+          ? { id: "verified", selfie: "verified" }
+          : {};
   for (const [kind, status] of Object.entries(plan) as [VerificationKind, VerificationStatus][]) {
     await store.putVerification({
-      id: randomUUID(), userId: user.id, kind, status, simulated: true, files: [], fields: { source: "demo seed" },
-      submittedAt: new Date().toISOString(), decidedAt: new Date().toISOString(),
+      id: randomUUID(),
+      userId: user.id,
+      kind,
+      status,
+      simulated: true,
+      files: [],
+      fields: { source: "demo seed" },
+      submittedAt: new Date().toISOString(),
+      decidedAt: new Date().toISOString(),
     });
   }
   await recomputeBadges(user.id);

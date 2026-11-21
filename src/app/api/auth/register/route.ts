@@ -1,7 +1,14 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
 import { guard, fail } from "@/lib/auth/http";
-import { citySchema, langSchema, mpinProblem, mpinSchema, nameSchema, roleChoiceSchema } from "@/lib/validation";
+import {
+  citySchema,
+  langSchema,
+  mpinProblem,
+  mpinSchema,
+  nameSchema,
+  roleChoiceSchema,
+} from "@/lib/validation";
 import { store, toPublicUser } from "@/lib/store";
 import { hashMpin } from "@/lib/auth/mpin";
 import { clearVerifiedTicket, readVerifiedTicket } from "@/lib/auth/otp";
@@ -26,7 +33,8 @@ export async function POST(req: NextRequest) {
   if ("res" in g) return g.res;
   const { name, city, role, mpin, lang, categories, marketingOptIn } = g.data;
   // Providers say what they do, so the right tasks reach them.
-  if (role !== "client" && categories.length === 0) return fail(422, "categories_required", { field: "categories" });
+  if (role !== "client" && categories.length === 0)
+    return fail(422, "categories_required", { field: "categories" });
 
   // The verified phone or email comes from the OTP ticket cookie, never from the request body.
   const target = await readVerifiedTicket("signup");
@@ -39,7 +47,11 @@ export async function POST(req: NextRequest) {
   const roles: Role[] = role === "both" ? ["client", "provider"] : [role];
   try {
     const user = await store.createUser({
-      phone: viaEmail ? "" : target, ...(viaEmail ? { email: target } : {}), name, city, roles,
+      phone: viaEmail ? "" : target,
+      ...(viaEmail ? { email: target } : {}),
+      name,
+      city,
+      roles,
       activeRole: roles[0],
       mpinHash: await hashMpin(mpin),
       failedAttempts: 0,
@@ -56,7 +68,8 @@ export async function POST(req: NextRequest) {
     await setSessionCookie({ sub: user.id, role: user.activeRole, mpinAt: nowSec() });
     return NextResponse.json({ ok: true, user: toPublicUser(user) });
   } catch (e) {
-    if (e instanceof Error && (e.message === "phone_taken" || e.message === "email_taken")) return fail(409, e.message);
+    if (e instanceof Error && (e.message === "phone_taken" || e.message === "email_taken"))
+      return fail(409, e.message);
     throw e;
   }
 }

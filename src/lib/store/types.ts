@@ -112,7 +112,8 @@ export interface Verification {
 }
 
 /* ------------------------------------------------------------------ tasks */
-export type TaskStatus = "open" | "assigned" | "in_progress" | "delivered" | "completed" | "cancelled" | "disputed";
+export type TaskStatus =
+  "open" | "assigned" | "in_progress" | "delivered" | "completed" | "cancelled" | "disputed";
 
 export interface Task {
   id: string;
@@ -340,10 +341,22 @@ export interface Report {
   updatedAt: string;
 }
 
-export interface Block { id: string; blockerId: string; blockedId: string; createdAt: string }
+export interface Block {
+  id: string;
+  blockerId: string;
+  blockedId: string;
+  createdAt: string;
+}
 
 /** Admin price-table edits, applied on top of the built-in example table. */
-export interface PriceOverride { category: string; low: number; high: number; perDay: number; updatedBy: string; updatedAt: string }
+export interface PriceOverride {
+  category: string;
+  low: number;
+  high: number;
+  perDay: number;
+  updatedBy: string;
+  updatedAt: string;
+}
 
 export interface Store {
   /* safety & admin */

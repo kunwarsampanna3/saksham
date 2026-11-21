@@ -68,7 +68,8 @@ function matches(q: string, ...fields: string[]) {
   return words.every((w) => hay.includes(w));
 }
 
-const origin = (city: string): [number, number] | null => (city === "Online" ? null : CITY_COORDS[city] ?? null);
+const origin = (city: string): [number, number] | null =>
+  city === "Online" ? null : (CITY_COORDS[city] ?? null);
 
 /* ---------------------------------------------------------------- tasks */
 /** Card-ready task (shared by Home, Explore and the map). Built on the server from stored tasks. */
@@ -103,27 +104,46 @@ export interface ProviderResult extends ExampleProvider {
 /** `pool`: example providers for demo accounts, real provider accounts for everyone else (see real-providers.ts). */
 export function searchProviders(f: Filters, pool: ExampleProvider[] = EXAMPLE_PROVIDERS): ProviderResult[] {
   const o = origin(f.city);
-  return pool
-    .filter((p) => !f.cat || p.categories.includes(f.cat))
-    .filter((p) => !f.online || p.onlineOk)
-    .filter((p) => !f.women || p.womenLed)
-    .filter((p) => !f.verified || isVerified(p))
-    .filter((p) => !f.max || p.priceMin <= f.max)
-    .filter((p) => matches(f.q, p.name, p.headline.en, p.headline.ne, p.city, p.area, ...p.categories.flatMap((c) => [category(c).en, category(c).ne]), ...p.services.flatMap((s) => [s.en, s.ne])))
-    .map((p) => {
-      const coords = providerCoords(p);
-      const distanceKm = o ? Math.round(haversineKm(o, coords) * 10) / 10 : null;
-      const verified = isVerified(p);
-      const dist = distanceKm === null ? 0.9 : p.onlineOk && distanceKm > 25 ? 0.9 : Math.max(0, 1 - Math.max(0, distanceKm - 2) / 23);
-      const score = 0.4 * (p.rating / 5) + 0.3 * dist + 0.2 * (verified ? 1 : 0) + 0.1 * Math.min(p.jobsDone / 50, 1);
-      return { ...p, coords, distanceKm, verified, score: Math.round(score * 1000) / 1000 };
-    })
-    // Within the radius, or anywhere when the viewer asked for online-capable providers.
-    .filter((p) => !f.radius || p.distanceKm === null || p.distanceKm <= f.radius || f.online)
-    .sort((a, b) => {
-      if (f.sort === "near") return (a.distanceKm ?? 0) - (b.distanceKm ?? 0);
-      if (f.sort === "rating") return b.rating - a.rating || b.ratingCount - a.ratingCount;
-      if (f.sort === "price") return a.priceMin - b.priceMin;
-      return b.score - a.score;
-    });
+  return (
+    pool
+      .filter((p) => !f.cat || p.categories.includes(f.cat))
+      .filter((p) => !f.online || p.onlineOk)
+      .filter((p) => !f.women || p.womenLed)
+      .filter((p) => !f.verified || isVerified(p))
+      .filter((p) => !f.max || p.priceMin <= f.max)
+      .filter((p) =>
+        matches(
+          f.q,
+          p.name,
+          p.headline.en,
+          p.headline.ne,
+          p.city,
+          p.area,
+          ...p.categories.flatMap((c) => [category(c).en, category(c).ne]),
+          ...p.services.flatMap((s) => [s.en, s.ne]),
+        ),
+      )
+      .map((p) => {
+        const coords = providerCoords(p);
+        const distanceKm = o ? Math.round(haversineKm(o, coords) * 10) / 10 : null;
+        const verified = isVerified(p);
+        const dist =
+          distanceKm === null
+            ? 0.9
+            : p.onlineOk && distanceKm > 25
+              ? 0.9
+              : Math.max(0, 1 - Math.max(0, distanceKm - 2) / 23);
+        const score =
+          0.4 * (p.rating / 5) + 0.3 * dist + 0.2 * (verified ? 1 : 0) + 0.1 * Math.min(p.jobsDone / 50, 1);
+        return { ...p, coords, distanceKm, verified, score: Math.round(score * 1000) / 1000 };
+      })
+      // Within the radius, or anywhere when the viewer asked for online-capable providers.
+      .filter((p) => !f.radius || p.distanceKm === null || p.distanceKm <= f.radius || f.online)
+      .sort((a, b) => {
+        if (f.sort === "near") return (a.distanceKm ?? 0) - (b.distanceKm ?? 0);
+        if (f.sort === "rating") return b.rating - a.rating || b.ratingCount - a.ratingCount;
+        if (f.sort === "price") return a.priceMin - b.priceMin;
+        return b.score - a.score;
+      })
+  );
 }

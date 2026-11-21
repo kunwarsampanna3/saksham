@@ -8,7 +8,11 @@ export function LangSwitch({ tone = "default" }: { tone?: "default" | "onDark" }
   const { lang, setLang, t } = useI18n();
   const base = tone === "onDark" ? "border-white/30 text-white" : "border-line-strong text-text";
   return (
-    <div role="group" aria-label={t.lang.label} className={`inline-flex overflow-hidden rounded-md border ${base}`}>
+    <div
+      role="group"
+      aria-label={t.lang.label}
+      className={`inline-flex overflow-hidden rounded-md border ${base}`}
+    >
       {(["ne", "en"] as const).map((l) => (
         <button
           key={l}
@@ -18,7 +22,9 @@ export function LangSwitch({ tone = "default" }: { tone?: "default" | "onDark" }
           onClick={() => lang !== l && setLang(l)}
           className={`min-h-9 px-2.5 text-sm font-semibold transition-colors ${
             lang === l
-              ? tone === "onDark" ? "bg-white text-forest" : "bg-accent text-accent-contrast"
+              ? tone === "onDark"
+                ? "text-forest bg-white"
+                : "bg-accent text-accent-contrast"
               : "hover:bg-accent-soft"
           } ${l === "ne" ? "deva" : ""}`}
         >
@@ -43,7 +49,9 @@ export function ThemeToggle({ tone = "default" }: { tone?: "default" | "onDark" 
       aria-label={label}
       title={label}
       className={`inline-flex h-10 w-10 items-center justify-center rounded-md border transition-colors ${
-        tone === "onDark" ? "border-white/30 text-white hover:bg-white/10" : "border-line-strong text-text hover:border-accent hover:text-accent"
+        tone === "onDark"
+          ? "border-white/30 text-white hover:bg-white/10"
+          : "border-line-strong text-text hover:border-accent hover:text-accent"
       }`}
     >
       <Icon size={18} aria-hidden />

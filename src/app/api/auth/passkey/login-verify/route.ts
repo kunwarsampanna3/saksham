@@ -30,11 +30,18 @@ export async function POST(req: NextRequest) {
       expectedOrigin: origin,
       expectedRPID: rpID,
       requireUserVerification: true,
-      credential: { id: pk.id, publicKey: b64url.decode(pk.publicKey), counter: pk.counter, transports: pk.transports },
+      credential: {
+        id: pk.id,
+        publicKey: b64url.decode(pk.publicKey),
+        counter: pk.counter,
+        transports: pk.transports,
+      },
     });
     if (!v.verified) return fail(401, "passkey_failed");
     await store.updateUser(user.id, {
-      passkeys: user.passkeys.map((p) => (p.id === pk.id ? { ...p, counter: v.authenticationInfo.newCounter } : p)),
+      passkeys: user.passkeys.map((p) =>
+        p.id === pk.id ? { ...p, counter: v.authenticationInfo.newCounter } : p,
+      ),
     });
     await setSessionCookie({ sub: user.id, role: user.activeRole, mpinAt: nowSec() });
     return NextResponse.json({ ok: true, user: toPublicUser(user) });

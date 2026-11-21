@@ -27,7 +27,13 @@ export async function POST(req: NextRequest) {
   const started = Date.now();
   const ai = await aiParseTask(g.data.text, g.data.lang);
   const task = ai ?? keywordParseTask(g.data.text);
-  const range = await fairRangeLive({ category: task.category, days: task.days, quantity: task.quantity, city: g.data.city, online: task.online });
+  const range = await fairRangeLive({
+    category: task.category,
+    days: task.days,
+    quantity: task.quantity,
+    city: g.data.city,
+    online: task.online,
+  });
 
   return NextResponse.json({
     ok: true,

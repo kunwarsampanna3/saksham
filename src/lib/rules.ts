@@ -30,8 +30,15 @@ export function distanceFit(km: number | null): number {
 
 /** Machine-readable reasons so the UI can phrase them in Nepali or English. */
 export type ReasonCode =
-  | { k: "below" } | { k: "within" } | { k: "above" } | { k: "tooLow" }
-  | { k: "rating"; v: number } | { k: "online" } | { k: "near"; v: number } | { k: "verified" } | { k: "jobs"; v: number };
+  | { k: "below" }
+  | { k: "within" }
+  | { k: "above" }
+  | { k: "tooLow" }
+  | { k: "rating"; v: number }
+  | { k: "online" }
+  | { k: "near"; v: number }
+  | { k: "verified" }
+  | { k: "jobs"; v: number };
 
 export interface Ranked<T> {
   bid: T;
@@ -42,7 +49,10 @@ export interface Ranked<T> {
 }
 
 /** score = 0.35 price fit + 0.30 rating/5 + 0.20 distance fit + 0.15 verified */
-export function rankBids<T extends BidForRanking>(bids: T[], range: { low: number; high: number; mid: number }): Ranked<T>[] {
+export function rankBids<T extends BidForRanking>(
+  bids: T[],
+  range: { low: number; high: number; mid: number },
+): Ranked<T>[] {
   return bids
     .map((bid) => {
       const parts = {
@@ -58,7 +68,11 @@ export function rankBids<T extends BidForRanking>(bids: T[], range: { low: numbe
     .sort((a, b) => b.score - a.score || a.bid.amount - b.bid.amount);
 }
 
-function reasonCodes(b: BidForRanking, p: Ranked<BidForRanking>["parts"], range: { low: number; mid: number }): ReasonCode[] {
+function reasonCodes(
+  b: BidForRanking,
+  p: Ranked<BidForRanking>["parts"],
+  range: { low: number; mid: number },
+): ReasonCode[] {
   const r: ReasonCode[] = [];
   if (b.amount < range.low * 0.6) r.push({ k: "tooLow" });
   else if (p.price === 1) r.push(b.amount <= range.mid * 0.9 ? { k: "below" } : { k: "within" });
@@ -75,15 +89,24 @@ function reasonCodes(b: BidForRanking, p: Ranked<BidForRanking>["parts"], range:
 function reasonFor(codes: ReasonCode[]): string {
   const en = codes.map((c) => {
     switch (c.k) {
-      case "below": return "below the fair midpoint";
-      case "within": return "within the fair range";
-      case "above": return "priced above the fair range";
-      case "tooLow": return "unusually low for this job";
-      case "rating": return `rated ${c.v.toFixed(1)}`;
-      case "online": return "online";
-      case "near": return `${c.v.toFixed(1)} km away`;
-      case "verified": return "verified";
-      case "jobs": return `${c.v} jobs done`;
+      case "below":
+        return "below the fair midpoint";
+      case "within":
+        return "within the fair range";
+      case "above":
+        return "priced above the fair range";
+      case "tooLow":
+        return "unusually low for this job";
+      case "rating":
+        return `rated ${c.v.toFixed(1)}`;
+      case "online":
+        return "online";
+      case "near":
+        return `${c.v.toFixed(1)} km away`;
+      case "verified":
+        return "verified";
+      case "jobs":
+        return `${c.v} jobs done`;
     }
   });
   const s = en.join(", ");
@@ -93,7 +116,8 @@ function reasonFor(codes: ReasonCode[]): string {
 /* ------------------------------------------------------------- counters */
 /** A counter-offer is auto-acceptable when within ~7% of the provider's bid. */
 export const COUNTER_TOLERANCE = 0.07;
-export const counterWithinTolerance = (bid: number, counter: number) => counter >= bid * (1 - COUNTER_TOLERANCE);
+export const counterWithinTolerance = (bid: number, counter: number) =>
+  counter >= bid * (1 - COUNTER_TOLERANCE);
 
 /* --------------------------------------------------------------- escrow */
 export type EscrowState = "scheduled" | "held" | "delivered" | "released" | "refunded";
@@ -115,7 +139,11 @@ export function splitPlan(total: number, plan: "full" | "two" | "milestones"): n
 }
 
 /* --------------------------------------------------------------- credit */
-export interface CreditInput { verifiedEarnings: number; completedJobs: number; rating: number }
+export interface CreditInput {
+  verifiedEarnings: number;
+  completedJobs: number;
+  rating: number;
+}
 export interface CreditOffer {
   eligible: boolean;
   limit: number;
@@ -135,14 +163,28 @@ export function creditOffer({ verifiedEarnings, completedJobs, rating }: CreditI
   const base = Math.round((verifiedEarnings * CREDIT_RULES.pct) / 1000) * 1000;
   if (completedJobs < CREDIT_RULES.minJobs) {
     const n = CREDIT_RULES.minJobs - completedJobs;
-    return { eligible: false, limit: 0, full: false, base, jobsNeeded: n, halved: false, capped: false, explain: [`Complete ${n} more job${n === 1 ? "" : "s"} to unlock an offer.`] };
+    return {
+      eligible: false,
+      limit: 0,
+      full: false,
+      base,
+      jobsNeeded: n,
+      halved: false,
+      capped: false,
+      explain: [`Complete ${n} more job${n === 1 ? "" : "s"} to unlock an offer.`],
+    };
   }
-  const explain = [`15% of verified earnings Rs. ${verifiedEarnings.toLocaleString("en-IN")} ≈ Rs. ${base.toLocaleString("en-IN")}`];
+  const explain = [
+    `15% of verified earnings Rs. ${verifiedEarnings.toLocaleString("en-IN")} ≈ Rs. ${base.toLocaleString("en-IN")}`,
+  ];
   const full = rating >= CREDIT_RULES.fullRating;
   let limit = full ? base : Math.round((base * 0.5) / 1000) * 1000;
   if (!full) explain.push(`Rating ${rating.toFixed(1)} is below 4.5, so the offer starts at half`);
   const capped = limit > CREDIT_RULES.cap;
-  if (capped) { limit = CREDIT_RULES.cap; explain.push("Capped at Rs. 100,000"); }
+  if (capped) {
+    limit = CREDIT_RULES.cap;
+    explain.push("Capped at Rs. 100,000");
+  }
   return { eligible: limit > 0, limit, full, base, jobsNeeded: 0, halved: !full, capped, explain };
 }
 

@@ -23,18 +23,37 @@ export default async function ReceiptPage({ params }: { params: Promise<{ id: st
   const client = await store.getUserById(booking.clientId);
   const inst = booking.installments.find((i) => i.id === r.installmentId);
   const k = t.receipt;
-  const when = new Intl.DateTimeFormat(lang === "ne" ? "ne-NP" : "en-GB", { dateStyle: "long", timeStyle: "short", timeZone: "Asia/Kathmandu" }).format(new Date(r.createdAt));
+  const when = new Intl.DateTimeFormat(lang === "ne" ? "ne-NP" : "en-GB", {
+    dateStyle: "long",
+    timeStyle: "short",
+    timeZone: "Asia/Kathmandu",
+  }).format(new Date(r.createdAt));
   const rows: [string, string][] = [
     [k.no, r.receiptNo],
     [k.date, when],
     [k.type, t.payments.receiptKinds[r.kind]],
     [k.task, `${task?.title ?? ""}${inst ? ` — ${t.booking.labels[inst.label]} (${inst.pct}%)` : ""}`],
-    [k.from, r.kind === "refund" ? "Saksham escrow" : r.kind === "release" ? "Saksham escrow" : client?.name ?? ""],
-    [k.to, r.kind === "release" ? booking.providerName : r.kind === "refund" ? client?.name ?? "" : "Saksham escrow"],
+    [
+      k.from,
+      r.kind === "refund" ? "Saksham escrow" : r.kind === "release" ? "Saksham escrow" : (client?.name ?? ""),
+    ],
+    [
+      k.to,
+      r.kind === "release"
+        ? booking.providerName
+        : r.kind === "refund"
+          ? (client?.name ?? "")
+          : "Saksham escrow",
+    ],
     [k.method, t.booking.methods[r.method]],
     [k.ref, r.ref],
     [k.amount, rs(r.amount, lang)],
-    ...(r.kind === "release" ? ([[k.fee, rs(r.fee, lang)], [k.net, rs(r.amount - r.fee, lang)]] as [string, string][]) : []),
+    ...(r.kind === "release"
+      ? ([
+          [k.fee, rs(r.fee, lang)],
+          [k.net, rs(r.amount - r.fee, lang)],
+        ] as [string, string][])
+      : []),
   ];
 
   return (
@@ -46,16 +65,20 @@ export default async function ReceiptPage({ params }: { params: Promise<{ id: st
             <span className="demo-tag">{t.common.sandbox}</span>
           </div>
           <h1 className="font-display mt-6 text-3xl font-extrabold">{k.title}</h1>
-          <dl className="mt-5 divide-y divide-line border-y border-line">
+          <dl className="divide-line border-line mt-5 divide-y border-y">
             {rows.map(([dt, dd]) => (
               <div key={dt} className="grid grid-cols-[10rem_1fr] gap-3 py-2.5 text-[0.95rem]">
                 <dt className="text-muted">{dt}</dt>
-                <dd className={dt === k.amount ? "font-display text-xl font-extrabold" : "font-semibold"}>{dd}</dd>
+                <dd className={dt === k.amount ? "font-display text-xl font-extrabold" : "font-semibold"}>
+                  {dd}
+                </dd>
               </div>
             ))}
           </dl>
-          <p className="mt-5 text-xs font-semibold text-muted">{k.sandbox}</p>
-          <div className="mt-6 print:hidden"><PrintButton label={k.print} /></div>
+          <p className="text-muted mt-5 text-xs font-semibold">{k.sandbox}</p>
+          <div className="mt-6 print:hidden">
+            <PrintButton label={k.print} />
+          </div>
         </div>
       </article>
     </div>

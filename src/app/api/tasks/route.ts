@@ -21,7 +21,10 @@ const Body = z.object({
   online: z.boolean(),
   womenOnly: z.boolean(),
   budget: z.number().int().min(100, "budget").max(1_000_000, "budget").nullable(),
-  dueDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  dueDate: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/)
+    .optional(),
   flexible: z.boolean(),
   family: z.object({ country: z.enum(ABROAD_COUNTRIES), familyName: z.string().max(60) }).optional(),
   aiSource: z.enum(["ai", "fallback", "manual"]),
@@ -37,7 +40,10 @@ export async function POST(req: NextRequest) {
   if (!rl.ok) return fail(429, "rate_limited", { retryAfter: rl.retryAfter });
 
   const d = g.data;
-  if (d.dueDate && (d.dueDate < today() || d.dueDate > new Date(Date.now() + 365 * 86_400_000).toISOString().slice(0, 10))) {
+  if (
+    d.dueDate &&
+    (d.dueDate < today() || d.dueDate > new Date(Date.now() + 365 * 86_400_000).toISOString().slice(0, 10))
+  ) {
     return fail(422, "due_date", { field: "dueDate" });
   }
   if (!d.online && d.city !== "Online" && d.area && !areasFor(d.city).some((a) => a.name === d.area)) {
@@ -47,10 +53,21 @@ export async function POST(req: NextRequest) {
   if (title.length < 3) return fail(422, "title", { field: "title" });
 
   const task = await createTask(user, {
-    category: d.category, title, details: cleanText(d.details, 2000), quantity: d.quantity, days: d.days,
-    city: d.city, area: d.area, online: d.online, womenOnly: d.womenOnly, budget: d.budget,
-    dueDate: d.dueDate, flexible: d.flexible,
-    forFamilyAbroad: d.family ? { country: d.family.country, familyName: cleanText(d.family.familyName, 60) } : undefined,
+    category: d.category,
+    title,
+    details: cleanText(d.details, 2000),
+    quantity: d.quantity,
+    days: d.days,
+    city: d.city,
+    area: d.area,
+    online: d.online,
+    womenOnly: d.womenOnly,
+    budget: d.budget,
+    dueDate: d.dueDate,
+    flexible: d.flexible,
+    forFamilyAbroad: d.family
+      ? { country: d.family.country, familyName: cleanText(d.family.familyName, 60) }
+      : undefined,
     aiSource: d.aiSource,
   });
   return NextResponse.json({ ok: true, id: task.id });

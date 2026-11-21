@@ -11,7 +11,9 @@ export default async function HomeLayout({ children }: { children: React.ReactNo
   return (
     <>
       {user ? <Header /> : <PublicHeader t={t} />}
-      <main id="main" tabIndex={-1} className="outline-none">{children}</main>
+      <main id="main" tabIndex={-1} className="outline-none">
+        {children}
+      </main>
       <Footer />
       {user && <Assistant />}
     </>

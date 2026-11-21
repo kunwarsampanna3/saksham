@@ -23,26 +23,45 @@ export default async function Professionals({ searchParams }: { searchParams: SP
 
   return (
     <div>
-      <div className="relative overflow-hidden border-b border-line">
+      <div className="border-line relative overflow-hidden border-b">
         <Contours seed={45} centers={1} rings={8} />
-        <span lang="ne" aria-hidden className="deva-giant absolute -right-4 top-2 text-[7rem] sm:text-[11rem]">सीप</span>
-        <div className="relative mx-auto max-w-[88rem] px-4 pb-6 pt-10 sm:px-6">
+        <span
+          lang="ne"
+          aria-hidden
+          className="deva-giant absolute top-2 -right-4 text-[7rem] sm:text-[11rem]"
+        >
+          सीप
+        </span>
+        <div className="relative mx-auto max-w-[88rem] px-4 pt-10 pb-6 sm:px-6">
           <h1 className="font-display text-4xl font-extrabold sm:text-5xl">{p.title}</h1>
-          <p className="mt-2 max-w-2xl text-lg text-muted">{p.lead}</p>
+          <p className="text-muted mt-2 max-w-2xl text-lg">{p.lead}</p>
 
-          <section aria-labelledby="bid-h" className="mt-6 flex flex-col gap-4 rounded-[6px] border border-line bg-surface p-5 lg:flex-row lg:items-center lg:justify-between">
+          <section
+            aria-labelledby="bid-h"
+            className="border-line bg-surface mt-6 flex flex-col gap-4 rounded-[6px] border p-5 lg:flex-row lg:items-center lg:justify-between"
+          >
             <div>
-              <h2 id="bid-h" className="font-display flex items-center gap-2 text-xl font-bold"><Gavel size={20} aria-hidden className="text-accent" /> {p.bidTitle}</h2>
-              <p className="mt-1 max-w-2xl text-muted">{p.bidLead}</p>
+              <h2 id="bid-h" className="font-display flex items-center gap-2 text-xl font-bold">
+                <Gavel size={20} aria-hidden className="text-accent" /> {p.bidTitle}
+              </h2>
+              <p className="text-muted mt-1 max-w-2xl">{p.bidLead}</p>
               <ol className="mt-3 flex flex-wrap gap-x-5 gap-y-2 text-sm font-semibold">
                 {p.bidSteps.map((s, i) => (
                   <li key={s} className="inline-flex items-center gap-2">
-                    <span className="grid h-6 w-6 place-items-center rounded-full bg-accent text-xs text-accent-contrast" aria-hidden>{i + 1}</span>{s}
+                    <span
+                      className="bg-accent text-accent-contrast grid h-6 w-6 place-items-center rounded-full text-xs"
+                      aria-hidden
+                    >
+                      {i + 1}
+                    </span>
+                    {s}
                   </li>
                 ))}
               </ol>
             </div>
-            <Link href="/post" className="btn btn-primary shrink-0"><Plus size={18} aria-hidden /> {p.bidCta}</Link>
+            <Link href="/post" className="btn btn-primary shrink-0">
+              <Plus size={18} aria-hidden /> {p.bidCta}
+            </Link>
           </section>
 
           <div className="mt-6">
@@ -54,13 +73,28 @@ export default async function Professionals({ searchParams }: { searchParams: SP
         <ResultsLayout
           t={t}
           count={t.explore.count(pros.length, t.explore.prosWord)}
-          pins={pros.map((x) => ({ id: x.id, lat: x.coords[0], lng: x.coords[1], kind: "provider" as const, label: x.name, sub: `${x.area}, ${x.city}`, href: `/profile/${x.id}` }))}
+          pins={pros.map((x) => ({
+            id: x.id,
+            lat: x.coords[0],
+            lng: x.coords[1],
+            kind: "provider" as const,
+            label: x.name,
+            sub: `${x.area}, ${x.city}`,
+            href: `/profile/${x.id}`,
+          }))}
           emptyHref="/professionals"
-          note={`${user.isDemo ? t.browse.exampleNote : ""} ${f.sort === "best" ? t.explore.bestReason : ""}`.trim() || undefined}
+          note={
+            `${user.isDemo ? t.browse.exampleNote : ""} ${f.sort === "best" ? t.explore.bestReason : ""}`.trim() ||
+            undefined
+          }
         >
           {pros.length ? (
             <ul className="grid gap-4 sm:grid-cols-2">
-              {pros.map((x) => <li key={x.id}><ProviderCard p={x} t={t} lang={lang} /></li>)}
+              {pros.map((x) => (
+                <li key={x.id}>
+                  <ProviderCard p={x} t={t} lang={lang} />
+                </li>
+              ))}
             </ul>
           ) : null}
         </ResultsLayout>

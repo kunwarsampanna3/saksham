@@ -16,20 +16,40 @@ export default async function LocationPage() {
 
   const pins: Pin[] = [
     ...(await openTasksFor(user)).flatMap((x) =>
-      x.coords ? [{ id: x.id, lat: x.coords[0], lng: x.coords[1], kind: "task" as const, label: x.title[lang], href: `/task/${x.id}` }] : []),
+      x.coords
+        ? [
+            {
+              id: x.id,
+              lat: x.coords[0],
+              lng: x.coords[1],
+              kind: "task" as const,
+              label: x.title[lang],
+              href: `/task/${x.id}`,
+            },
+          ]
+        : [],
+    ),
     ...(user.isDemo ? EXAMPLE_PROVIDERS : await realProviders()).map((p) => {
       const c = providerCoords(p);
-      return { id: p.id, lat: c[0], lng: c[1], kind: "provider" as const, label: p.name, sub: p.area ? `${p.area}, ${p.city}` : p.city, href: `/profile/${p.id}` };
+      return {
+        id: p.id,
+        lat: c[0],
+        lng: c[1],
+        kind: "provider" as const,
+        label: p.name,
+        sub: p.area ? `${p.area}, ${p.city}` : p.city,
+        href: `/profile/${p.id}`,
+      };
     }),
   ];
 
   return (
     <div>
-      <div className="relative overflow-hidden border-b border-line">
+      <div className="border-line relative overflow-hidden border-b">
         <Contours seed={63} centers={1} rings={9} />
-        <div className="relative mx-auto max-w-[88rem] px-4 pb-8 pt-10 sm:px-6">
+        <div className="relative mx-auto max-w-[88rem] px-4 pt-10 pb-8 sm:px-6">
           <h1 className="font-display text-4xl font-extrabold sm:text-5xl">{l.title}</h1>
-          <p className="mt-2 max-w-2xl text-lg text-muted">{l.lead}</p>
+          <p className="text-muted mt-2 max-w-2xl text-lg">{l.lead}</p>
         </div>
       </div>
       <div className="mx-auto max-w-[88rem] px-4 py-10 sm:px-6">

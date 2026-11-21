@@ -12,7 +12,13 @@ export function MapPanel({ pins }: { pins: Pin[] }) {
   const [open, setOpen] = useState(false);
   return (
     <div className="lg:sticky lg:top-[calc(var(--header-h)+16px)]">
-      <button type="button" className="btn btn-ghost !min-h-11 w-full lg:hidden" aria-expanded={open} aria-controls="results-map" onClick={() => setOpen((o) => !o)}>
+      <button
+        type="button"
+        className="btn btn-ghost !min-h-11 w-full lg:hidden"
+        aria-expanded={open}
+        aria-controls="results-map"
+        onClick={() => setOpen((o) => !o)}
+      >
         {open ? <List size={17} aria-hidden /> : <MapIcon size={17} aria-hidden />} {open ? e.list : e.map}
       </button>
       <div id="results-map" className={`${open ? "block" : "hidden"} mt-3 lg:mt-0 lg:block`}>
@@ -21,7 +27,7 @@ export function MapPanel({ pins }: { pins: Pin[] }) {
             <NepalMap pins={pins} label={e.mapLabel} />
           </div>
         </div>
-        <p className="mt-2 text-xs text-muted">{e.mapNote}</p>
+        <p className="text-muted mt-2 text-xs">{e.mapNote}</p>
       </div>
     </div>
   );

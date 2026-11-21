@@ -8,5 +8,8 @@ export const dynamic = "force-dynamic";
 export async function GET() {
   const user = await currentUser();
   if (!user) return fail(401, "signed_out");
-  return NextResponse.json({ ok: true, status: await statusFor(user) }, { headers: { "Cache-Control": "private, no-store" } });
+  return NextResponse.json(
+    { ok: true, status: await statusFor(user) },
+    { headers: { "Cache-Control": "private, no-store" } },
+  );
 }

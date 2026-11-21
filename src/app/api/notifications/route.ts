@@ -12,12 +12,23 @@ export async function GET() {
   const user = await currentUser();
   if (!user) return fail(401, "signed_out");
   const all = (await store.listNotifications(user.id)).sort((a, b) => b.createdAt.localeCompare(a.createdAt));
-  return NextResponse.json({
-    ok: true,
-    unread: all.filter((n) => !n.readAt).length,
-    messages: await unreadMessages(user),
-    items: all.slice(0, 15).map((n) => ({ id: n.id, kind: n.kind, code: n.code, params: n.params, href: n.href, read: !!n.readAt, at: n.createdAt })),
-  }, { headers: { "Cache-Control": "private, no-store" } });
+  return NextResponse.json(
+    {
+      ok: true,
+      unread: all.filter((n) => !n.readAt).length,
+      messages: await unreadMessages(user),
+      items: all.slice(0, 15).map((n) => ({
+        id: n.id,
+        kind: n.kind,
+        code: n.code,
+        params: n.params,
+        href: n.href,
+        read: !!n.readAt,
+        at: n.createdAt,
+      })),
+    },
+    { headers: { "Cache-Control": "private, no-store" } },
+  );
 }
 
 const Body = z.object({ action: z.literal("read_all") });
@@ -28,6 +39,7 @@ export async function POST(req: NextRequest) {
   const user = await currentUser();
   if (!user) return fail(401, "signed_out");
   const t = new Date().toISOString();
-  for (const n of await store.listNotifications(user.id)) if (!n.readAt) await store.putNotification({ ...n, readAt: t });
+  for (const n of await store.listNotifications(user.id))
+    if (!n.readAt) await store.putNotification({ ...n, readAt: t });
   return NextResponse.json({ ok: true });
 }

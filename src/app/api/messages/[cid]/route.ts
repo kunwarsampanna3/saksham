@@ -15,21 +15,36 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ cid
   const { user, conv } = l;
   await markRead(conv, user);
   const [msgs, other, task, allowed] = await Promise.all([
-    store.listMessages(conv.id), store.getUserById(otherParty(conv, user)), conv.taskId ? store.getTask(conv.taskId) : null, contactsAllowed(conv),
+    store.listMessages(conv.id),
+    store.getUserById(otherParty(conv, user)),
+    conv.taskId ? store.getTask(conv.taskId) : null,
+    contactsAllowed(conv),
   ]);
   const otherSeen = (m: { readBy: string[] }) => !!other && m.readBy.includes(other.id);
-  return NextResponse.json({
-    ok: true,
-    other: { name: other?.name ?? "—", verified: !!other?.verified },
-    task: task ? { id: task.id, title: task.title, status: task.status } : null,
-    contactsAllowed: allowed,
-    blocked: await isBlocked(conv.clientId, conv.providerId),
-    messages: msgs.sort((a, b) => a.createdAt.localeCompare(b.createdAt)).map((m) => ({
-      id: m.id, kind: m.kind, body: m.body, system: m.system ?? null, mine: m.senderId === user.id,
-      file: m.file ? { url: `/api/messages/${conv.id}/file/${m.id}`, durationSec: m.file.durationSec ?? null } : null,
-      seen: m.senderId === user.id ? otherSeen(m) : true, at: m.createdAt,
-    })),
-  }, { headers: { "Cache-Control": "private, no-store" } });
+  return NextResponse.json(
+    {
+      ok: true,
+      other: { name: other?.name ?? "—", verified: !!other?.verified },
+      task: task ? { id: task.id, title: task.title, status: task.status } : null,
+      contactsAllowed: allowed,
+      blocked: await isBlocked(conv.clientId, conv.providerId),
+      messages: msgs
+        .sort((a, b) => a.createdAt.localeCompare(b.createdAt))
+        .map((m) => ({
+          id: m.id,
+          kind: m.kind,
+          body: m.body,
+          system: m.system ?? null,
+          mine: m.senderId === user.id,
+          file: m.file
+            ? { url: `/api/messages/${conv.id}/file/${m.id}`, durationSec: m.file.durationSec ?? null }
+            : null,
+          seen: m.senderId === user.id ? otherSeen(m) : true,
+          at: m.createdAt,
+        })),
+    },
+    { headers: { "Cache-Control": "private, no-store" } },
+  );
 }
 
 const Body = z.object({ body: z.string().min(1).max(2000) });

@@ -11,7 +11,7 @@ export default async function MessagesPage() {
   return (
     <div className="mx-auto max-w-[88rem] px-4 py-6 sm:px-6">
       <h1 className="font-display text-3xl font-extrabold sm:text-4xl">{t.msg.title}</h1>
-      <p className="mb-5 mt-1 text-muted">{t.msg.lead}</p>
+      <p className="text-muted mt-1 mb-5">{t.msg.lead}</p>
       <Suspense fallback={<p className="text-muted">{t.common.loading}</p>}>
         <Chat />
       </Suspense>

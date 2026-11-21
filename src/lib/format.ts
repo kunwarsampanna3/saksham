@@ -22,12 +22,20 @@ const MONTHS = {
  * Accepts "YYYY-MM-DD" or a full ISO timestamp.
  */
 export function npDate(value: string, lang: Lang, opts: { year?: boolean; time?: boolean } = {}): string {
-  let y: number, m: number, d: number, hh = 0, mm = 0;
+  let y: number,
+    m: number,
+    d: number,
+    hh = 0,
+    mm = 0;
   if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
     [y, m, d] = value.split("-").map(Number);
   } else {
     const t = new Date(new Date(value).getTime() + (5 * 60 + 45) * 60_000);
-    y = t.getUTCFullYear(); m = t.getUTCMonth() + 1; d = t.getUTCDate(); hh = t.getUTCHours(); mm = t.getUTCMinutes();
+    y = t.getUTCFullYear();
+    m = t.getUTCMonth() + 1;
+    d = t.getUTCDate();
+    hh = t.getUTCHours();
+    mm = t.getUTCMinutes();
   }
   const time = opts.time ? `, ${String(hh).padStart(2, "0")}:${String(mm).padStart(2, "0")}` : "";
   const s = `${d} ${MONTHS[lang][m - 1]}${opts.year === false ? "" : ` ${y}`}${time}`;
@@ -37,3 +45,14 @@ export function npDate(value: string, lang: Lang, opts: { year?: boolean; time?:
 /** EXAMPLE exchange rate, always labelled as such on screen. Not a live rate. */
 export const EXAMPLE_USD_RATE = 133;
 export const approxUsd = (npr: number) => Math.round(npr / EXAMPLE_USD_RATE);
+
+/** Up to two capital letters from a person's name, e.g. "Sita Sharma" → "SS". */
+export function initials(name: string): string {
+  return name
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((part) => part[0])
+    .slice(0, 2)
+    .join("")
+    .toUpperCase();
+}
