@@ -1,7 +1,8 @@
 import "server-only";
 import { randomUUID } from "node:crypto";
 import { store } from "@/lib/store";
-import type { AbroadJob, Booking, Task, User } from "@/lib/store/types";
+import type { AbroadJob, Booking, PostPayment, Task, User } from "@/lib/store/types";
+import { postPhase } from "@/lib/business";
 import type { JobCountry } from "@/lib/geo";
 import type { CategoryId } from "@/lib/pricing";
 import { jobProgress, type JobProgress } from "@/lib/abroad-state";
@@ -44,11 +45,12 @@ export async function progressOf(job: AbroadJob): Promise<JobProgress> {
 /** Demo accounts and real accounts never see each other's jobs. */
 export const canSeeJob = (job: AbroadJob, viewer: User) => job.isDemo === viewer.isDemo;
 
-export async function postJob(user: User, input: NewJob): Promise<AbroadJob> {
+export async function postJob(user: User, input: NewJob, post: PostPayment): Promise<AbroadJob> {
   if (!user.roles.includes("client")) throw new RuleError("client_only", 403);
   const title = maskContacts(input.title).text;
   return store.putAbroadJob({
     ...input,
+    post,
     id: randomUUID(),
     clientId: user.id,
     clientName: user.name,
@@ -116,7 +118,7 @@ export async function declineApplication(job: AbroadJob, user: User, application
   return saved;
 }
 
-/** Hire one applicant and pay their whole pay into escrow by Visa (sandbox). */
+/** Hire one applicant and pay their 50% advance by Visa (sandbox). */
 export async function hire(job: AbroadJob, user: User, applicationId: string) {
   if (job.clientId !== user.id) throw new RuleError("forbidden", 403);
   if ((await progressOf(job)).state !== "open") throw new RuleError("not_open");
@@ -126,8 +128,8 @@ export async function hire(job: AbroadJob, user: User, applicationId: string) {
   if (kyc.id.status !== "verified" || kyc.selfie.status !== "verified")
     throw new RuleError("kyc_required", 403);
   const worker = await store.getUserById(a.userId);
-  // They may have replaced their ID or blocked the recruiter since applying.
-  if (!worker?.verified) throw new RuleError("worker_unverified");
+  // They may have replaced their ID, been suspended or blocked the recruiter since applying.
+  if (!worker?.verified || worker.suspended) throw new RuleError("worker_unverified");
   if (await isBlocked(user.id, worker.id)) throw new RuleError("blocked", 403);
 
   const at = now();
@@ -175,7 +177,7 @@ export async function hire(job: AbroadJob, user: User, applicationId: string) {
     createdAt: at,
     updatedAt: at,
   });
-  const booking = await createBooking(task, user, "full", "card_sandbox");
+  const booking = await createBooking(task, user, "card_sandbox");
   const saved = await store.putAbroadJob({
     ...job,
     applications: job.applications.map((x) => (x.id === a.id ? { ...x, status: "hired", taskId } : x)),
@@ -199,9 +201,12 @@ export async function closeJob(job: AbroadJob, user: User) {
 export async function reopenJob(job: AbroadJob, user: User) {
   if (job.clientId !== user.id) throw new RuleError("forbidden", 403);
   const p = await progressOf(job);
-  if (p.state === "open" || p.seatsLeft === 0) throw new RuleError("cannot_reopen");
+  if (p.state === "open" || p.seatsLeft === 0 || !canReopen(job)) throw new RuleError("cannot_reopen");
   return store.putAbroadJob({ ...job, closedAt: undefined, reopenedAtDone: p.done, updatedAt: now() });
 }
+
+/** Reopening is for the days that were paid for. It is not a way to post again for free. */
+export const canReopen = (job: AbroadJob) => !job.removed && postPhase(job.post) !== "expired";
 
 /* ------------------------------------------------------------------ reading */
 
@@ -218,13 +223,20 @@ async function visibleJobs(viewer: User): Promise<JobView[]> {
 export async function boardFor(viewer: User, country?: string) {
   const all = await visibleJobs(viewer);
   return {
-    open: all.filter((v) => v.state === "open" && (!country || v.job.country === country)),
+    open: await withoutSuspended(
+      all.filter((v) => v.state === "open" && (!country || v.job.country === country)),
+    ),
     mine: all.filter(
       (v) =>
         v.job.clientId === viewer.id ||
         v.job.applications.some((a) => a.userId === viewer.id && a.status !== "withdrawn"),
     ),
   };
+}
+
+async function withoutSuspended(views: JobView[]) {
+  const owners = await Promise.all(views.map((v) => store.getUserById(v.job.clientId)));
+  return views.filter((_, i) => !owners[i]?.suspended);
 }
 
 export interface WorkRecord {

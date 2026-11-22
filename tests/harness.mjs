@@ -21,6 +21,14 @@ const SECRET = randomBytes(48).toString("hex");
 const iso = (ms = Date.now()) => new Date(ms).toISOString();
 let fakeIp = 0;
 
+/** The posting fee payment that goes with a new post. */
+export const postFor = (days = 3) => ({
+  requestId: randomUUID(),
+  days,
+  fee: days === 3 ? 1000 : 4000,
+  method: "esewa_sandbox",
+});
+
 function seed() {
   const users = [];
   const verifications = [];
@@ -115,6 +123,8 @@ export class App {
         RENDER: "",
         OWNER_PHONES: "",
         ANTHROPIC_API_KEY: "",
+        ANTHROPIC_BASE_URL: "",
+        AI_DAILY_LIMIT: "",
         NEXT_PUBLIC_SUPABASE_URL: "",
         SUPABASE_SERVICE_ROLE_KEY: "",
         RESEND_API_KEY: "",
@@ -137,7 +147,7 @@ export class App {
   }
 
   async stop() {
-    if (!this.server || this.server.exitCode !== null) return;
+    if (!this.server || this.server.exitCode !== null || this.server.signalCode !== null) return;
     const exited = new Promise((resolve) => this.server.once("exit", resolve));
     this.server.kill();
     await exited;
@@ -214,6 +224,7 @@ export class App {
         budget,
         flexible: true,
         aiSource: "manual",
+        post: postFor(),
       },
       who,
     );
@@ -229,23 +240,62 @@ export class App {
     return this.call(`/api/tasks/${task}/bids/${bid}`, body, who);
   }
 
-  async booking(plan = "milestones", amount = 5000) {
-    const task = await this.task();
+  async booking(amount = 5000) {
+    return this.book(await this.task(), amount);
+  }
+
+  /** Offer, accept, pay the 50% advance. */
+  async book(task, amount = 5000) {
     const bid = (await this.offer(task, amount)).json.id;
     await this.act(task, bid, { action: "accept", amount });
-    const r = await this.call("/api/bookings", { taskId: task, plan, method: "esewa_sandbox" }, this.client);
+    const r = await this.call("/api/bookings", { taskId: task, method: "esewa_sandbox" }, this.client);
     if (r.status !== 200) throw new Error(`booking: ${r.status} ${r.text.slice(0, 200)}`);
-    const { installments } = this.db().bookings.find((b) => b.id === r.json.id);
-    return { id: r.json.id, task, installments };
+    return { task, ...this.steps(r.json.id) };
+  }
+
+  /** What can happen to a booking, in order. */
+  steps(id, client = this.client, pro = this.pro) {
+    const { installments } = this.db().bookings.find((b) => b.id === id);
+    const last = installments.at(-1).id;
+    const call = (body, who) => this.call(`/api/bookings/${id}`, body, who);
+    const steps = {
+      id,
+      installments,
+      half: () => call({ action: "half" }, pro),
+      second: () => call({ action: "second" }, client),
+      deliver: () => call({ action: "deliver", installmentId: last }, pro),
+      release: () => call({ action: "release", installmentId: last }, client),
+      finish: async () => {
+        for (const step of ["half", "second", "deliver", "release"]) {
+          const r = await steps[step]();
+          if (r.status !== 200) throw new Error(`${step}: ${r.status} ${r.text.slice(0, 200)}`);
+        }
+      },
+    };
+    return steps;
+  }
+
+  /** Change the saved data while the server is off. */
+  async restartWith(change) {
+    await this.stop();
+    const db = this.db();
+    change(db);
+    fs.writeFileSync(this.dbFile, JSON.stringify(db));
+    await this.start();
+  }
+
+  /** Signed in, but the MPIN was entered over five minutes ago. */
+  staleCookie(key) {
+    return this.legacyCookie(key, 600);
   }
 
   /** A session cookie in the format used before sessions had ids. */
-  legacyCookie(key) {
+  legacyCookie(key, mpinAgeSec = 0) {
     const enc = (o) => Buffer.from(JSON.stringify(o)).toString("base64url");
     const now = Math.floor(Date.now() / 1000);
     const claims = {
       role: "client",
-      mpinAt: now,
+      mpinAt: now - mpinAgeSec,
       sub: this.users[key].id,
       iat: now,
       iss: "saksham",

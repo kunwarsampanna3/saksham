@@ -6,6 +6,8 @@ import { CreditCard, Send } from "lucide-react";
 import { postJson, useI18n } from "@/components/providers";
 import { PaySheet, type PayResult } from "@/components/pay/pay-sheet";
 import { num, rs } from "@/lib/format";
+import { splitAdvance } from "@/lib/business";
+import { jobPayment } from "@/components/pay/job-money";
 
 function useJobAction(jobId: string) {
   const { t } = useI18n();
@@ -163,8 +165,9 @@ export function HireButton({
         <PaySheet
           method="card_sandbox"
           methodLabel={j.visa}
-          amount={amount}
-          amountText={rs(amount, lang)}
+          amount={splitAdvance(amount).firstPayment}
+          amountText={rs(splitAdvance(amount).firstPayment, lang)}
+          details={jobPayment("first", { t, lang, total: amount, task: title, name: workerName })}
           installment={{ seq: 1, of: 1 }}
           headline={j.seats(num(opened.seq, lang), num(opened.of, lang))}
           taskTitle={title}

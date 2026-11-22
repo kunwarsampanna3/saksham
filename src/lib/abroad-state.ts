@@ -1,7 +1,8 @@
 import type { AbroadJob, Booking } from "@/lib/store/types";
+import { postPhase } from "@/lib/business";
 
-/** open: listed. filled, completed and closed: off the list, still on both profiles. */
-export type JobState = "open" | "filled" | "completed" | "closed";
+/** open: listed. Everything else: off the list, still on both profiles. */
+export type JobState = "open" | "filled" | "completed" | "closed" | "expired" | "removed";
 
 export interface JobProgress {
   state: JobState;
@@ -35,10 +36,14 @@ export function jobProgress(
   const state: JobState =
     finished && (seatsLeft === 0 || done > (job.reopenedAtDone ?? 0))
       ? "completed"
-      : job.closedAt
-        ? "closed"
-        : seatsLeft === 0
-          ? "filled"
-          : "open";
+      : job.removed
+        ? "removed"
+        : job.closedAt
+          ? "closed"
+          : seatsLeft === 0
+            ? "filled"
+            : postPhase(job.post) === "expired"
+              ? "expired"
+              : "open";
   return { state, hired, done, seatsLeft };
 }

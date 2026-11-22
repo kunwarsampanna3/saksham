@@ -5,6 +5,7 @@ import { category, type CategoryId } from "@/lib/pricing";
 import { haversineKm } from "@/lib/geo";
 import { ensureExampleTasks, sameWorld, taskCoords } from "@/lib/tasks";
 import { matchesQuery, originFor, type Filters, type TaskResult } from "@/lib/search";
+import { asOfNow } from "@/lib/post-state";
 
 /** Open tasks the viewer may see, as cards. Women-only requests appear only to women providers (and their owner). */
 export async function openTasksFor(viewer: User): Promise<TaskResult[]> {
@@ -13,10 +14,11 @@ export async function openTasksFor(viewer: User): Promise<TaskResult[]> {
   const now = Date.now();
   const demoCache = new Map<string, boolean>();
   const open = (await store.listTasks()).filter(
-    (t) => t.status === "open" && (!t.womenOnly || women || t.clientId === viewer.id),
+    (t) => asOfNow(t).status === "open" && (!t.womenOnly || women || t.clientId === viewer.id),
   );
   const seen = await Promise.all(open.map((t) => sameWorld(t, viewer, demoCache)));
-  const tasks = open.filter((_, i) => seen[i]);
+  const owners = await Promise.all(open.map((t) => (t.clientId ? store.getUserById(t.clientId) : null)));
+  const tasks = open.filter((_, i) => seen[i] && !owners[i]?.suspended);
   return Promise.all(
     tasks.map(async (t) =>
       toResult(

@@ -9,7 +9,7 @@ const Body = z.object({ mpin: mpinSchema });
 
 /** Re-enter MPIN before a payment (required after 5 minutes idle). Shares the lockout counter with login. */
 export async function POST(req: NextRequest) {
-  const g = await guard(req, { name: "reauth", schema: Body, limit: 10 });
+  const g = await guard(req, { name: "reauth", schema: Body, evenWhenPaused: true, limit: 10 });
   if ("res" in g) return g.res;
   const s = await getSession();
   if (!s) return fail(401, "signed_out");

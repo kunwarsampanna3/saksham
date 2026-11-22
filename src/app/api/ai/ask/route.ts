@@ -20,8 +20,8 @@ const FALLBACK = {
 const FAQ: { re: RegExp; en: string; ne: string }[] = [
   {
     re: /escrow|एस्क्रो|hold|safe pay/i,
-    en: "When you book, your payment goes into escrow (sandbox in this demo). The applicant sees it's secured, does the work, and you release it when you're happy. You can pay in full, in two halves, or 30-40-30.",
-    ne: "बुक गर्दा तपाईंको भुक्तानी एस्क्रोमा बस्छ (यो डेमोमा स्यान्डबक्स)। काम चित्तबुझ्दो भएपछि मात्र तपाईं रकम छोड्नुहुन्छ। पूरा, दुई भाग वा ३०-४०-३० मा तिर्न सकिन्छ।",
+    en: "When you hire you pay 50% (sandbox in this demo): the applicant gets 30% and Saksham holds 20%. When they report half the work done, you pay the other 50% and they get 30% more. They get the last 40% when you approve.",
+    ne: "काममा लिँदा ५०% तिर्नुहुन्छ (यो डेमोमा स्यान्डबक्स): आवेदकले ३०% पाउँछन्, २०% सक्षमसँग रहन्छ। आधा काम सकिएपछि बाँकी ५०% तिर्नुहुन्छ र उनीहरू थप ३०% पाउँछन्। स्वीकृत गरेपछि अन्तिम ४०% पाउँछन्।",
   },
   {
     re: /fair|price|range|मूल्य|दायरा/i,
@@ -45,7 +45,7 @@ const FAQ: { re: RegExp; en: string; ne: string }[] = [
   },
   {
     re: /abroad|family|विदेश|परिवार/i,
-    en: "Hire from abroad has two options. For family in Nepal: describe the job, pay into escrow and share a private link so they confirm. Hire Nepalis abroad: post how many workers you need and pay each by Visa into escrow when you hire.",
+    en: "Hire from abroad has two options. For family in Nepal: describe the job, pay into escrow and share a private link so they confirm. Hire Nepalis abroad: post how many workers you need and pay each by Visa, 50% when you hire and 50% at half work.",
     ne: "'विदेशबाट काम लगाउनुहोस्' मा दुई विकल्प छन्। नेपालको परिवारका लागि: काम लेख्नुहोस्, एस्क्रोमा तिर्नुहोस् र पुष्टि गर्ने लिंक पठाउनुहोस्। विदेशमा रहेका नेपालीका लागि: कति जना चाहिन्छ राख्नुहोस्, र लिँदा Visa बाट एस्क्रोमा तिर्नुहोस्।",
   },
 ];

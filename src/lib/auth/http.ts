@@ -3,7 +3,12 @@ import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
 import { config } from "@/lib/config";
 import { rateLimit } from "./rate-limit";
+import type { User } from "@/lib/store/types";
 import { getSession } from "./session";
+import { currentUser } from "./current-user";
+import { failBlocked } from "./blocked";
+import { siteBlock } from "@/lib/controls";
+import { visitorKey } from "@/lib/visitor";
 
 export type ApiError = {
   ok: false;
@@ -41,14 +46,27 @@ export function sameOrigin(req: NextRequest): boolean {
   return allowed.has(origin);
 }
 
-/** Common guard: origin check + per-caller rate limit + JSON body validated by a zod schema. */
+/** Maintenance mode and the visitor limit stop changes as well as pages. */
+export async function pausedFor(user: User | null): Promise<NextResponse | null> {
+  const block = await siteBlock(user, await visitorKey(user?.id));
+  return block ? failBlocked(block) : null;
+}
+
+/**
+ * Common guard: origin check + per-caller rate limit + paused-site check + JSON body validated by a zod schema.
+ * `evenWhenPaused` is for what must keep working so an admin can get back in.
+ */
 export async function guard<T extends z.ZodType>(
   req: NextRequest,
-  opts: { name: string; schema: T; limit?: number; windowSec?: number },
+  opts: { name: string; schema: T; limit?: number; windowSec?: number; evenWhenPaused?: boolean },
 ): Promise<{ data: z.infer<T> } | { res: NextResponse }> {
   if (!sameOrigin(req)) return { res: fail(403, "bad_origin") };
   const rl = await callerLimit(req, opts.name, opts.limit ?? 20, opts.windowSec ?? 60);
   if (!rl.ok) return { res: fail(429, "rate_limited", { retryAfter: rl.retryAfter }) };
+  if (!opts.evenWhenPaused) {
+    const paused = await pausedFor(await currentUser());
+    if (paused) return { res: paused };
+  }
   let body: unknown;
   try {
     body = await req.json();

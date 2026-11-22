@@ -1,7 +1,7 @@
 // "Hire from abroad → hire Nepalis abroad": the rules, the money, the profiles and the demo.
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { App, sleep } from "./harness.mjs";
+import { App, postFor, sleep } from "./harness.mjs";
 
 const PAY = 50_000;
 
@@ -24,6 +24,7 @@ async function post(app, over = {}, who = app.client) {
       workersNeeded: 2,
       days: 30,
       payPerWorker: PAY,
+      post: postFor(),
       ...over,
     },
     who,
@@ -44,10 +45,7 @@ const hire = (app, job, key, amount = PAY, who = app.client) =>
   act(app, job, { action: "hire", applicationId: applicationOf(app, job, key).id, amount }, who);
 
 async function finish(app, bookingId, key) {
-  const installmentId = app.db().bookings.find((b) => b.id === bookingId).installments[0].id;
-  const url = `/api/bookings/${bookingId}`;
-  assert.equal((await app.call(url, { action: "deliver", installmentId }, app[key])).status, 200);
-  assert.equal((await app.call(url, { action: "release", installmentId }, app.client)).status, 200);
+  await app.steps(bookingId, app.client, app[key]).finish();
 }
 
 /** The public list only, not "Your jobs abroad". */
@@ -89,7 +87,7 @@ test("a job leaves the list when every place is filled, and stays on both profil
   }
 });
 
-test("each hire is a full Visa payment into escrow", async (t) => {
+test("each hire pays the 50% advance by Visa", async (t) => {
   const app = await setup(t);
   const job = (await post(app)).json.id;
   await apply(app, job, "pro");
@@ -101,11 +99,16 @@ test("each hire is a full Visa payment into escrow", async (t) => {
   assert.equal(booking.total, PAY);
   assert.deepEqual(
     booking.installments.map((i) => i.state),
-    ["held"],
+    ["released", "held", "scheduled", "scheduled"],
   );
   assert.match(r.json.ref, /^CARD-SBX-/);
-  assert.equal(db.receipts.length, 1);
-  assert.equal(db.receipts[0].amount, PAY);
+  assert.deepEqual(
+    db.receipts.map((x) => [x.kind, x.amount]),
+    [
+      ["hold", PAY / 2],
+      ["release", PAY * 0.3],
+    ],
+  );
 });
 
 test("a card number is never accepted or stored", async (t) => {
@@ -127,7 +130,7 @@ test("two hires at once cannot overfill a job", async (t) => {
   const both = await Promise.all([hire(app, job, "pro"), hire(app, job, "pro2")]);
   assert.equal(both.filter((r) => r.status === 200).length, 1);
   assert.equal(app.db().bookings.length, 1);
-  assert.equal(app.db().receipts.length, 1);
+  assert.equal(app.db().receipts.filter((r) => r.kind === "hold").length, 1);
 });
 
 test("one applicant is charged once, however often Pay is pressed", async (t) => {
@@ -136,7 +139,7 @@ test("one applicant is charged once, however often Pay is pressed", async (t) =>
   await apply(app, job, "pro");
   const all = await Promise.all([1, 2, 3, 4].map(() => hire(app, job, "pro")));
   assert.equal(all.filter((r) => r.status === 200).length, 1);
-  assert.equal(app.db().receipts.length, 1);
+  assert.equal(app.db().receipts.filter((r) => r.kind === "hold").length, 1);
 });
 
 test("completed work leaves the list, can be reopened, and closes again when done", async (t) => {
@@ -286,7 +289,7 @@ test("the demo has open, part-filled, filled and completed jobs, and its whole f
   const before = app.db();
   for (const a of stored(app, cleaning).applications) {
     const b = before.bookings.find((x) => x.taskId === a.taskId);
-    const body = { action: "release", installmentId: b.installments[0].id };
+    const body = { action: "release", installmentId: b.installments.at(-1).id };
     assert.equal((await app.call(`/api/bookings/${b.id}`, body, suman)).status, 200);
   }
   const me = before.users.find((u) => u.name === "Suman Gurung").id;

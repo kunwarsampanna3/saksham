@@ -28,7 +28,7 @@ export function DemoPanel({ mpin, next }: { mpin: string; next?: string }) {
     setErr(null);
     const r = await postJson<{ user: PublicUser }>("/api/auth/demo", { persona });
     setBusy(null);
-    if (!r.ok) return setErr(t.errors.generic);
+    if (!r.ok) return setErr(r.error === "suspended" ? t.market.blocked.suspended : t.errors.generic);
     setUser(r.user);
     router.replace(safeNext(next));
     router.refresh();

@@ -178,9 +178,11 @@ async function decideNow(
   decision: "verified" | "rejected",
   reviewerId: string | null,
   note?: string,
+  /** When what the reviewer looked at was submitted. A newer upload must be looked at again. */
+  seen?: string,
 ) {
   const v = (await store.listVerifications(userId)).find((x) => x.kind === kind);
-  if (!v || v.status !== "pending") return null;
+  if (!v || v.status !== "pending" || (seen && v.submittedAt !== seen)) return null;
   const updated: Verification = {
     ...v,
     status: decision,

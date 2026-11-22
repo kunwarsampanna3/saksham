@@ -38,6 +38,7 @@ export async function POST(req: NextRequest) {
   });
   if (!updated) return fail(401, "otp_required");
   await clearVerifiedTicket();
+  if (updated.suspended) return fail(403, "suspended");
   await startSession(updated);
   return NextResponse.json({ ok: true, user: toPublicUser(updated) });
 }

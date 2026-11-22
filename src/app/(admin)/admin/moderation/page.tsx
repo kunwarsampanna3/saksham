@@ -1,19 +1,19 @@
-import type { Metadata } from "next";
-import { notFound } from "next/navigation";
-import { Contours } from "@/components/contours";
-import { AdminView, type AdminData } from "@/components/admin/admin-view";
-import { requireUser } from "@/lib/auth/current-user";
+import { AdminView, type AdminData, type Tab } from "@/components/admin/admin-view";
+import { PageHead } from "@/components/admin/ui";
+import { requireAdmin } from "@/lib/admin";
 import { getDict } from "@/lib/i18n/server";
 import { store } from "@/lib/store";
 import { config } from "@/lib/config";
 import { CATEGORIES } from "@/lib/pricing";
 
-export const metadata: Metadata = { title: "Admin", robots: { index: false, follow: false } };
 export const dynamic = "force-dynamic";
 
-export default async function AdminPage() {
-  const [user, { t }] = await Promise.all([requireUser("/admin"), getDict()]);
-  if (!user.isAdmin) notFound();
+const TABS: Tab[] = ["verify", "reports", "disputes", "prices", "demo"];
+
+/** Trust & safety: verifications, reports, disputes, the price table and the demo reset. */
+export default async function Moderation({ searchParams }: { searchParams: Promise<{ tab?: string }> }) {
+  const [, { t }, sp] = await Promise.all([requireAdmin("/admin/moderation"), getDict(), searchParams]);
+  const initial = TABS.find((x) => x === sp.tab);
 
   const name = async (id?: string | null) => (id ? ((await store.getUserById(id))?.name ?? "—") : "—");
   const [pending, reports, bookings, overrides] = await Promise.all([
@@ -91,17 +91,9 @@ export default async function AdminPage() {
   };
 
   return (
-    <div>
-      <div className="border-line relative overflow-hidden border-b">
-        <Contours seed={44} centers={1} rings={8} />
-        <div className="relative mx-auto max-w-[88rem] px-4 pt-10 pb-8 sm:px-6">
-          <h1 className="font-display text-4xl font-extrabold sm:text-5xl">{t.admin.title}</h1>
-          <p className="text-muted mt-2 max-w-2xl text-lg">{t.admin.lead}</p>
-        </div>
-      </div>
-      <div className="mx-auto max-w-[88rem] px-4 py-10 sm:px-6">
-        <AdminView data={data} />
-      </div>
-    </div>
+    <>
+      <PageHead title={t.adminDash.nav.moderation} lead={t.admin.lead} />
+      <AdminView key={initial} data={data} initial={initial} />
+    </>
   );
 }

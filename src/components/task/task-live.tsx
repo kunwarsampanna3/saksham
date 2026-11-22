@@ -44,9 +44,13 @@ export function TaskLive({
   const errText = (e?: string) =>
     e && e in k.errors
       ? k.errors[e as keyof typeof k.errors]
-      : e === "offline"
-        ? t.errors.offline
-        : t.errors.generic;
+      : e === "applying_paused"
+        ? t.market.blocked.applying
+        : e === "maintenance" || e === "busy"
+          ? t.market.blocked[e].title
+          : e === "offline"
+            ? t.errors.offline
+            : t.errors.generic;
 
   const refresh = useCallback(async () => {
     const r = await fetch(`/api/tasks/${taskId}/live`, { cache: "no-store" })
@@ -104,13 +108,18 @@ export function TaskLive({
 
   return (
     <div className="space-y-10">
-      {!open && live.agreedPrice !== null && (
+      {!open && live.status !== "cancelled" && live.agreedPrice !== null && (
         <section className="notch-frame" aria-labelledby="assigned-h">
           <div className="notch-card terrace-edge p-5">
             <h2 id="assigned-h" className="font-display flex items-center gap-2 text-xl font-bold">
               <CheckCircle2 size={20} aria-hidden className="text-accent" /> {k.assignedTitle}
             </h2>
             <p className="text-muted mt-1">{k.assignedLead(rs(live.agreedPrice, lang))}</p>
+            {live.status === "assigned" && !live.owner && myOffer?.status === "accepted" && (
+              <p className="bg-surface-2 mt-3 rounded-[4px] p-3 font-semibold">
+                {t.market.money.waitForAdvance}
+              </p>
+            )}
             {scheduleHref ? (
               <Link href={scheduleHref} className="btn btn-primary mt-4">
                 {t.payments.title} <ArrowRight size={17} aria-hidden />

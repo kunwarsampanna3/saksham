@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Gavel, Plus } from "lucide-react";
+import { Gavel, Plus, Sparkles } from "lucide-react";
 import { Contours } from "@/components/contours";
 import { FilterBar } from "@/components/browse/filters";
 import { ResultsLayout } from "@/components/browse/results-layout";
@@ -35,6 +35,9 @@ export default async function Professionals({ searchParams }: { searchParams: SP
         <div className="relative mx-auto max-w-[88rem] px-4 pt-10 pb-6 sm:px-6">
           <h1 className="font-display text-4xl font-extrabold sm:text-5xl">{p.title}</h1>
           <p className="text-muted mt-2 max-w-2xl text-lg">{p.lead}</p>
+          <Link href="/match?for=match" className="btn btn-ghost mt-4">
+            <Sparkles size={17} aria-hidden /> {t.match.title}
+          </Link>
 
           <section
             aria-labelledby="bid-h"

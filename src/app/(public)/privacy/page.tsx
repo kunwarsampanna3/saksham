@@ -32,6 +32,14 @@ export default function Privacy() {
           </p>
         </section>
         <section>
+          <h2 className="font-display text-xl font-bold">Visit counts and admins</h2>
+          <p className="mt-2">
+            We count which pages are opened, at what hour and by how many different visitors, using a random
+            cookie. We don&apos;t store IP addresses or device details for this. Saksham&apos;s admins can see
+            account details, jobs and payment records to run the service and handle problems.
+          </p>
+        </section>
+        <section>
           <h2 className="font-display text-xl font-bold">How we use it</h2>
           <p className="mt-2">
             To run your account, match tasks and applicants, hold payments in escrow, keep people safe and
@@ -42,8 +50,11 @@ export default function Privacy() {
         <section>
           <h2 className="font-display text-xl font-bold">Saksham AI</h2>
           <p className="mt-2">
-            When you use AI features, the text you type is sent to our AI provider to draft a task or answer a
-            question. AI never decides prices, rankings, credit or payments.
+            When you use AI features, the text you type is sent to our AI provider, Anthropic (Claude), to
+            draft a task, answer a question, or suggest people and skills. For suggestions we also send
+            applicants&apos; public work details (skills, headline, services, city, rating, jobs done and
+            price) without their names, phone numbers, emails or account ids. Suggestions are advice: AI never
+            decides prices, offer rankings, credit or payments.
           </p>
         </section>
         <section>

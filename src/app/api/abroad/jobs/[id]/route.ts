@@ -6,6 +6,7 @@ import { requireFreshMpin } from "@/lib/booking-api";
 import { cleanText, ruleResponse } from "@/lib/task-api";
 import { store } from "@/lib/store";
 import { withLock } from "@/lib/lock";
+import { switchedOff } from "@/lib/controls";
 import {
   applyToJob,
   canSeeJob,
@@ -50,9 +51,12 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       if (!job || !canSeeJob(job, user)) return fail(404, "not_found");
       const d = g.data;
       switch (d.action) {
-        case "apply":
+        case "apply": {
+          const off = await switchedOff("applying", user);
+          if (off) return off;
           await applyToJob(job, user, cleanText(d.note, 500), d.eligible);
           break;
+        }
         case "withdraw":
           await withdrawApplication(job, user);
           break;

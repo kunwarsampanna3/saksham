@@ -5,13 +5,15 @@ import { currentUser } from "@/lib/auth/current-user";
 import { store } from "@/lib/store";
 import type { Task, User } from "@/lib/store/types";
 import { canView, RuleError } from "@/lib/tasks";
+import { asOfNow } from "@/lib/post-state";
 
 /** Load the signed-in user and a task they are allowed to see (404 otherwise — no existence leak). */
 export async function loadTask(id: string): Promise<{ user: User; task: Task } | { res: NextResponse }> {
   const user = await currentUser();
   if (!user) return { res: fail(401, "signed_out") };
   if (!/^[\w-]{3,64}$/.test(id)) return { res: fail(404, "not_found") };
-  const task = await store.getTask(id);
+  const saved = await store.getTask(id);
+  const task = saved && asOfNow(saved);
   if (!task || !(await canView(task, user))) return { res: fail(404, "not_found") };
   return { user, task };
 }

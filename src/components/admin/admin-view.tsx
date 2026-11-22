@@ -55,12 +55,12 @@ export interface AdminData {
   }[];
 }
 
-type Tab = "verify" | "reports" | "disputes" | "prices" | "demo";
+export type Tab = "verify" | "reports" | "disputes" | "prices" | "demo";
 
-export function AdminView({ data }: { data: AdminData }) {
+export function AdminView({ data, initial = "verify" }: { data: AdminData; initial?: Tab }) {
   const { t } = useI18n();
   const a = t.admin;
-  const [tab, setTab] = useState<Tab>("verify");
+  const [tab, setTab] = useState<Tab>(initial);
   const openReports = data.reports.filter((r) => r.status === "open" || r.status === "reviewing").length;
   const counts: Partial<Record<Tab, number>> = {
     verify: data.verifications.length,
@@ -128,10 +128,14 @@ function VerifyQueue({ items }: { items: AdminData["verifications"] }) {
       kind: v.kind,
       decision,
       note: notes[v.id]?.trim() || undefined,
+      submittedAt: v.submittedAt || undefined,
     });
     setBusy(null);
     if (r.ok) router.refresh();
-    else setErr(t.errors.generic);
+    else if (r.error === "not_pending") {
+      setErr(t.adminDash.changedWhileOpen);
+      router.refresh();
+    } else setErr(t.errors.generic);
   };
 
   return (

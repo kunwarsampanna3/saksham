@@ -13,6 +13,7 @@ import {
   MapPin,
   ShieldAlert,
   ShieldCheck,
+  Sparkles,
   UserRound,
   Wallet,
 } from "lucide-react";
@@ -96,6 +97,7 @@ export function ProfileMenu({ user }: { user: PublicUser }) {
     { href: "/verification", label: t.nav.verification, Icon: ShieldCheck },
     { href: "/location", label: t.location.title, Icon: MapPin },
     { href: "/abroad", label: t.nav.abroad, Icon: Globe2 },
+    { href: "/match", label: t.match.title, Icon: Sparkles },
     { href: "/safety", label: t.nav.safety, Icon: ShieldAlert },
     ...(user.isAdmin ? [{ href: "/admin", label: t.nav.admin, Icon: UserRound }] : []),
   ];

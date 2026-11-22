@@ -13,6 +13,8 @@ const STATE_STYLE: Record<JobState, string> = {
   filled: "bg-marigold text-ink",
   completed: "bg-accent text-accent-contrast",
   closed: "bg-surface-2 text-muted",
+  expired: "bg-surface-2 text-muted",
+  removed: "bg-danger-soft text-danger",
 };
 
 export function JobStateBadge({ state, t }: { state: JobState; t: Dict }) {

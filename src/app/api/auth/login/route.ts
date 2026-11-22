@@ -18,7 +18,7 @@ const Body = z
 const ghostAttempts = new Map<string, { n: number; until: number }>();
 
 export async function POST(req: NextRequest) {
-  const g = await guard(req, { name: "login", schema: Body, limit: 12, windowSec: 60 });
+  const g = await guard(req, { name: "login", schema: Body, limit: 12, windowSec: 60, evenWhenPaused: true });
   if ("res" in g) return g.res;
   const { mpin } = g.data;
   const phone = targetOf(g.data); // phone number or email
@@ -51,6 +51,8 @@ export async function POST(req: NextRequest) {
     return fail(error === "locked" ? 423 : 401, error, extra);
   }
   const fresh = r.user;
+  // Only after the MPIN was right, so this says nothing about other people's accounts.
+  if (fresh.suspended) return fail(403, "suspended");
   await startSession(fresh);
   return NextResponse.json({ ok: true, user: toPublicUser(fresh) });
 }

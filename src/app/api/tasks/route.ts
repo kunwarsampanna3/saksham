@@ -7,6 +7,11 @@ import { CATEGORY_IDS } from "@/lib/pricing";
 import { CITY_COORDS, areasFor, ABROAD_COUNTRIES } from "@/lib/geo";
 import { createTask } from "@/lib/tasks";
 import { cleanText } from "@/lib/task-api";
+import { requireFreshMpin } from "@/lib/booking-api";
+import { switchedOff } from "@/lib/controls";
+import { feeMatches, payForPost, PostChoice } from "@/lib/posting";
+import { store } from "@/lib/store";
+import { withLock } from "@/lib/lock";
 
 const today = () => new Date().toISOString().slice(0, 10);
 
@@ -28,9 +33,13 @@ const Body = z.object({
   flexible: z.boolean(),
   family: z.object({ country: z.enum(ABROAD_COUNTRIES), familyName: z.string().max(60) }).optional(),
   aiSource: z.enum(["ai", "fallback", "manual"]),
+  post: PostChoice,
 });
 
-/** Create a task. The fair range is recomputed here from the price table; anything sent by the browser is ignored. */
+/**
+ * Pay the posting fee (sandbox, MPIN) and create the task. The fair range is recomputed here from the price table;
+ * anything sent by the browser is ignored.
+ */
 export async function POST(req: NextRequest) {
   const g = await guard(req, { name: "task-create", schema: Body, limit: 10 });
   if ("res" in g) return g.res;
@@ -52,7 +61,13 @@ export async function POST(req: NextRequest) {
   const title = cleanText(d.title, 80);
   if (title.length < 3) return fail(422, "title", { field: "title" });
 
-  const task = await createTask(user, {
+  if (!feeMatches(d.post)) return fail(409, "price_changed");
+  const off = await switchedOff("posting", user);
+  if (off) return off;
+  const stale = await requireFreshMpin();
+  if (stale) return stale;
+
+  const input = {
     category: d.category,
     title,
     details: cleanText(d.details, 2000),
@@ -69,6 +84,13 @@ export async function POST(req: NextRequest) {
       ? { country: d.family.country, familyName: cleanText(d.family.familyName, 60) }
       : undefined,
     aiSource: d.aiSource,
+  };
+  const task = await withLock(`post:${user.id}`, async () => {
+    // The same click again: the post that was already paid for.
+    const same = (await store.listTasks()).find(
+      (t) => t.clientId === user.id && t.post?.requestId === d.post.requestId,
+    );
+    return same ?? createTask(user, input, payForPost(d.post));
   });
-  return NextResponse.json({ ok: true, id: task.id });
+  return NextResponse.json({ ok: true, id: task.id, ref: task.post?.ref });
 }

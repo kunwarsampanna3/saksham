@@ -48,6 +48,10 @@ Open http://localhost:3000. `scripts/setup-env.mjs` creates `.env.local` with `D
 3. Stop and restart `npm run dev`
 
 Without a key everything still works: the app falls back to keyword matching and the typed form.
+With a key, **AI match & coach** (`/match`) also asks Claude to suggest teachers and professionals and to plan
+what to learn. It gets public work details without names or contacts. `AI_DAILY_LIMIT` (default 500 calls a day)
+caps what the whole site can spend.
+
 The key is used only in server routes (`src/lib/ai/claude.ts`) and never sent to the browser.
 
 ### Use Supabase instead of the local file store
@@ -68,7 +72,7 @@ persist on Vercel/Netlify). For a real deployment:
 |    3 | Explore, professionals, profile (Skill Passport QR, availability), location (Leaflet + OpenStreetMap)                                                                                      | Done                 |
 |    4 | Verification center: ID, selfie (simulated match in demo), address, women-led group proof                                                                                                  | Done                 |
 |    5 | Post wizard (AI draft, photos, budget slider, women-only) and task detail (ranked live offers, counter, accept, Q&A)                                                                       | Done                 |
-|    6 | Booking (full / 2 installments / 30-40-30 milestones), escrow schedule, receipts, Service Guarantee disputes                                                                               | Done                 |
+|    6 | Booking (50% advance, paid out 30 / 30 / 40), escrow schedule, receipts, Service Guarantee disputes                                                                                        | Done                 |
 |    7 | My tasks dashboard, messages (text, photo, voice notes, system updates), notifications                                                                                                     | Done                 |
 |    8 | Wallet (earnings, escrow, fees, withdrawals, receipts), Earnings Passport with QR, ratings, Saksham Credit (demo partner)                                                                  | Done                 |
 |    9 | Hire from abroad (estimate + family confirmation link), Safety (SOS, contacts, report, block), floating Saksham AI, Admin (verification queue, reports, disputes, price table, demo reset) | Done                 |
@@ -94,10 +98,10 @@ Also landed early because later steps depend on them: the Claude integration (`/
 | Email sign-up / sign-in / forgot MPIN                                                                                | Real: 6-digit code emailed through Gmail SMTP or Resend once `EMAIL_FROM` + SMTP or `RESEND_API_KEY` are set (also in demo mode). Without them, demo mode shows the code on screen, labelled. Emails are stored lower-case and unique |
 | One-tap example accounts                                                                                             | **Demo only**, hidden when `DEMO_MODE=false`                                                                                                                                                                                          |
 | Selfie-to-ID face match                                                                                              | **Simulated** in demo (labelled); without DEMO_MODE it waits for manual review — no face-match provider connected                                                                                                                     |
-| eSewa / Khalti payments                                                                                              | **Sandbox · demo**: a labelled test screen; escrow states, receipts and the 7% example fee are real logic, but no money moves. Real gateway integration needs merchant keys                                                           |
+| eSewa / Khalti payments                                                                                              | **Sandbox · demo**: a labelled test screen; escrow states, receipts, posting fees and the 7% withdrawal fee are real logic, but no money moves. Real gateway integration needs merchant keys                                          |
 | Paying / releasing money                                                                                             | Real check: MPIN re-entry after 5 minutes idle, enforced on the server                                                                                                                                                                |
-| Withdrawals                                                                                                          | **Sandbox**: real balance logic (earned − fees − withdrawn), MPIN required, no money moves                                                                                                                                            |
-| Saksham Credit                                                                                                       | Real formula (15% of verified earnings, ≥3 jobs, full at 4.5★, cap Rs. 1,00,000). Partner, rate (example 14%) and application are **demo** — nothing is sent to any lender                                                            |
+| Withdrawals                                                                                                          | **Sandbox**: real balance logic (released − withdrawn, 7% taken from each withdrawal), MPIN required, no money moves                                                                                                                  |
+| Saksham Credit                                                                                                       | Real formula (applicants: 10 completed jobs; recruiters: 50 posts; 15%, cap Rs. 1,00,000). Partner, rate (example 14%) and application are **demo** — nothing is sent to any lender                                                   |
 | Earnings Passport                                                                                                    | Real: built only from jobs paid through escrow and ratings from those clients. Demo accounts also get a labelled example Passport                                                                                                     |
 | Dispute resolution                                                                                                   | Admins resolve from /admin (redo or refund). **Demo reviewer** buttons also appear in demo                                                                                                                                            |
 | Example offers                                                                                                       | **Demo only**: example providers in the right category bid on new tasks over ~3 minutes, labelled "Example offer"                                                                                                                     |
@@ -118,7 +122,7 @@ Two options on `/abroad`:
 
 1. **For family in Nepal**: you are abroad, someone does the job for your family, and they confirm by a private link.
 2. **Hire Nepalis abroad**: post a job in another country with the number of workers needed. Each hire is paid by Visa
-   (sandbox test card) into escrow and released when that worker's job is done.
+   (sandbox test card): 50% when hired, 50% when half the work is done.
 
 A job leaves the open list when every place is filled, when the work of everyone hired is completed, or when the
 recruiter closes it. It stays on the recruiter's and the workers' profiles, and can be reopened if places are left.
@@ -129,6 +133,39 @@ To try it with `DEMO_MODE=true`: sign in as Suman, open **Hire from abroad → H
 Before real use: connect a licensed card gateway (the app never takes card numbers) and get legal advice on the
 Foreign Employment Act. These jobs are only for Nepalis already living in that country. On Supabase, run
 `0016_abroad_jobs.sql`.
+
+## Business rules
+
+All the numbers are in `src/lib/business.ts` and `src/lib/rules.ts`.
+
+**Posting.** A recruiter pays Rs. 1,000 for 3 days or Rs. 4,000 for 10 days. If nobody is hired the post gets 5 free
+days, then it is removed. The fee is separate from the job's pay and is not refunded.
+
+**Job money.**
+
+| When                             | Recruiter pays | Applicant is paid | Saksham holds |
+| -------------------------------- | -------------: | ----------------: | ------------: |
+| Hired                            |            50% |               30% |           20% |
+| Applicant says half is finished  |            50% |               30% |           40% |
+| Recruiter approves finished work |              – |               40% |             – |
+
+A dispute can refund only what is still held. Bookings made before these rules keep their own schedule.
+
+**Withdrawing.** Saksham keeps 7% of the income withdrawn. Money that already paid 7% under the old rules isn't
+charged again.
+
+**Saksham Credit (demo).** Applicants need 10 completed jobs: 15% of verified earnings, half below 4.5 stars.
+Recruiters need 50 posts: 15% of what they paid applicants. Both stop at Rs. 1,00,000.
+
+Paid "connects" for applicants are not built.
+
+## Admin dashboard
+
+`/admin`: users and their records, traffic and its switches (sign-ups, posting, applying, maintenance, visitor limit),
+posts, money, credit, trust & safety, and a log of admin changes.
+
+Numbers in `OWNER_PHONES` see and manage everyone. The demo admin (Mina) sees real accounts' contacts masked and
+can't change those accounts. Online counts are kept in memory, so they reset with the server.
 
 ## Tests
 
@@ -145,7 +182,7 @@ Each test starts the app in a throwaway folder with invented users, so your `.da
   `.data/db.json.bak` is the copy from before the previous run's first save.
 - Money, offers, MPIN tries and verifications are handled one at a time **within one server process**. Run one
   instance, or move these to database transactions before running several.
-- On Supabase, also run `0015_sessions.sql`.
+- On Supabase, also run `0015_sessions.sql` and `0017_advance_posts_admin.sql`.
 - IP headers are not trusted by default, because visitors can write them. Signed-in limits are per account; signed-out
   visitors share a larger limit. Set `TRUSTED_IP_HEADER` only to a header your proxy overwrites.
 - Expired ID photos are deleted at server start and every hour while it runs.
@@ -176,4 +213,5 @@ Data resets whenever the free server restarts or sleeps. Testers share the demo 
 - SMS provider and live-location service for SOS (currently "Demo alert")
 - Real exchange-rate source if foreign-currency estimates should be live
 - Review the example price table at /admin with real providers
-- Run all Supabase migrations `0001`–`0009`
+- Run all Supabase migrations `0001`–`0017`
+- Have a lawyer check the posting fee, the non-refundable 30% advance and lending (Saksham Credit)

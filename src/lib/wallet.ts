@@ -1,8 +1,9 @@
 import "server-only";
 import { randomBytes, randomUUID } from "node:crypto";
 import { store } from "@/lib/store";
-import type { Booking, PayMethod, User } from "@/lib/store/types";
+import type { Booking, CreditApplication, CreditKind, PayMethod, User } from "@/lib/store/types";
 import { creditOffer, type CreditOffer } from "@/lib/rules";
+import { MIN_WITHDRAW, WITHDRAW_FEE_RATE, withdrawalFee } from "@/lib/business";
 import { getProvider } from "@/lib/seed/providers";
 import { config } from "@/lib/config";
 import { RuleError } from "@/lib/tasks";
@@ -10,19 +11,34 @@ import { notify } from "@/lib/chat";
 
 /**
  * Wallet numbers are derived from escrow (bookings + receipts) — never typed in.
- *  - Provider: released money minus the example 7% fee is "earned"; minus payouts it is "available".
+ *  - Provider: released money is "available" until withdrawn. The 7% comes out when it is withdrawn.
+ *    (Bookings from before paid their 7% at release, and that money is withdrawn without another fee.)
  *  - Earnings Passport: completed jobs, verified earnings (money released through escrow), average rating.
  *  - Saksham Credit: plain-code formula in rules.ts; the partner and application are DEMO only.
  */
+export interface CreditState extends CreditOffer {
+  /** Applied for and not declined */
+  used: number;
+  /** Still open to apply for */
+  left: number;
+}
+
 export interface WalletSummary {
   provider: {
     releasedGross: number;
+    /** 7% already taken */
     fees: number;
+    /** What all released money comes to after the 7% */
     earnedNet: number;
     inEscrow: number;
     scheduled: number;
-    paidOut: number;
+    /** What reached them */
+    received: number;
+    /** Balance, before the 7% */
     available: number;
+    /** For the fee preview: see withdrawalFee() */
+    untaxed: number;
+    taxedBefore: number;
   };
   client: { paidIn: number; inEscrow: number; released: number; refunded: number };
   receipts: {
@@ -36,12 +52,19 @@ export interface WalletSummary {
     createdAt: string;
     role: "client" | "provider";
   }[];
-  payouts: { id: string; amount: number; method: PayMethod; ref: string; createdAt: string }[];
+  payouts: { id: string; amount: number; fee: number; method: PayMethod; ref: string; createdAt: string }[];
   passport: Passport;
   examplePassport: Passport | null;
-  credit: CreditOffer;
-  exampleCredit: CreditOffer | null;
-  applications: { id: string; amount: number; months: number; createdAt: string }[];
+  credit: Record<CreditKind, CreditState>;
+  exampleCredit: Record<CreditKind, CreditState | null>;
+  applications: {
+    id: string;
+    kind: CreditKind;
+    amount: number;
+    months: number;
+    status: CreditApplication["status"];
+    createdAt: string;
+  }[];
 }
 
 export interface Passport {
@@ -54,6 +77,12 @@ export interface Passport {
   verified: boolean;
   isExample: boolean;
 }
+
+/** Demo recruiters get a labelled example history, so recruiter credit can be reviewed without 50 real posts. */
+const EXAMPLE_RECRUITER: Record<string, { posts: number; releasedSpend: number }> = {
+  "9800000001": { posts: 56, releasedSpend: 240_000 },
+  "9800000004": { posts: 52, releasedSpend: 380_000 },
+};
 
 const PERSONA: Record<string, { slug: string; earnings: number }> = {
   "9800000002": { slug: "bikash-tamang", earnings: 118_000 },
@@ -111,6 +140,15 @@ const sum = (b: Booking[], states: string[]) =>
     .filter((i) => states.includes(i.state))
     .reduce((a, i) => a + i.amount, 0);
 
+/** How many jobs a recruiter has posted. Posts an admin took down, and cancelled ones, don't count. */
+async function postsBy(user: User) {
+  const [tasks, jobs] = await Promise.all([store.listTasks(), store.listAbroadJobs()]);
+  return (
+    tasks.filter((t) => t.clientId === user.id && !t.abroad && !t.removed && t.status !== "cancelled")
+      .length + jobs.filter((j) => j.clientId === user.id && !j.removed).length
+  );
+}
+
 export async function walletFor(user: User): Promise<WalletSummary> {
   const all = await store.listBookings();
   const asProvider = all.filter((b) => b.providerId === user.id);
@@ -136,33 +174,50 @@ export async function walletFor(user: User): Promise<WalletSummary> {
   }
   receipts.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 
-  const fees = (await Promise.all(asProvider.map((b) => store.listReceipts(b.id))))
+  const releaseFees = (await Promise.all(asProvider.map((b) => store.listReceipts(b.id))))
     .flat()
     .filter((r) => r.kind === "release")
     .reduce((a, r) => a + r.fee, 0);
   const releasedGross = sum(asProvider, ["released"]);
   const payouts = (await store.listPayouts(user.id)).sort((a, b) => b.createdAt.localeCompare(a.createdAt));
   const paidOut = payouts.reduce((a, p) => a + p.amount, 0);
-  const earnedNet = releasedGross - fees;
+  const withdrawFees = payouts.reduce((a, p) => a + (p.fee ?? 0), 0);
+  const taxedBefore = payouts.reduce((a, p) => a + (p.feeBase ?? 0), 0);
+  const balance = Math.max(0, releasedGross - releaseFees - paidOut);
+  // Money that hasn't paid its 7% yet: released on bookings that don't charge at release.
+  const taxable = sum(
+    asProvider.filter((b) => !b.feeRate),
+    ["released"],
+  );
+  const untaxed = Math.max(0, balance - Math.max(0, taxable - taxedBefore));
 
   const passport = await passportFor(user);
   const ex = examplePassport(user);
   const apps = (await store.listCreditApplications(user.id)).sort((a, b) =>
     b.createdAt.localeCompare(a.createdAt),
   );
+  const withUsed = (offer: CreditOffer): CreditState => {
+    const used = apps
+      .filter((a) => (a.kind ?? "applicant") === offer.kind && a.status !== "declined_demo")
+      .reduce((n, a) => n + a.amount, 0);
+    return { ...offer, used, left: Math.max(0, offer.limit - used) };
+  };
+  const exRecruiter = config.demoMode && user.isDemo ? EXAMPLE_RECRUITER[user.phone] : undefined;
 
   return {
     provider: {
       releasedGross,
-      fees,
-      earnedNet,
+      fees: releaseFees + withdrawFees,
+      earnedNet: releasedGross - releaseFees - Math.round(taxable * WITHDRAW_FEE_RATE),
       inEscrow: sum(asProvider, ["held", "delivered"]),
       scheduled: sum(
         asProvider.filter((b) => b.status === "active"),
         ["scheduled"],
       ),
-      paidOut,
-      available: Math.max(0, earnedNet - paidOut),
+      received: paidOut - withdrawFees,
+      available: balance,
+      untaxed,
+      taxedBefore,
     },
     client: {
       paidIn: sum(asClient, ["held", "delivered", "released", "refunded"]),
@@ -174,25 +229,51 @@ export async function walletFor(user: User): Promise<WalletSummary> {
     payouts: payouts.map((p) => ({
       id: p.id,
       amount: p.amount,
+      fee: p.fee ?? 0,
       method: p.method,
       ref: p.ref,
       createdAt: p.createdAt,
     })),
     passport,
     examplePassport: ex,
-    credit: creditOffer({
-      verifiedEarnings: passport.verifiedEarnings,
-      completedJobs: passport.completedJobs,
-      rating: passport.rating,
-    }),
-    exampleCredit: ex
-      ? creditOffer({
-          verifiedEarnings: ex.verifiedEarnings,
-          completedJobs: ex.completedJobs,
-          rating: ex.rating,
-        })
-      : null,
-    applications: apps.map((a) => ({ id: a.id, amount: a.amount, months: a.months, createdAt: a.createdAt })),
+    credit: {
+      applicant: withUsed(
+        creditOffer({
+          kind: "applicant",
+          verifiedEarnings: passport.verifiedEarnings,
+          completedJobs: passport.completedJobs,
+          rating: passport.rating,
+        }),
+      ),
+      recruiter: withUsed(
+        creditOffer({
+          kind: "recruiter",
+          releasedSpend: sum(asClient, ["released"]),
+          posts: await postsBy(user),
+        }),
+      ),
+    },
+    exampleCredit: {
+      applicant: ex
+        ? withUsed(
+            creditOffer({
+              kind: "applicant",
+              verifiedEarnings: ex.verifiedEarnings,
+              completedJobs: ex.completedJobs,
+              rating: ex.rating,
+            }),
+          )
+        : null,
+      recruiter: exRecruiter ? withUsed(creditOffer({ kind: "recruiter", ...exRecruiter })) : null,
+    },
+    applications: apps.map((a) => ({
+      id: a.id,
+      kind: a.kind ?? "applicant",
+      amount: a.amount,
+      months: a.months,
+      status: a.status,
+      createdAt: a.createdAt,
+    })),
   };
 }
 
@@ -200,36 +281,43 @@ export async function walletFor(user: User): Promise<WalletSummary> {
 export async function requestPayout(user: User, amount: number, method: PayMethod) {
   if (!user.roles.includes("provider")) throw new RuleError("provider_only", 403);
   const w = await walletFor(user);
-  if (amount < 100) throw new RuleError("payout_min", 422, { field: "amount" });
+  if (amount < MIN_WITHDRAW) throw new RuleError("payout_min", 422, { field: "amount" });
   if (amount > w.provider.available) throw new RuleError("payout_too_much", 422, { field: "amount" });
+  const { fee, feeBase } = withdrawalFee(amount, w.provider);
   const p = await store.putPayout({
     id: randomUUID(),
     userId: user.id,
-    amount: Math.round(amount),
+    amount,
+    fee,
+    feeBase,
     method,
     ref: `${method === "esewa_sandbox" ? "ESEWA" : "KHALTI"}-PAYOUT-SBX-${randomBytes(4).toString("hex").toUpperCase()}`,
     status: "sent_sandbox",
     createdAt: new Date().toISOString(),
   });
-  await notify(user.id, "payment", "payout_sent", { amount: p.amount }, "/wallet");
+  await notify(user.id, "payment", "payout_sent", { amount: p.amount - fee }, "/wallet");
   return p;
 }
 
 /** Demo partner application. Validates against the plain-code offer; nothing leaves Saksham. */
 export async function applyForCredit(
   user: User,
+  kind: CreditKind,
   amount: number,
   months: 3 | 6 | 12,
   purpose: string,
   useExample: boolean,
 ) {
+  if (!user.roles.includes(kind === "applicant" ? "provider" : "client"))
+    throw new RuleError("credit_not_eligible", 403);
   const w = await walletFor(user);
-  const offer = useExample && w.exampleCredit ? w.exampleCredit : w.credit;
+  const offer = (useExample ? w.exampleCredit[kind] : null) ?? w.credit[kind];
   if (!offer.eligible) throw new RuleError("credit_not_eligible", 403);
-  if (amount < 1000 || amount > offer.limit) throw new RuleError("credit_amount", 422, { field: "amount" });
+  if (amount < 1000 || amount > offer.left) throw new RuleError("credit_amount", 422, { field: "amount" });
   const a = await store.putCreditApplication({
     id: randomUUID(),
     userId: user.id,
+    kind,
     amount: Math.round(amount / 1000) * 1000,
     months,
     purpose,

@@ -110,6 +110,7 @@ export function LoginForm({ next }: { next?: string }) {
       setLockedFor(r.retryAfter ?? 900);
       fail(t.login.locked(Math.ceil((r.retryAfter ?? 900) / 60)));
     } else if (r.error === "rate_limited") fail(t.login.rateLimited);
+    else if (r.error === "suspended") fail(t.market.blocked.suspended);
     else if (r.error === "phone_invalid") setPhoneErr(t.errors.phone_invalid);
     else if (r.error === "email_invalid") setPhoneErr(t.errors.email_invalid);
     else fail(r.error === "offline" ? t.errors.offline : t.errors.generic);
@@ -129,6 +130,7 @@ export function LoginForm({ next }: { next?: string }) {
       });
       if (r.ok) return done(r.user);
       if (r.error === "locked") return fail(t.login.locked(Math.ceil((r.retryAfter ?? 900) / 60)));
+      if (r.error === "suspended") return fail(t.market.blocked.suspended);
       if (r.error === "passkey_unknown") {
         try {
           localStorage.removeItem(PASSKEY_FLAG);

@@ -140,62 +140,63 @@ const ESCROW_NEXT: Record<EscrowState, EscrowState[]> = {
 };
 export const canMoveEscrow = (from: EscrowState, to: EscrowState) => ESCROW_NEXT[from].includes(to);
 
-/** Split a total into installment amounts that sum exactly to the total. */
-export function splitPlan(total: number, plan: "full" | "two" | "milestones"): number[] {
-  const pcts = plan === "full" ? [100] : plan === "two" ? [50, 50] : [30, 40, 30];
-  const parts = pcts.map((p) => Math.floor((total * p) / 100));
-  parts[parts.length - 1] += total - parts.reduce((a, b) => a + b, 0);
-  return parts;
-}
-
 /* --------------------------------------------------------------- credit */
-export interface CreditInput {
-  verifiedEarnings: number;
-  completedJobs: number;
-  rating: number;
-}
+export type CreditInput =
+  | { kind: "applicant"; verifiedEarnings: number; completedJobs: number; rating: number }
+  | { kind: "recruiter"; releasedSpend: number; posts: number };
+
 export interface CreditOffer {
+  kind: CreditInput["kind"];
   eligible: boolean;
   limit: number;
-  full: boolean;
-  /** structured basis so the UI can explain it in either language */
-  base: number; // 15% of verified earnings, rounded to Rs. 1,000
-  jobsNeeded: number; // more completed jobs needed before any offer
-  halved: boolean; // rating below 4.5
+  /** Jobs completed (applicant) or jobs posted (recruiter) */
+  count: number;
+  need: number;
+  remaining: number; // more jobs or posts needed
+  /** Verified earnings (applicant) or money released to applicants (recruiter) */
+  money: number;
+  base: number; // 15% of money, rounded to Rs. 1,000
+  halved: boolean; // applicant rating below 4.5
   capped: boolean; // hit Rs. 100,000
-  explain: string[]; // English, for logs
 }
 
-export const CREDIT_RULES = { pct: 0.15, minJobs: 3, fullRating: 4.5, cap: 100_000 } as const;
+export const CREDIT_RULES = {
+  pct: 0.15,
+  minJobs: 10,
+  minPosts: 50,
+  fullRating: 4.5,
+  cap: 100_000,
+} as const;
 
-/** limit = 15% of verified earnings, rounded to Rs. 1,000; needs ≥3 jobs; full only at rating ≥4.5; cap Rs. 100,000. */
-export function creditOffer({ verifiedEarnings, completedJobs, rating }: CreditInput): CreditOffer {
-  const base = Math.round((verifiedEarnings * CREDIT_RULES.pct) / 1000) * 1000;
-  if (completedJobs < CREDIT_RULES.minJobs) {
-    const n = CREDIT_RULES.minJobs - completedJobs;
-    return {
-      eligible: false,
-      limit: 0,
-      full: false,
-      base,
-      jobsNeeded: n,
-      halved: false,
-      capped: false,
-      explain: [`Complete ${n} more job${n === 1 ? "" : "s"} to unlock an offer.`],
-    };
-  }
-  const explain = [
-    `15% of verified earnings Rs. ${verifiedEarnings.toLocaleString("en-IN")} ≈ Rs. ${base.toLocaleString("en-IN")}`,
-  ];
-  const full = rating >= CREDIT_RULES.fullRating;
-  let limit = full ? base : Math.round((base * 0.5) / 1000) * 1000;
-  if (!full) explain.push(`Rating ${rating.toFixed(1)} is below 4.5, so the offer starts at half`);
-  const capped = limit > CREDIT_RULES.cap;
-  if (capped) {
-    limit = CREDIT_RULES.cap;
-    explain.push("Capped at Rs. 100,000");
-  }
-  return { eligible: limit > 0, limit, full, base, jobsNeeded: 0, halved: !full, capped, explain };
+/**
+ * Saksham Credit.
+ *  - Applicant: 10 completed jobs. 15% of verified earnings, half below a 4.5 rating.
+ *  - Recruiter: 50 jobs posted. 15% of what they have released to applicants.
+ * Both round to Rs. 1,000 and stop at Rs. 100,000.
+ */
+export function creditOffer(input: CreditInput): CreditOffer {
+  const worker = input.kind === "applicant";
+  const count = worker ? input.completedJobs : input.posts;
+  const need = worker ? CREDIT_RULES.minJobs : CREDIT_RULES.minPosts;
+  const money = worker ? input.verifiedEarnings : input.releasedSpend;
+  const base = Math.round((money * CREDIT_RULES.pct) / 1000) * 1000;
+  const remaining = Math.max(0, need - count);
+
+  const halved = worker && remaining === 0 && input.rating < CREDIT_RULES.fullRating;
+  const raw = remaining > 0 ? 0 : halved ? Math.round((base * 0.5) / 1000) * 1000 : base;
+  const limit = Math.min(raw, CREDIT_RULES.cap);
+  return {
+    kind: input.kind,
+    eligible: limit > 0,
+    limit,
+    count,
+    need,
+    remaining,
+    money,
+    base,
+    halved,
+    capped: raw > CREDIT_RULES.cap,
+  };
 }
 
 /** Example repayment (equal monthly installments, reducing balance). The rate is an EXAMPLE, labelled on screen. */

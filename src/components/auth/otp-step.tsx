@@ -47,6 +47,8 @@ export function OtpStep({
       setError(t.signup.taken);
     } else if (r.error === "email_taken") {
       setError(t.signup.emailTaken);
+    } else if (r.error === "signups_paused") {
+      setError(t.market.blocked.signups);
     } else if (r.error === "sms_unavailable") {
       setError(t.otp.smsDown);
     } else if (r.error === "email_unavailable") {

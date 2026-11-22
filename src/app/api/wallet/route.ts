@@ -15,6 +15,7 @@ const Body = z.discriminatedUnion("action", [
   }),
   z.object({
     action: z.literal("credit"),
+    kind: z.enum(["applicant", "recruiter"]),
     amount: z.number().int().min(1).max(100_000),
     months: z.union([z.literal(3), z.literal(6), z.literal(12)]),
     purpose: z.string().min(3, "purpose").max(300),
@@ -34,10 +35,11 @@ export async function POST(req: NextRequest) {
     return await withLock(`wallet:${user.id}`, async () => {
       if (g.data.action === "payout") {
         const p = await requestPayout(user, g.data.amount, g.data.method);
-        return NextResponse.json({ ok: true, id: p.id, ref: p.ref });
+        return NextResponse.json({ ok: true, id: p.id, ref: p.ref, fee: p.fee ?? 0 });
       }
       const a = await applyForCredit(
         user,
+        g.data.kind,
         g.data.amount,
         g.data.months,
         cleanText(g.data.purpose, 300),

@@ -3,7 +3,8 @@ import { z } from "zod";
 import { guard } from "@/lib/auth/http";
 import { ruleResponse, cleanText } from "@/lib/task-api";
 import { loadBooking } from "@/lib/booking-api";
-import { openDispute, resolveDispute } from "@/lib/escrow";
+import { openDispute, resolveDispute, roleIn } from "@/lib/escrow";
+import { logAdmin } from "@/lib/admin";
 import { withLock } from "@/lib/lock";
 
 const Body = z.discriminatedUnion("action", [
@@ -29,6 +30,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
         return NextResponse.json({ ok: true, id: d.id });
       }
       const b = await resolveDispute(l.booking, l.user, g.data.outcome);
+      if (!roleIn(l.booking, l.user))
+        await logAdmin(l.user, `dispute_${g.data.outcome}`, l.booking.providerName);
       return NextResponse.json({ ok: true, status: b.status });
     });
   } catch (e) {

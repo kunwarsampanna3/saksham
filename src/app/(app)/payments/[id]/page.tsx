@@ -9,7 +9,7 @@ import { FamilyPanel } from "@/components/abroad/family-panel";
 import { requireUser } from "@/lib/auth/current-user";
 import { getDict } from "@/lib/i18n/server";
 import { store } from "@/lib/store";
-import { roleIn } from "@/lib/escrow";
+import { providerNet, roleIn } from "@/lib/escrow";
 import { config } from "@/lib/config";
 import { rs } from "@/lib/format";
 
@@ -48,8 +48,7 @@ export default async function PaymentsPage({ params }: { params: Promise<{ id: s
             <span className="text-muted">{k.withProvider}:</span> <strong>{booking.providerName}</strong>
             {booking.providerIsExample && <span className="demo-tag ml-2">{t.browse.example}</span>}
             <span className="text-muted mx-2">·</span>
-            <span className="text-muted">{k.net}:</span>{" "}
-            <strong>{rs(Math.round(booking.total * (1 - booking.feeRate)), lang)}</strong>
+            <span className="text-muted">{k.net}:</span> <strong>{rs(providerNet(booking), lang)}</strong>
             <span className="demo-tag ml-2">{t.common.sandbox}</span>
           </p>
         </div>
@@ -62,6 +61,8 @@ export default async function PaymentsPage({ params }: { params: Promise<{ id: s
           providerName={booking.providerName}
           taskTitle={task?.title}
           feeRate={booking.feeRate}
+          plan={booking.plan}
+          halfDoneAt={booking.halfDoneAt}
           providerIsExample={booking.providerIsExample}
           method={booking.method}
           demoMode={config.demoMode}
@@ -94,7 +95,12 @@ export default async function PaymentsPage({ params }: { params: Promise<{ id: s
               bookingId={booking.id}
               familyName={booking.family?.name ?? task.forFamilyAbroad.familyName ?? ""}
               confirmations={booking.family?.confirmations ?? []}
-              labels={Object.fromEntries(booking.installments.map((i) => [i.id, t.booking.labels[i.label]]))}
+              labels={Object.fromEntries(
+                booking.installments.map((i) => [
+                  i.id,
+                  i.label === "kept" ? t.market.money.halfStep : t.booking.labels[i.label],
+                ]),
+              )}
             />
           </div>
         )}

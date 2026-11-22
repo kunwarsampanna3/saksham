@@ -16,6 +16,8 @@ export const config = {
   faceMatch: process.env.FACE_MATCH ? process.env.FACE_MATCH === "on" : process.env.RENDER !== "true",
   anthropicModel: process.env.ANTHROPIC_MODEL || "claude-opus-5-5",
   hasAnthropic: Boolean(process.env.ANTHROPIC_API_KEY),
+  /** Most Claude calls a day for the whole site, so a busy or abused site can't run up the bill. */
+  aiDailyLimit: Number(process.env.AI_DAILY_LIMIT) || 500,
   /** Outgoing email for sign-in codes (Resend key, or SMTP such as Gmail with an app password). */
   email: {
     from: process.env.EMAIL_FROM ?? "",

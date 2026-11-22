@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Bricolage_Grotesque, Mukta } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/components/providers";
+import { TrafficBeacon } from "@/components/traffic-beacon";
 import { getCity, getDict, getThemePref } from "@/lib/i18n/server";
 import { currentPublicUser } from "@/lib/auth/current-user";
 
@@ -57,6 +58,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       <body className="min-h-dvh antialiased">
         <Providers initialLang={lang} initialTheme={theme} initialUser={user} initialCity={city}>
           {children}
+          <TrafficBeacon />
         </Providers>
       </body>
     </html>

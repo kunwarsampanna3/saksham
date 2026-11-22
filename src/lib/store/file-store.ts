@@ -4,6 +4,7 @@ import path from "node:path";
 import { randomUUID } from "node:crypto";
 import type {
   AbroadJob,
+  AuditEntry,
   Bid,
   Block,
   Booking,
@@ -19,8 +20,10 @@ import type {
   Rating,
   Receipt,
   Report,
+  SiteControls,
   Store,
   Task,
+  TrafficDay,
   User,
   Verification,
 } from "./types";
@@ -50,7 +53,12 @@ interface DB {
   blocks?: Block[];
   priceOverrides?: (PriceOverride & { id: string })[];
   abroadJobs?: AbroadJob[];
+  controls?: SiteControls;
+  traffic?: TrafficDay[];
+  audit?: AuditEntry[];
 }
+/** The dashboard keeps this much history. */
+const KEEP = { trafficDays: 90, auditEntries: 1000 };
 
 const FILE = path.join(process.cwd(), ".data", "db.json");
 /** Private uploads: outside /public, so they are never served statically. */
@@ -155,6 +163,38 @@ function upsert<T extends { id: string }>(list: T[] | undefined, item: T): T[] {
 }
 
 export const fileStore: Store = {
+  async listUsers() {
+    return (await load()).users;
+  },
+  async getControls() {
+    return (await load()).controls ?? null;
+  },
+  async putControls(c) {
+    const db = await load();
+    db.controls = c;
+    await persist(db);
+    return c;
+  },
+  async listTrafficDays() {
+    return (await load()).traffic ?? [];
+  },
+  async putTrafficDay(d) {
+    const db = await load();
+    db.traffic = [...(db.traffic ?? []).filter((x) => x.day !== d.day), d]
+      .sort((a, b) => a.day.localeCompare(b.day))
+      .slice(-KEEP.trafficDays);
+    await persist(db);
+    return d;
+  },
+  async listAudit() {
+    return (await load()).audit ?? [];
+  },
+  async putAudit(a) {
+    const db = await load();
+    db.audit = upsert(db.audit, a).slice(-KEEP.auditEntries);
+    await persist(db);
+    return a;
+  },
   async listReports() {
     return (await load()).reports ?? [];
   },

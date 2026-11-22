@@ -4,7 +4,7 @@ import { LangSwitch } from "@/components/prefs-controls";
 import { ConfirmForm } from "@/components/abroad/confirm-form";
 import { getDict } from "@/lib/i18n/server";
 import { store } from "@/lib/store";
-import { bookingForToken } from "@/lib/family";
+import { bookingForToken, confirmable } from "@/lib/family";
 import { rs } from "@/lib/format";
 
 export const metadata: Metadata = { title: "Confirm the work", robots: { index: false, follow: false } };
@@ -18,7 +18,7 @@ export default async function ConfirmPage({ params }: { params: Promise<{ token:
   const b = await bookingForToken(token);
   const task = b ? await store.getTask(b.taskId) : null;
   const client = b ? await store.getUserById(b.clientId) : null;
-  const pending = b ? b.installments.filter((i) => i.state === "held" || i.state === "delivered") : [];
+  const pending = b ? confirmable(b) : [];
 
   return (
     <main id="main" className="mx-auto max-w-xl px-4 py-8 sm:px-6">
@@ -56,7 +56,10 @@ export default async function ConfirmPage({ params }: { params: Promise<{ token:
                   return (
                     <li key={i.id} className="border-line rounded-[4px] border p-4">
                       <p className="text-muted text-sm">
-                        {c.step}: {t.booking.labels[i.label]} · {rs(i.amount, lang)}
+                        {c.step}:{" "}
+                        {i.label === "kept"
+                          ? t.market.money.halfStep
+                          : `${t.booking.labels[i.label]} · ${rs(i.amount, lang)}`}
                       </p>
                       <ConfirmForm token={token} installmentId={i.id} already={done ? done.ok : null} />
                     </li>

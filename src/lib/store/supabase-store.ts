@@ -3,6 +3,7 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { config } from "@/lib/config";
 import type {
   AbroadJob,
+  AuditEntry,
   Bid,
   Block,
   Booking,
@@ -20,9 +21,11 @@ import type {
   Rating,
   Receipt,
   Report,
+  SiteControls,
   Store,
   StoredFile,
   Task,
+  TrafficDay,
   User,
   Verification,
 } from "./types";
@@ -70,6 +73,7 @@ type Row = {
   terms_accepted_at: string | null;
   session_version: number | null;
   revoked_sessions: User["revokedSessions"] | null;
+  suspended: User["suspended"] | null;
   passkeys?: {
     credential_id: string;
     public_key: string;
@@ -113,6 +117,7 @@ function toUser(r: Row): User {
     updatedAt: r.updated_at,
     sessionVersion: r.session_version ?? 0,
     revokedSessions: r.revoked_sessions ?? [],
+    suspended: r.suspended ?? null,
     passkeys: (r.passkeys ?? []).map<Passkey>((p) => ({
       id: p.credential_id,
       publicKey: p.public_key,
@@ -152,6 +157,7 @@ function toRow(u: Partial<User>): Partial<Row> {
   if (u.womenLed !== undefined) r.women_led = u.womenLed;
   if (u.sessionVersion !== undefined) r.session_version = u.sessionVersion;
   if (u.revokedSessions !== undefined) r.revoked_sessions = u.revokedSessions;
+  if (u.suspended !== undefined) r.suspended = u.suspended;
   return r;
 }
 
@@ -183,6 +189,13 @@ async function syncPasskeys(userId: string, passkeys: Passkey[]) {
 
 type BaseMethods = Omit<
   Store,
+  | "listUsers"
+  | "getControls"
+  | "putControls"
+  | "listTrafficDays"
+  | "putTrafficDay"
+  | "listAudit"
+  | "putAudit"
   | "listAbroadJobs"
   | "getAbroadJob"
   | "putAbroadJob"
@@ -461,6 +474,8 @@ type TRow = {
   photos: StoredFile[];
   ai_source: Task["aiSource"];
   status: Task["status"];
+  post: Task["post"] | null;
+  removed: Task["removed"] | null;
   accepted_bid_id: string | null;
   agreed_price: number | null;
   created_at: string;
@@ -495,6 +510,8 @@ const toT = (r: TRow): Task => ({
   photos: r.photos ?? [],
   aiSource: r.ai_source,
   status: r.status,
+  post: r.post ?? undefined,
+  removed: r.removed ?? undefined,
   acceptedBidId: r.accepted_bid_id ?? undefined,
   agreedPrice: r.agreed_price ?? undefined,
   createdAt: r.created_at,
@@ -528,6 +545,8 @@ const fromT = (t: Task): TRow => ({
   photos: t.photos,
   ai_source: t.aiSource,
   status: t.status,
+  post: t.post ?? null,
+  removed: t.removed ?? null,
   accepted_bid_id: t.acceptedBidId ?? null,
   agreed_price: t.agreedPrice ?? null,
   created_at: t.createdAt,
@@ -658,6 +677,7 @@ const taskMethods = {
 
 /* ------------------------------------------------------------ bookings, receipts, disputes */
 type BkRow = {
+  half_done_at: string | null;
   id: string;
   request_id: string;
   bid_id: string;
@@ -718,6 +738,7 @@ async function loadBooking(r: BkRow | null): Promise<Booking | null> {
     total: r.total,
     feeRate: Number(r.fee_rate),
     plan: r.plan,
+    halfDoneAt: r.half_done_at ?? undefined,
     method: r.method,
     status: r.status,
     installments: (data as InRow[]).map(toIn),
@@ -760,6 +781,7 @@ const bookingMethods = {
         fee: Math.round(b.total * b.feeRate),
         fee_rate: b.feeRate,
         plan: b.plan,
+        half_done_at: b.halfDoneAt ?? null,
         method: b.method,
         status: b.status,
         created_at: b.createdAt,
@@ -1088,6 +1110,8 @@ const walletMethods = {
         id: string;
         user_id: string;
         amount: number;
+        fee: number;
+        fee_base: number;
         method: Payout["method"];
         ref: string;
         status: Payout["status"];
@@ -1097,6 +1121,8 @@ const walletMethods = {
       id: p.id,
       userId: p.user_id,
       amount: p.amount,
+      fee: p.fee,
+      feeBase: p.fee_base,
       method: p.method,
       ref: p.ref,
       status: p.status,
@@ -1104,15 +1130,19 @@ const walletMethods = {
     }));
   },
   async putPayout(p: Payout) {
-    const { error } = await db().from("payouts").upsert({
-      id: p.id,
-      user_id: p.userId,
-      amount: p.amount,
-      method: p.method,
-      ref: p.ref,
-      status: p.status,
-      created_at: p.createdAt,
-    });
+    const { error } = await db()
+      .from("payouts")
+      .upsert({
+        id: p.id,
+        user_id: p.userId,
+        amount: p.amount,
+        fee: p.fee ?? 0,
+        fee_base: p.feeBase ?? 0,
+        method: p.method,
+        ref: p.ref,
+        status: p.status,
+        created_at: p.createdAt,
+      });
     if (error) throw new Error(error.message);
     return p;
   },
@@ -1162,6 +1192,9 @@ const walletMethods = {
         purpose: string;
         limit_at_apply: number;
         status: CreditApplication["status"];
+        kind: CreditApplication["kind"];
+        decided_at: string | null;
+        decided_by: string | null;
         created_at: string;
       }[]
     ).map((a) => ({
@@ -1172,20 +1205,28 @@ const walletMethods = {
       purpose: a.purpose,
       limitAtApply: a.limit_at_apply,
       status: a.status,
+      kind: a.kind,
+      decidedAt: a.decided_at ?? undefined,
+      decidedBy: a.decided_by ?? undefined,
       createdAt: a.created_at,
     }));
   },
   async putCreditApplication(a: CreditApplication) {
-    const { error } = await db().from("credit_applications").upsert({
-      id: a.id,
-      user_id: a.userId,
-      amount: a.amount,
-      months: a.months,
-      purpose: a.purpose,
-      limit_at_apply: a.limitAtApply,
-      status: a.status,
-      created_at: a.createdAt,
-    });
+    const { error } = await db()
+      .from("credit_applications")
+      .upsert({
+        id: a.id,
+        user_id: a.userId,
+        amount: a.amount,
+        months: a.months,
+        purpose: a.purpose,
+        limit_at_apply: a.limitAtApply,
+        status: a.status,
+        kind: a.kind ?? "applicant",
+        decided_at: a.decidedAt ?? null,
+        decided_by: a.decidedBy ?? null,
+        created_at: a.createdAt,
+      });
     if (error) throw new Error(error.message);
     return a;
   },
@@ -1361,8 +1402,60 @@ const abroadMethods = {
   },
 } satisfies Pick<Store, "listAbroadJobs" | "getAbroadJob" | "putAbroadJob">;
 
+const adminMethods = {
+  async listUsers() {
+    // The API returns 1,000 rows at most, so read page by page.
+    const out: User[] = [];
+    for (let from = 0; ; from += 1000) {
+      const rows = ok(
+        await db()
+          .from("users")
+          .select(SELECT)
+          .order("created_at")
+          .range(from, from + 999),
+      ) as Row[];
+      out.push(...rows.map(toUser));
+      if (rows.length < 1000) return out;
+    }
+  },
+  async getControls() {
+    const row = ok(await db().from("site_controls").select("data").eq("id", 1).maybeSingle()) as {
+      data: SiteControls;
+    } | null;
+    return row?.data ?? null;
+  },
+  async putControls(c: SiteControls) {
+    ok(await db().from("site_controls").upsert({ id: 1, data: c }));
+    return c;
+  },
+  async listTrafficDays() {
+    const rows = ok(
+      await db().from("traffic_days").select("data").order("day", { ascending: false }).limit(90),
+    ) as { data: TrafficDay }[];
+    return rows.map((r) => r.data).reverse();
+  },
+  async putTrafficDay(d: TrafficDay) {
+    ok(await db().from("traffic_days").upsert({ day: d.day, data: d }));
+    return d;
+  },
+  async listAudit() {
+    const rows = ok(
+      await db().from("admin_audit").select("data").order("created_at", { ascending: false }).limit(1000),
+    ) as { data: AuditEntry }[];
+    return rows.map((r) => r.data).reverse();
+  },
+  async putAudit(a: AuditEntry) {
+    ok(await db().from("admin_audit").upsert({ id: a.id, created_at: a.createdAt, data: a }));
+    return a;
+  },
+} satisfies Pick<
+  Store,
+  "listUsers" | "getControls" | "putControls" | "listTrafficDays" | "putTrafficDay" | "listAudit" | "putAudit"
+>;
+
 export const supabaseStore: Store = {
   ...base,
+  ...adminMethods,
   ...abroadMethods,
   ...verificationMethods,
   ...taskMethods,

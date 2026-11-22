@@ -40,6 +40,8 @@ export default async function WalletPage() {
         <WalletView
           data={data}
           isProvider={user.roles.includes("provider")}
+          isRecruiter={user.roles.includes("client")}
+          working={user.activeRole === "provider" && user.roles.includes("provider")}
           qrSvg={qrSvg}
           passportUrl={passportUrl}
         />

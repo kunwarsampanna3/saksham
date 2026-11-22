@@ -27,6 +27,8 @@ import { ensureExampleTasks, canView, isOwner, rankedOffers, categoryLabel } fro
 import { statusFor } from "@/lib/verification";
 import { isCountable, type CategoryId } from "@/lib/pricing";
 import { rs, rsRange } from "@/lib/format";
+import { asOfNow } from "@/lib/post-state";
+import { PostNotice } from "@/components/post/post-notice";
 
 type Params = Promise<{ id: string }>;
 
@@ -55,7 +57,7 @@ export default async function TaskPage({ params }: { params: Params }) {
     statusFor(user),
   ]);
   const initial: Live = {
-    status: task.status,
+    status: asOfNow(task).status,
     agreedPrice: task.agreedPrice ?? null,
     acceptedBidId: task.acceptedBidId ?? null,
     owner,
@@ -96,7 +98,7 @@ export default async function TaskPage({ params }: { params: Params }) {
     ? 0
     : states.every((s) => s === "released")
       ? 3
-      : states.some((s) => s === "delivered" || s === "released")
+      : states.some((s) => s === "delivered" || (s === "released" && booking.plan !== "advance"))
         ? 2
         : states.some((s) => s === "held")
           ? 1
@@ -142,6 +144,15 @@ export default async function TaskPage({ params }: { params: Params }) {
 
       <div className="mx-auto mt-8 grid max-w-[88rem] gap-10 px-4 pb-10 sm:px-6 lg:grid-cols-12">
         <div className="space-y-10 lg:col-span-8">
+          <PostNotice
+            post={task.post}
+            removed={task.removed}
+            owner={owner}
+            waiting={task.status === "open" || task.status === "expired"}
+            againHref="/post"
+            t={t}
+            lang={lang}
+          />
           <section aria-labelledby="det-h">
             <h2 id="det-h" className="font-display text-2xl font-bold">
               {k.details}

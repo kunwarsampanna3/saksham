@@ -16,7 +16,7 @@ const Body = z.object({
 /** One-tap demo sign-in. Hard-disabled unless DEMO_MODE=true. */
 export async function POST(req: NextRequest) {
   if (!config.demoMode) return fail(404, "not_found");
-  const g = await guard(req, { name: "demo", schema: Body, limit: 30 });
+  const g = await guard(req, { name: "demo", schema: Body, limit: 30, evenWhenPaused: true });
   if ("res" in g) return g.res;
   // One at a time: the first sign-in on an empty store creates every demo account, and two would collide.
   return withLock("demo:accounts", () => signIn(g.data.persona));
@@ -36,6 +36,7 @@ async function signIn(persona: DemoPersona) {
     }
   }
   if (!user) return fail(500, "seed_failed");
+  if (user.suspended) return fail(403, "suspended");
   const seed = DEMO_PERSONAS[persona];
   const roles = [...seed.roles],
     categories = [...seed.categories];

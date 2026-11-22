@@ -16,6 +16,7 @@ import { startSession } from "@/lib/auth/session";
 import type { Role } from "@/lib/store/types";
 import { CATEGORY_IDS } from "@/lib/pricing";
 import { isEmail } from "@/lib/auth/target";
+import { switchedOff } from "@/lib/controls";
 
 const Body = z.object({
   name: nameSchema,
@@ -32,6 +33,8 @@ export async function POST(req: NextRequest) {
   const g = await guard(req, { name: "register", schema: Body, limit: 5, windowSec: 60 });
   if ("res" in g) return g.res;
   const { name, city, role, mpin, lang, categories, marketingOptIn } = g.data;
+  const off = await switchedOff("signups", null);
+  if (off) return off;
   // Providers say what they do, so the right tasks reach them.
   if (role !== "client" && categories.length === 0)
     return fail(422, "categories_required", { field: "categories" });

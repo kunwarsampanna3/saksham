@@ -40,9 +40,14 @@ export default function Terms() {
         <section>
           <h2 className="font-display text-xl font-bold">4. Payments and escrow</h2>
           <p className="mt-2">
-            Payments are held in escrow and released to the applicant only when the recruiter approves the
-            work, in full or in installments. In this preview, eSewa and Khalti are a labelled sandbox and no
-            real money moves. The example platform fee is 7%.
+            To post a job, a recruiter pays Rs. 1,000 for 3 days or Rs. 4,000 for 10 days. If nobody is hired,
+            the post stays up 5 more days free and is then removed. The posting fee is not refunded. On
+            hiring, the recruiter pays 50% of the agreed price: Saksham pays 30% to the applicant and holds
+            20%. When the applicant reports that half of the work is finished, the recruiter pays the other
+            50% and the applicant is paid another 30%. The last 40% is paid when the recruiter approves the
+            finished work. Money already paid to the applicant cannot be refunded through a dispute. Saksham
+            keeps 7% of an applicant&apos;s income when it is withdrawn. In this preview, eSewa, Khalti and
+            cards are a labelled sandbox and no real money moves.
           </p>
         </section>
         <section>

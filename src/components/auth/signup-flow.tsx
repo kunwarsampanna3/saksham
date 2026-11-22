@@ -112,7 +112,8 @@ export function SignupFlow({ cities }: { cities: readonly string[] }) {
     } else if (r.error === "otp_required") {
       setServerErr(t.errors.otp_required);
       setStep(0);
-    } else setServerErr(r.error === "offline" ? t.errors.offline : t.errors.generic);
+    } else if (r.error === "signups_paused") setServerErr(t.market.blocked.signups);
+    else setServerErr(r.error === "offline" ? t.errors.offline : t.errors.generic);
   };
 
   const goals = [

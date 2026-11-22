@@ -83,7 +83,7 @@ export async function getAuth(): Promise<{ session: SessionClaims; user: User } 
   const session = await verifySession(jar.get(SESSION_COOKIE)?.value);
   if (!session) return null;
   const user = await store.getUserById(session.sub);
-  if (!user || (user.sessionVersion ?? 0) !== session.ver) return null;
+  if (!user || user.suspended || (user.sessionVersion ?? 0) !== session.ver) return null;
   if (user.revokedSessions?.some((r) => r.sid === session.sid)) return null;
   return { session, user };
 }

@@ -5,7 +5,7 @@ import type { AbroadJob, User } from "@/lib/store/types";
 import { withLock } from "@/lib/lock";
 import { DEMO_PERSONAS, demoSeed, type DemoPersona } from "@/lib/auth/demo";
 import { applyToJob, hire } from "@/lib/abroad";
-import { markDelivered, release } from "@/lib/escrow";
+import { markDelivered, paySecondHalf, release, reportHalfDone } from "@/lib/escrow";
 import { rateBooking } from "@/lib/wallet";
 import { ensureDemoVerifications } from "@/lib/verification";
 
@@ -29,7 +29,7 @@ interface Spec {
     AbroadJob,
     "id" | "clientId" | "clientName" | "isDemo" | "applications" | "createdAt" | "updatedAt"
   >;
-  /** pending: applied · held: hired and paid · delivered: work done · released: paid out and rated */
+  /** pending: applied · held: hired, 50% paid · delivered: both halves paid, work done · released: paid out and rated */
   people: [Worker, "pending" | "held" | "delivered" | "released", string][];
 }
 
@@ -219,9 +219,12 @@ async function seedJob(spec: Spec, who: Record<"suman" | "mina" | Worker, User>)
   for (const { key, step, bookingId } of hires) {
     if (step === "held") continue;
     let booking = (await store.getBooking(bookingId))!;
-    booking = await markDelivered(booking, who[key], booking.installments[0].id);
+    booking = await reportHalfDone(booking, who[key]);
+    booking = await paySecondHalf(booking, owner);
+    const finish = booking.installments.find((i) => i.label === "finish")!.id;
+    booking = await markDelivered(booking, who[key], finish);
     if (step !== "released") continue;
-    booking = await release(booking, owner, booking.installments[0].id);
+    booking = await release(booking, owner, finish);
     await rateBooking(owner, booking, 5, "Reliable, on time and careful work.");
   }
 }

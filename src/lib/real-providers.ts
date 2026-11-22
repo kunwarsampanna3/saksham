@@ -84,7 +84,7 @@ export async function toRealProvider(u: User): Promise<ExampleProvider> {
 }
 
 export async function realProviders(): Promise<ExampleProvider[]> {
-  return Promise.all((await store.listProviderUsers()).map(toRealProvider));
+  return Promise.all((await store.listProviderUsers()).filter((u) => !u.suspended).map(toRealProvider));
 }
 
 /** Profile lookup: an example provider by slug, or a real provider account by id. */
@@ -94,5 +94,5 @@ export async function findProvider(id: string): Promise<ExampleProvider | null> 
   if (ex) return ex;
   if (!/^[0-9a-f-]{36}$/.test(id)) return null;
   const u = await store.getUserById(id);
-  return u && !u.isDemo && u.roles.includes("provider") ? toRealProvider(u) : null;
+  return u && !u.suspended && !u.isDemo && u.roles.includes("provider") ? toRealProvider(u) : null;
 }

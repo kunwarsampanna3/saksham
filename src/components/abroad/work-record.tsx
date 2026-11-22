@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Plane, Star } from "lucide-react";
 import { JobStateBadge, countryName } from "@/components/abroad/job-card";
 import type { WorkRecord } from "@/lib/abroad";
+import { netOfFee } from "@/lib/business";
 import { num, npDate, rs } from "@/lib/format";
 import type { Dict, Lang } from "@/lib/i18n/dict";
 
@@ -72,7 +73,7 @@ export function AbroadWorkRecord({
                       )}
                       {self && finished && booking && (
                         <p className="text-accent mt-1 text-sm font-semibold">
-                          {r.earned(rs(booking.total - Math.round(booking.total * booking.feeRate), lang))}
+                          {r.earned(rs(netOfFee(booking.total), lang))}
                         </p>
                       )}
                     </li>

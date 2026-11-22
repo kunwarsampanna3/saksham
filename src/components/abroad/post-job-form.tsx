@@ -7,6 +7,7 @@ import { postJson, useI18n } from "@/components/providers";
 import { EXAMPLE_FX, JOB_COUNTRIES, type JobCountry } from "@/lib/geo";
 import { CATEGORIES, type CategoryId } from "@/lib/pricing";
 import { num, rs } from "@/lib/format";
+import { usePostPayment } from "@/components/post/post-payment";
 
 export function PostJobForm() {
   const { t, lang } = useI18n();
@@ -21,7 +22,7 @@ export function PostJobForm() {
   const [days, setDays] = useState("30");
   const [pay, setPay] = useState("");
   const [details, setDetails] = useState("");
-  const [busy, setBusy] = useState(false);
+
   const [err, setErr] = useState<string | null>(null);
 
   const total = (Number(pay) || 0) * (Number(workers) || 0);
@@ -39,24 +40,31 @@ export function PostJobForm() {
     return null;
   };
 
-  const submit = async () => {
+  const payment = usePostPayment({
+    cardFirst: true,
+    onPosted: (id) => router.push(`/abroad/jobs/${id}`),
+    submit: async (post) => {
+      const r = await postJson<{ id: string; ref?: string }>("/api/abroad/jobs", {
+        title,
+        category: cat,
+        country,
+        city,
+        details,
+        workersNeeded: Number(workers),
+        days: Number(days),
+        payPerWorker: Number(pay),
+        post,
+      });
+      if (r.ok && r.id) return { id: r.id, ref: r.ref };
+      const errors: Record<string, string> = { ...j.errors, ...t.market.post.errors };
+      return { error: (r.error && errors[r.error]) || t.errors.generic };
+    },
+  });
+
+  const submit = () => {
     const p = problem();
     setErr(p);
-    if (p) return;
-    setBusy(true);
-    const r = await postJson<{ id: string }>("/api/abroad/jobs", {
-      title,
-      category: cat,
-      country,
-      city,
-      details,
-      workersNeeded: Number(workers),
-      days: Number(days),
-      payPerWorker: Number(pay),
-    });
-    if (r.ok && r.id) return router.push(`/abroad/jobs/${r.id}`);
-    setBusy(false);
-    setErr(r.error && r.error in j.errors ? j.errors[r.error as keyof typeof j.errors] : t.errors.generic);
+    if (!p) payment.open(title.trim());
   };
 
   return (
@@ -65,7 +73,7 @@ export function PostJobForm() {
       className="grid gap-8 lg:grid-cols-[1fr_20rem]"
       onSubmit={(e) => {
         e.preventDefault();
-        void submit();
+        submit();
       }}
     >
       <div className="grid content-start gap-4 sm:grid-cols-2">
@@ -180,6 +188,7 @@ export function PostJobForm() {
             onChange={(e) => setDetails(e.target.value)}
           />
         </label>
+        <div className="sm:col-span-2">{payment.picker}</div>
       </div>
 
       <aside className="border-line bg-surface h-fit space-y-4 rounded-[14px] border p-5">
@@ -195,11 +204,12 @@ export function PostJobForm() {
             {err}
           </p>
         )}
-        <button type="submit" className="btn btn-primary w-full" disabled={busy}>
-          {busy ? f.busy : f.submit}
+        <button type="submit" className="btn btn-primary w-full">
+          {payment.payLabel}
         </button>
         <p className="text-muted text-xs">{j.legal}</p>
       </aside>
+      {payment.sheet}
     </form>
   );
 }

@@ -5,12 +5,14 @@ import { currentUser } from "@/lib/auth/current-user";
 import { decide, statusFor } from "@/lib/verification";
 import { config } from "@/lib/config";
 import { store } from "@/lib/store";
+import { logAdmin } from "@/lib/admin";
 
 const Body = z.object({
   userId: z.string().uuid().optional(),
   kind: z.enum(["id", "selfie", "address", "womenGroup"]),
   decision: z.enum(["verified", "rejected"]),
   note: z.string().trim().max(300).optional(),
+  submittedAt: z.string().max(40).optional(),
 });
 
 /**
@@ -31,8 +33,10 @@ export async function POST(req: NextRequest) {
   if (own && !(config.demoMode && me.isDemo)) return fail(403, "no_self_review");
   if (!own && !me.isAdmin) return fail(403, "forbidden");
 
-  const v = await decide(targetId, g.data.kind, g.data.decision, own ? null : me.id, g.data.note);
+  const { kind, decision, note, submittedAt } = g.data;
+  const v = await decide(targetId, kind, decision, own ? null : me.id, note, submittedAt);
   if (!v) return fail(409, "not_pending");
   const target = own ? me : await store.getUserById(targetId);
+  if (!own) await logAdmin(me, decision, target?.name ?? targetId, kind);
   return NextResponse.json({ ok: true, status: target ? await statusFor(target) : null });
 }

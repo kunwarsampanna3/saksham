@@ -20,12 +20,14 @@ import { postJson, useI18n } from "@/components/providers";
 import { useReauth } from "@/components/reauth-dialog";
 import { PaySheet } from "./pay-sheet";
 import { rs, npDate } from "@/lib/format";
+import type { Installment, PlanKind } from "@/lib/store/types";
+import { AdvanceSteps } from "./advance-steps";
 
 type State = "scheduled" | "held" | "delivered" | "released" | "refunded";
 export interface Inst {
   id: string;
   seq: number;
-  label: "full" | "first" | "second" | "start" | "middle" | "finish";
+  label: Installment["label"];
   pct: number;
   amount: number;
   dueDate: string;
@@ -38,6 +40,8 @@ export interface ScheduleProps {
   providerName: string;
   taskTitle?: string;
   feeRate?: number;
+  plan: PlanKind;
+  halfDoneAt?: string;
   providerIsExample: boolean;
   method: "esewa_sandbox" | "khalti_sandbox" | "card_sandbox";
   demoMode: boolean;
@@ -130,9 +134,11 @@ export function PaymentSchedule(p: ScheduleProps) {
           ))}
         </dl>
 
-        {/* timeline */}
-        <ol className="space-y-3">
-          {p.installments.map((i, idx) => {
+        {p.plan === "advance" && <AdvanceSteps p={p} errText={errText} />}
+
+        {/* timeline of a booking from before the advance rules */}
+        <ol className={p.plan === "advance" ? "hidden" : "space-y-3"}>
+          {(p.plan === "advance" ? [] : p.installments).map((i, idx) => {
             const cancelled = p.status === "refunded" && i.state === "scheduled";
             const Icon = cancelled ? Ban : ICON[i.state];
             const stateLabel = cancelled ? k.states.cancelled : k.states[i.state];

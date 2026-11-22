@@ -11,7 +11,7 @@ const Body = z.object({
 
 /** Language and theme preference. Stored in cookies (and on the account when signed in). */
 export async function POST(req: NextRequest) {
-  const g = await guard(req, { name: "prefs", schema: Body, limit: 60 });
+  const g = await guard(req, { name: "prefs", schema: Body, evenWhenPaused: true, limit: 60 });
   if ("res" in g) return g.res;
   const res = NextResponse.json({ ok: true });
   const year = 60 * 60 * 24 * 365;

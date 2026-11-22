@@ -11,6 +11,7 @@ import { StepDescribe } from "./step-describe";
 import { StepPrice } from "./step-price";
 import { StepWhereWhen } from "./step-where-when";
 import { TaskPreview } from "./task-preview";
+import { usePostPayment } from "./post-payment";
 import {
   CITIES,
   initialFields,
@@ -43,7 +44,7 @@ export function PostWizard({
     [],
   );
   const [step, setStep] = useState(0);
-  const [busy, setBusy] = useState<"ai" | "post" | null>(null);
+  const [busy, setBusy] = useState<"ai" | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [banner, setBanner] = useState<string | null>(null);
   const [aiNote, setAiNote] = useState<Source | null>(null);
@@ -154,7 +155,51 @@ export function PostWizard({
     requestAnimationFrame(() => document.getElementById("wizard-h")?.focus());
   };
 
-  const publish = async () => {
+  const payment = usePostPayment({
+    cardFirst: form.familyOn,
+    onPosted: (id) => router.push(`/task/${id}`),
+    submit: async (post) => {
+      const f = form;
+      const r = await postJson<{ id: string; ref?: string }>("/api/tasks", {
+        category: f.cat,
+        title: f.title.trim(),
+        details: f.details.trim(),
+        quantity: isCountable(f.cat as string) ? f.quantity : 1,
+        days: f.days,
+        city: f.online ? "Online" : f.city,
+        area: f.online ? undefined : f.area,
+        online: f.online,
+        womenOnly: f.womenOnly,
+        budget: f.budget,
+        dueDate: f.flexible ? undefined : f.dueDate,
+        flexible: f.flexible,
+        family: f.familyOn ? { country: f.country, familyName: f.familyName.trim() } : undefined,
+        aiSource: f.source,
+        post,
+      });
+      if (!r.ok || !r.id) {
+        const errors: Record<string, string> = { ...p.errors, ...t.market.post.errors };
+        return { error: (r.error && errors[r.error]) || p.errors.generic };
+      }
+      if (f.photos.length) {
+        const fd = new FormData();
+        f.photos.forEach((b, i) => fd.append("photos", b, `photo-${i}.jpg`));
+        await fetch(`/api/tasks/${r.id}/photos`, {
+          method: "POST",
+          body: fd,
+          credentials: "same-origin",
+        }).catch(() => null);
+      }
+      try {
+        sessionStorage.removeItem("sk_draft");
+      } catch {
+        /* ignore */
+      }
+      return { id: r.id, ref: r.ref };
+    },
+  });
+
+  const publish = () => {
     for (let s = 0; s <= LAST_STEP; s++) {
       const e = validate(s);
       if (e) {
@@ -163,45 +208,8 @@ export function PostWizard({
         return;
       }
     }
-    setBusy("post");
     setErr(null);
-    const f = form;
-    const r = await postJson<{ id: string }>("/api/tasks", {
-      category: f.cat,
-      title: f.title.trim(),
-      details: f.details.trim(),
-      quantity: isCountable(f.cat as string) ? f.quantity : 1,
-      days: f.days,
-      city: f.online ? "Online" : f.city,
-      area: f.online ? undefined : f.area,
-      online: f.online,
-      womenOnly: f.womenOnly,
-      budget: f.budget,
-      dueDate: f.flexible ? undefined : f.dueDate,
-      flexible: f.flexible,
-      family: f.familyOn ? { country: f.country, familyName: f.familyName.trim() } : undefined,
-      aiSource: f.source,
-    });
-    if (!r.ok || !r.id) {
-      setBusy(null);
-      setErr(r.error && r.error in p.errors ? p.errors[r.error as keyof typeof p.errors] : p.errors.generic);
-      return;
-    }
-    if (f.photos.length) {
-      const fd = new FormData();
-      f.photos.forEach((b, i) => fd.append("photos", b, `photo-${i}.jpg`));
-      await fetch(`/api/tasks/${r.id}/photos`, {
-        method: "POST",
-        body: fd,
-        credentials: "same-origin",
-      }).catch(() => null);
-    }
-    try {
-      sessionStorage.removeItem("sk_draft");
-    } catch {
-      /* ignore */
-    }
-    router.push(`/task/${r.id}`);
+    payment.open(form.title.trim());
   };
 
   return (
@@ -227,7 +235,12 @@ export function PostWizard({
           />
         )}
         {step === 1 && <StepWhereWhen form={form} update={update} areas={areas} />}
-        {step === 2 && <StepPrice form={form} update={update} range={range} />}
+        {step === 2 && (
+          <>
+            <StepPrice form={form} update={update} range={range} />
+            <div className="mt-6">{payment.picker}</div>
+          </>
+        )}
 
         {err && (
           <p role="alert" className="field-error mt-5">
@@ -248,16 +261,17 @@ export function PostWizard({
             <button
               type="button"
               className="btn btn-primary ml-auto"
-              onClick={() => void publish()}
+              onClick={publish}
               disabled={busy !== null}
             >
-              {busy === "post" ? p.publishing : p.publish}
+              {payment.payLabel}
             </button>
           )}
         </div>
       </div>
 
       <TaskPreview form={form} range={range} />
+      {payment.sheet}
     </div>
   );
 }

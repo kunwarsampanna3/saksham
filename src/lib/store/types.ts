@@ -46,7 +46,9 @@ export interface User {
   /** When the user accepted the Terms and Privacy Policy. */
   termsAcceptedAt?: string;
   passkeys: Passkey[];
-  /** Goes up when every session must end (MPIN reset). Missing means 0. */
+  /** Suspended by an admin: can't sign in, and open sessions stop working. */
+  suspended?: { at: string; by: string; reason: string } | null;
+  /** Goes up when every session must end (MPIN reset, or an admin signed them out). Missing means 0. */
   sessionVersion?: number;
   /** Signed-out sessions, kept until their token would have expired anyway. */
   revokedSessions?: { sid: string; until: string }[];
@@ -117,7 +119,32 @@ export interface Verification {
 
 /* ------------------------------------------------------------------ tasks */
 export type TaskStatus =
-  "open" | "assigned" | "in_progress" | "delivered" | "completed" | "cancelled" | "disputed";
+  "open" | "assigned" | "in_progress" | "delivered" | "completed" | "cancelled" | "disputed" | "expired";
+
+/** What a recruiter paid to post, and how long that keeps the post up. */
+export interface PostPayment {
+  /** From the browser, so a repeated click can't pay twice */
+  requestId: string;
+  days: 3 | 10;
+  fee: number;
+  method: PayMethod;
+  ref: string;
+  receiptNo: string;
+  paidAt: string;
+  /** The paid days end here */
+  endsAt: string;
+  /** The free days end here, and the post is removed */
+  removeAt: string;
+  freeNotifiedAt?: string;
+  expiredNotifiedAt?: string;
+}
+
+/** Taken down by an admin. */
+export interface Removal {
+  at: string;
+  by: string;
+  reason: string;
+}
 
 export interface Task {
   id: string;
@@ -149,6 +176,9 @@ export interface Task {
   photos: StoredFile[];
   aiSource: "ai" | "fallback" | "manual";
   status: TaskStatus;
+  /** Missing on posts from before posting was paid, on examples, and on hires abroad (the job carries it). */
+  post?: PostPayment;
+  removed?: Removal;
   acceptedBidId?: string;
   agreedPrice?: number;
   createdAt: string;
@@ -188,7 +218,8 @@ export interface Question {
 }
 
 /* ------------------------------------------------------------------ money */
-export type PlanKind = "full" | "two" | "milestones";
+/** "advance" is the only plan for new bookings. The others are bookings from before. */
+export type PlanKind = "advance" | "full" | "two" | "milestones";
 export type EscrowState = "scheduled" | "held" | "delivered" | "released" | "refunded";
 export interface AbroadApplication {
   id: string;
@@ -225,6 +256,8 @@ export interface AbroadJob {
   closedAt?: string;
   /** How many hires had finished when the recruiter reopened it */
   reopenedAtDone?: number;
+  post?: PostPayment;
+  removed?: Removal;
   createdAt: string;
   updatedAt: string;
 }
@@ -234,7 +267,7 @@ export type PayMethod = "esewa_sandbox" | "khalti_sandbox" | "card_sandbox";
 export interface Installment {
   id: string;
   seq: number; // 1-based
-  label: "full" | "first" | "second" | "start" | "middle" | "finish";
+  label: "full" | "first" | "second" | "start" | "middle" | "finish" | "advance" | "kept" | "half";
   pct: number;
   amount: number;
   dueDate: string; // YYYY-MM-DD
@@ -257,8 +290,11 @@ export interface Booking {
   providerName: string;
   providerIsExample: boolean;
   total: number; // agreed price, paid by the client
-  feeRate: number; // example 7%, deducted from the provider payout
+  /** Fee taken when money is released. 0 on "advance" bookings: their 7% is taken on withdrawal. */
+  feeRate: number;
   plan: PlanKind;
+  /** When the applicant said half of the work is finished */
+  halfDoneAt?: string;
   method: PayMethod;
   status: BookingStatus;
   installments: Installment[];
@@ -342,7 +378,11 @@ export interface Notification {
 export interface Payout {
   id: string;
   userId: string;
+  /** Taken out of the balance. They receive amount − fee. */
   amount: number;
+  fee?: number;
+  /** The part of amount the fee was worked out on */
+  feeBase?: number;
   method: PayMethod;
   /** sandbox reference — no real transfer in this build */
   ref: string;
@@ -361,19 +401,63 @@ export interface Rating {
   createdAt: string;
 }
 
+export type CreditKind = "applicant" | "recruiter";
+
 export interface CreditApplication {
   id: string;
   userId: string;
+  /** Missing means applicant */
+  kind?: CreditKind;
   amount: number;
   months: 3 | 6 | 12;
   purpose: string;
   limitAtApply: number;
   /** demo partner only — nothing is sent anywhere */
-  status: "submitted_demo";
+  status: "submitted_demo" | "approved_demo" | "declined_demo";
+  decidedAt?: string;
+  decidedBy?: string;
   createdAt: string;
 }
 
 /* ------------------------------------------------------------------ safety & admin */
+/** The switches on Admin → Traffic. */
+export interface SiteControls {
+  signups: boolean;
+  posting: boolean;
+  applying: boolean;
+  /** Only admins can use the site */
+  maintenance: boolean;
+  /** Most people on the site at once. 0 means no limit. */
+  maxOnline: number;
+  updatedAt?: string;
+  updatedBy?: string;
+}
+
+/** One Nepal day of visits. Holds no IP addresses. */
+export interface TrafficDay {
+  day: string; // YYYY-MM-DD
+  views: number;
+  /** Short one-way hashes, only to count different visitors */
+  visitors: string[];
+  signedInViews: number;
+  mobileViews: number;
+  /** People turned away by a switch or the visitor limit */
+  blocked: number;
+  hours: number[]; // 24 entries
+  pages: Record<string, number>;
+}
+
+/** What an admin did, and to whom. */
+export interface AuditEntry {
+  id: string;
+  adminId: string;
+  adminName: string;
+  action: string;
+  target: string;
+  detail: string;
+  createdAt: string;
+}
+
 export interface Report {
   id: string;
   reporterId: string;
@@ -404,6 +488,15 @@ export interface PriceOverride {
 }
 
 export interface Store {
+  /* admin dashboard */
+  listUsers(): Promise<User[]>;
+  getControls(): Promise<SiteControls | null>;
+  putControls(c: SiteControls): Promise<SiteControls>;
+  listTrafficDays(): Promise<TrafficDay[]>;
+  putTrafficDay(d: TrafficDay): Promise<TrafficDay>;
+  listAudit(): Promise<AuditEntry[]>;
+  putAudit(a: AuditEntry): Promise<AuditEntry>;
+
   /* safety & admin */
   listReports(): Promise<Report[]>;
   putReport(r: Report): Promise<Report>;

@@ -9,11 +9,11 @@ import { withLock } from "@/lib/lock";
 
 const Body = z.object({
   taskId: z.string().min(3).max(64),
-  plan: z.enum(["full", "two", "milestones"]),
+
   method: z.enum(["esewa_sandbox", "khalti_sandbox", "card_sandbox"]),
 });
 
-/** Book the accepted offer: choose a plan and pay the first installment into escrow (sandbox). Needs a fresh MPIN. */
+/** Book the accepted offer by paying the 50% advance (sandbox). Needs a fresh MPIN. */
 export async function POST(req: NextRequest) {
   const g = await guard(req, { name: "booking-create", schema: Body, limit: 10 });
   if ("res" in g) return g.res;
@@ -23,7 +23,7 @@ export async function POST(req: NextRequest) {
     return await withLock(`task:${g.data.taskId}`, async () => {
       const l = await loadTask(g.data.taskId);
       if ("res" in l) return l.res;
-      const b = await createBooking(l.task, l.user, g.data.plan, g.data.method);
+      const b = await createBooking(l.task, l.user, g.data.method);
       const hold = (await store.listReceipts(b.id)).filter((r) => r.kind === "hold").at(-1);
       return NextResponse.json({ ok: true, id: b.id, ref: hold?.ref, receiptId: hold?.id });
     });

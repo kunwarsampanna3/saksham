@@ -22,6 +22,7 @@ const PAGES: [RegExp, string][] = [
   [/^\/abroad/, "Hire from abroad"],
   [/^\/explore/, "Browse tasks map"],
   [/^\/professionals/, "Browse applicants"],
+  [/^\/match/, "AI match and coach: find teachers or professionals, and plan what to learn"],
   [/^\/messages/, "Messages"],
   [/^\/my-tasks/, "My tasks"],
   [/^\/$/, "Home"],

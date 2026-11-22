@@ -9,6 +9,9 @@ import { getDict } from "@/lib/i18n/server";
 import { store } from "@/lib/store";
 import type { Bid, Booking, Task } from "@/lib/store/types";
 import { categoryLabel } from "@/lib/tasks";
+import { asOfNow } from "@/lib/post-state";
+import { postPhase } from "@/lib/business";
+import { npDate } from "@/lib/format";
 import { rs } from "@/lib/format";
 import type { CategoryId } from "@/lib/pricing";
 
@@ -31,7 +34,9 @@ function stageOf(task: Task, offers: number, booking: Booking | null): number {
   if (booking) {
     const s = booking.installments.map((i) => i.state);
     if (s.every((x) => x === "released")) return 5;
-    if (s.some((x) => x === "delivered" || x === "released")) return 4;
+    // Under the advance rules some money is released as soon as they are hired.
+    const started = booking.plan !== "advance" && s.some((x) => x === "released");
+    if (started || s.some((x) => x === "delivered")) return 4;
     if (s.some((x) => x === "held")) return 3;
     return 2;
   }
@@ -46,7 +51,7 @@ export default async function MyTasks({ searchParams }: { searchParams: Promise<
 
   const now = Date.now();
   const rows: Row[] = [];
-  for (const task of await store.listTasks()) {
+  for (const task of (await store.listTasks()).map((x) => asOfNow(x))) {
     const bids = (await store.listBids(task.id)).filter(
       (b) => b.status !== "withdrawn" && new Date(b.appearAt).getTime() <= now,
     );
@@ -72,7 +77,8 @@ export default async function MyTasks({ searchParams }: { searchParams: Promise<
 
   const inTab = (r: Row): Tab => {
     const s = r.task.status;
-    if (s === "completed" || s === "cancelled" || r.booking?.status === "refunded") return "done";
+    if (s === "completed" || s === "cancelled" || s === "expired" || r.booking?.status === "refunded")
+      return "done";
     if (s === "assigned" || s === "in_progress" || s === "delivered" || s === "disputed") {
       // providers whose offer wasn't chosen see it under "My offers" as closed
       if (r.role === "provider" && r.task.acceptedBidId !== r.bid?.id) return "offers";
@@ -153,7 +159,11 @@ export default async function MyTasks({ searchParams }: { searchParams: Promise<
                           {r.task.status === "disputed" && (
                             <AlertTriangle size={11} aria-hidden className="mr-1 inline" />
                           )}
-                          {d.status[r.task.status]}
+                          {r.task.removed
+                            ? t.market.post.removedStatus
+                            : r.task.status === "expired"
+                              ? t.market.post.expiredStatus
+                              : d.status[r.task.status]}
                         </span>
                       </span>
                     </div>
@@ -172,6 +182,13 @@ export default async function MyTasks({ searchParams }: { searchParams: Promise<
                             ? ` · ${d.yourOffer(rs(r.bid.amount, lang))}`
                             : ""}
                     </p>
+                    {r.role === "client" && r.task.status === "open" && r.task.post && (
+                      <p className="mt-1 text-sm font-semibold">
+                        {postPhase(r.task.post) === "paid"
+                          ? t.market.post.paidUntil(npDate(r.task.post.endsAt, lang))
+                          : t.market.post.freeUntil(npDate(r.task.post.removeAt, lang))}
+                      </p>
+                    )}
                     {r.role === "provider" && r.bid?.counter?.status === "pending" && (
                       <p className="mt-1 text-sm font-semibold text-[color:var(--warn-text)]">
                         {d.counterWaiting}

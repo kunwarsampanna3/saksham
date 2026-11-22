@@ -347,7 +347,7 @@ export function TrustBand({ t }: P) {
 /* ================================================================ Aasha story */
 export function NepalStory({ t }: P) {
   const s = t.home.story;
-  const plan = [30, 40, 30];
+  const plan = [30, 30, 40];
   return (
     <section
       aria-labelledby="story-h"
@@ -380,7 +380,7 @@ export function NepalStory({ t }: P) {
         <div
           className="relative mt-6 flex h-10 overflow-hidden rounded-[3px]"
           role="img"
-          aria-label="30% / 40% / 30%"
+          aria-label="30% / 30% / 40%"
         >
           {plan.map((p, i) => (
             <div
@@ -481,6 +481,7 @@ export function ProviderCta({ t, lang, isProvider }: P & { isProvider: boolean }
   const p = t.home.provider;
   const sample = { jobs: 12, earnings: 184_000, rating: 4.7 };
   const offer = creditOffer({
+    kind: "applicant",
     verifiedEarnings: sample.earnings,
     completedJobs: sample.jobs,
     rating: sample.rating,

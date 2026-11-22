@@ -7,13 +7,12 @@ import { BookingForm } from "@/components/pay/booking-form";
 import { requireUser } from "@/lib/auth/current-user";
 import { getDict } from "@/lib/i18n/server";
 import { store } from "@/lib/store";
-import { planPreview } from "@/lib/escrow";
-import { FEE_RATE } from "@/lib/pricing";
+import { advanceDates } from "@/lib/escrow";
 
 export const metadata: Metadata = { title: "Book and pay" };
 export const dynamic = "force-dynamic";
 
-/** /booking/:taskId — choose a payment plan for the accepted offer. */
+/** /booking/:taskId — pay the 50% advance for the accepted offer. */
 export default async function BookingPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const [user, { t }] = await Promise.all([requireUser(`/booking/${id}`), getDict()]);
@@ -53,13 +52,8 @@ export default async function BookingPage({ params }: { params: Promise<{ id: st
             taskTitle={task.title}
             total={task.agreedPrice}
             providerName={bid.providerName}
-            feeRate={FEE_RATE}
             abroad={task.forFamilyAbroad?.country ?? null}
-            previews={{
-              full: planPreview(task.agreedPrice, "full", task),
-              two: planPreview(task.agreedPrice, "two", task),
-              milestones: planPreview(task.agreedPrice, "milestones", task),
-            }}
+            dates={advanceDates(task)}
           />
         )}
       </div>

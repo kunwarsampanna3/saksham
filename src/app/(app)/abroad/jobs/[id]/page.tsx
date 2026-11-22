@@ -9,7 +9,9 @@ import { requireUser } from "@/lib/auth/current-user";
 import { getDict } from "@/lib/i18n/server";
 import { store } from "@/lib/store";
 import type { Booking } from "@/lib/store/types";
-import { canSeeJob, type JobView } from "@/lib/abroad";
+import { canReopen, canSeeJob, type JobView } from "@/lib/abroad";
+import { splitAdvance } from "@/lib/business";
+import { PostNotice } from "@/components/post/post-notice";
 import { jobProgress } from "@/lib/abroad-state";
 import { statusFor } from "@/lib/verification";
 import { num, rs } from "@/lib/format";
@@ -21,7 +23,12 @@ function payState(b: Booking) {
   if (b.status === "refunded") return "refunded" as const;
   if (b.status === "disputed") return "disputed" as const;
   if (b.status === "completed") return "released" as const;
-  return b.installments.some((i) => i.state === "delivered") ? ("delivered" as const) : ("held" as const);
+  if (b.installments.some((i) => i.state === "delivered")) return "delivered" as const;
+  if (b.plan === "advance") {
+    if (b.installments.some((i) => i.label === "half" && i.state === "released")) return "second" as const;
+    if (b.halfDoneAt) return "half" as const;
+  }
+  return "held" as const;
 }
 
 export default async function AbroadJobPage({ params }: { params: Promise<{ id: string }> }) {
@@ -45,6 +52,7 @@ export default async function AbroadJobPage({ params }: { params: Promise<{ id: 
   const details = lang === "ne" && job.detailsNe ? job.detailsNe : job.details;
   const country = countryName(t, job.country);
   const local = localPay(t, lang, job.country, job.payPerWorker) ?? undefined;
+  const localNow = localPay(t, lang, job.country, splitAdvance(job.payPerWorker).firstPayment) ?? undefined;
 
   return (
     <div>
@@ -71,6 +79,15 @@ export default async function AbroadJobPage({ params }: { params: Promise<{ id: 
 
       <div className="mx-auto grid max-w-[88rem] gap-8 px-4 py-8 sm:px-6 lg:grid-cols-[1fr_22rem]">
         <div className="min-w-0 space-y-8 max-lg:order-2">
+          <PostNotice
+            post={job.post}
+            removed={owner ? job.removed : undefined}
+            owner={owner}
+            waiting={open || view.state === "expired"}
+            againHref="/abroad/jobs/new"
+            t={t}
+            lang={lang}
+          />
           {view.state !== "open" && (
             <p
               role="status"
@@ -137,7 +154,7 @@ export default async function AbroadJobPage({ params }: { params: Promise<{ id: 
                                 workerName={a.name}
                                 seat={view.hired + 1}
                                 seats={job.workersNeeded}
-                                approx={local}
+                                approx={localNow}
                               />
                             )}
                             <JobActionButton jobId={job.id} action="decline" applicationId={a.id} />
@@ -146,9 +163,10 @@ export default async function AbroadJobPage({ params }: { params: Promise<{ id: 
                         {booking && (
                           <Link
                             href={`/payments/${booking.id}`}
-                            className={`btn !min-h-10 ${state === "delivered" ? "btn-primary" : "btn-ghost"}`}
+                            className={`btn !min-h-10 ${state === "delivered" || state === "half" ? "btn-primary" : "btn-ghost"}`}
                           >
-                            <Wallet size={16} aria-hidden /> {state === "delivered" ? j.release : j.payment}
+                            <Wallet size={16} aria-hidden />{" "}
+                            {state === "delivered" ? j.release : state === "half" ? j.paySecond : j.payment}
                           </Link>
                         )}
                         <Link href={`/profile/${a.userId}`} className="btn btn-quiet !min-h-10">
@@ -183,7 +201,9 @@ export default async function AbroadJobPage({ params }: { params: Promise<{ id: 
             </p>
 
             {owner && open && <JobActionButton jobId={job.id} action="close" />}
-            {owner && !open && view.seatsLeft > 0 && <JobActionButton jobId={job.id} action="reopen" />}
+            {owner && !open && view.seatsLeft > 0 && canReopen(job) && (
+              <JobActionButton jobId={job.id} action="reopen" />
+            )}
 
             {!owner && mine?.status === "hired" && myBooking && (
               <div className="border-line space-y-3 border-t pt-4">

@@ -23,6 +23,17 @@ export default async function ReceiptPage({ params }: { params: Promise<{ id: st
   const client = await store.getUserById(booking.clientId);
   const inst = booking.installments.find((i) => i.id === r.installmentId);
   const k = t.receipt;
+  // Under the advance rules a receipt covers a whole payment (50%, 30% or 40%), not one internal piece.
+  const advance = booking.plan === "advance" && r.kind !== "refund";
+  const stepText = !inst
+    ? ""
+    : !advance
+      ? `${t.booking.labels[inst.label]} (${inst.pct}%)`
+      : r.kind === "hold"
+        ? inst.label === "advance"
+          ? t.market.money.firstTitle
+          : t.market.money.secondTitle
+        : `${t.booking.labels[inst.label]} (${inst.label === "finish" ? 40 : 30}%)`;
   const when = new Intl.DateTimeFormat(lang === "ne" ? "ne-NP" : "en-GB", {
     dateStyle: "long",
     timeStyle: "short",
@@ -32,7 +43,7 @@ export default async function ReceiptPage({ params }: { params: Promise<{ id: st
     [k.no, r.receiptNo],
     [k.date, when],
     [k.type, t.payments.receiptKinds[r.kind]],
-    [k.task, `${task?.title ?? ""}${inst ? ` — ${t.booking.labels[inst.label]} (${inst.pct}%)` : ""}`],
+    [k.task, `${task?.title ?? ""}${stepText ? ` — ${stepText}` : ""}`],
     [
       k.from,
       r.kind === "refund" ? "Saksham escrow" : r.kind === "release" ? "Saksham escrow" : (client?.name ?? ""),
@@ -48,7 +59,7 @@ export default async function ReceiptPage({ params }: { params: Promise<{ id: st
     [k.method, t.booking.methods[r.method]],
     [k.ref, r.ref],
     [k.amount, rs(r.amount, lang)],
-    ...(r.kind === "release"
+    ...(r.kind === "release" && booking.feeRate > 0
       ? ([
           [k.fee, rs(r.fee, lang)],
           [k.net, rs(r.amount - r.fee, lang)],

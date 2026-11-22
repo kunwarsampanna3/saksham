@@ -97,35 +97,41 @@ describe("saving data", () => {
 describe("money", () => {
   test("03 an installment is released once", async (t) => {
     const app = await signedIn(t);
-    const b = await app.booking("full");
-    const body = { action: "release", installmentId: b.installments[0].id };
+    const b = await app.booking();
+    await b.half();
+    await b.second();
+    const body = { action: "release", installmentId: b.installments.at(-1).id };
     const all = await times(5, () => app.call(`/api/bookings/${b.id}`, body, app.client));
     assert.equal(all.filter((r) => r.status === 200).length, 1);
-    const receipts = app.db().receipts.filter((r) => r.kind === "release");
+    const receipts = app
+      .db()
+      .receipts.filter((r) => r.kind === "release" && r.installmentId === body.installmentId);
     assert.equal(receipts.length, 1);
-    assert.equal(receipts[0].fee, 350);
+    assert.equal(receipts[0].amount, 2000);
   });
 
   test("04a an installment is charged once", async (t) => {
     const app = await signedIn(t);
     const b = await app.booking();
-    const id = b.installments[1].id;
-    const body = { action: "pay", installmentId: id };
+    await b.half();
+    const id = b.installments[2].id;
+    const body = { action: "second" };
     const all = await times(5, () => app.call(`/api/bookings/${b.id}`, body, app.client));
     assert.equal(all.filter((r) => r.status === 200).length, 1);
-    assert.equal(app.db().receipts.filter((r) => r.installmentId === id).length, 1);
+    assert.equal(app.db().receipts.filter((r) => r.installmentId === id && r.kind === "hold").length, 1);
   });
 
   test("04b a payment and a release at the same moment are both kept", async (t) => {
     const app = await signedIn(t);
     const b = await app.booking();
-    const [first, second] = b.installments;
-    await Promise.all([
-      app.call(`/api/bookings/${b.id}`, { action: "release", installmentId: first.id }, app.client),
-      app.call(`/api/bookings/${b.id}`, { action: "pay", installmentId: second.id }, app.client),
-    ]);
-    const states = app.db().bookings[0].installments.map((i) => i.state);
-    assert.deepEqual(states, ["released", "held", "scheduled"]);
+    await b.half();
+    await Promise.all([b.second(), app.call(`/api/bookings/${b.id}/family`, { action: "link" }, app.client)]);
+    const saved = app.db().bookings[0];
+    assert.deepEqual(
+      saved.installments.map((i) => i.state),
+      ["released", "released", "released", "held"],
+    );
+    assert.equal(saved.halfDoneAt !== undefined, true);
   });
 
   test("08 a refunded booking cannot come back to life", async (t) => {
@@ -389,23 +395,13 @@ describe("normal use still works", () => {
     await app.act(task, bid, { action: "counter", amount: 4000 });
     assert.equal((await app.act(task, bid, { action: "respond", accept: true }, app.pro)).status, 200);
     assert.equal((await app.act(task, bid, { action: "accept", amount: 4000 })).json.agreedPrice, 4000);
-    const made = await app.call(
-      "/api/bookings",
-      { taskId: task, plan: "two", method: "esewa_sandbox" },
-      app.client,
-    );
+    const made = await app.call("/api/bookings", { taskId: task, method: "esewa_sandbox" }, app.client);
     const url = `/api/bookings/${made.json.id}`;
-    const [a, b] = app.db().bookings[0].installments.map((i) => i.id);
-    const step = async (action, installmentId, who) =>
-      assert.equal((await app.call(url, { action, installmentId }, who)).status, 200, action);
-    await step("deliver", a, app.pro);
-    await step("release", a, app.client);
-    await step("pay", b, app.client);
-    await step("release", b, app.client);
+    await app.steps(made.json.id).finish();
     assert.equal(app.db().bookings[0].status, "completed");
     assert.equal((await app.call(`${url}/rate`, { stars: 5 }, app.client)).status, 200);
-    const payout = { action: "payout", amount: 3720, method: "esewa_sandbox" };
-    assert.equal((await app.call("/api/wallet", payout, app.pro)).status, 200);
+    const payout = { action: "payout", amount: 4000, method: "esewa_sandbox" };
+    assert.equal((await app.call("/api/wallet", payout, app.pro)).json.fee, 280);
   });
 
   test("a task can't be booked twice and earnings can't be withdrawn twice", async (t) => {
@@ -413,14 +409,13 @@ describe("normal use still works", () => {
     const task = await app.task();
     const bid = (await app.offer(task, 2000)).json.id;
     await app.act(task, bid, { action: "accept", amount: 2000 });
-    const book = { taskId: task, plan: "full", method: "esewa_sandbox" };
+    const book = { taskId: task, method: "esewa_sandbox" };
     await times(5, () => app.call("/api/bookings", book, app.client));
     const [booking] = app.db().bookings;
     assert.equal(app.db().bookings.length, 1);
-    const release = { action: "release", installmentId: booking.installments[0].id };
-    await app.call(`/api/bookings/${booking.id}`, release, app.client);
+    await app.steps(booking.id).finish();
     await times(5, () =>
-      app.call("/api/wallet", { action: "payout", amount: 1860, method: "esewa_sandbox" }, app.pro),
+      app.call("/api/wallet", { action: "payout", amount: 2000, method: "esewa_sandbox" }, app.pro),
     );
     assert.equal(app.db().payouts.length, 1);
   });
@@ -456,11 +451,7 @@ describe("normal use still works", () => {
     const task = await app.task(null, mina);
     const bid = (await app.offer(task, 5000, "I can do it", bikash)).json.id;
     await app.act(task, bid, { action: "accept", amount: 5000 }, mina);
-    const made = await app.call(
-      "/api/bookings",
-      { taskId: task, plan: "full", method: "esewa_sandbox" },
-      mina,
-    );
+    const made = await app.call("/api/bookings", { taskId: task, method: "esewa_sandbox" }, mina);
     const url = `/api/bookings/${made.json.id}/dispute`;
     await app.call(url, { action: "open", reason: "Trying the demo reviewer", wanted: "redo" }, mina);
     assert.equal((await app.call(url, { action: "resolve", outcome: "redo" }, mina)).status, 200);

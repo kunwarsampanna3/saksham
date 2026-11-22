@@ -3,23 +3,15 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import {
-  ArrowDownToLine,
-  BadgeCheck,
-  Landmark,
-  Star,
-  FileText,
-  Info,
-  FlaskConical,
-  Check,
-  X,
-} from "lucide-react";
+import { ArrowDownToLine, BadgeCheck, Star, FileText, Info, FlaskConical, Check, X } from "lucide-react";
 import { postJson, useI18n } from "@/components/providers";
 import { useReauth } from "@/components/reauth-dialog";
 import { rs, npDate, num } from "@/lib/format";
 import { toDeva } from "@/lib/i18n/dict";
 import { CATEGORIES } from "@/lib/pricing";
-import { monthlyInstallment, EXAMPLE_CREDIT_RATE, type CreditOffer } from "@/lib/rules";
+import { monthlyInstallment, EXAMPLE_CREDIT_RATE, CREDIT_RULES } from "@/lib/rules";
+import { MIN_WITHDRAW, withdrawalFee } from "@/lib/business";
+import { CreditPanel, type CreditData, type CreditKind } from "./credit-panel";
 
 interface Passport {
   completedJobs: number;
@@ -31,15 +23,17 @@ interface Passport {
   verified: boolean;
   isExample: boolean;
 }
-export interface WalletData {
+export interface WalletData extends CreditData {
   provider: {
     releasedGross: number;
     fees: number;
     earnedNet: number;
     inEscrow: number;
     scheduled: number;
-    paidOut: number;
+    received: number;
     available: number;
+    untaxed: number;
+    taxedBefore: number;
   };
   client: { paidIn: number; inEscrow: number; released: number; refunded: number };
   receipts: {
@@ -56,25 +50,27 @@ export interface WalletData {
   payouts: {
     id: string;
     amount: number;
+    fee: number;
     method: "esewa_sandbox" | "khalti_sandbox" | "card_sandbox";
     ref: string;
     createdAt: string;
   }[];
   passport: Passport;
   examplePassport: Passport | null;
-  credit: CreditOffer;
-  exampleCredit: CreditOffer | null;
-  applications: { id: string; amount: number; months: number; createdAt: string }[];
 }
 
 export function WalletView({
   data,
   isProvider,
+  isRecruiter,
+  working,
   qrSvg,
   passportUrl,
 }: {
   data: WalletData;
   isProvider: boolean;
+  isRecruiter: boolean;
+  working: boolean;
   qrSvg: string;
   passportUrl: string;
 }) {
@@ -83,13 +79,15 @@ export function WalletView({
   const router = useRouter();
   const { ensureFresh, dialog } = useReauth();
   const [tab, setTab] = useState<"provider" | "client">(isProvider ? "provider" : "client");
-  const [useExample, setUseExample] = useState(!!data.examplePassport && data.passport.completedJobs < 3);
+  const [useExample, setUseExample] = useState(
+    !!data.examplePassport && data.passport.completedJobs < CREDIT_RULES.minJobs,
+  );
   const [withdrawOpen, setWithdrawOpen] = useState(false);
-  const [applyOpen, setApplyOpen] = useState(false);
+  const [applying, setApplying] = useState<{ kind: CreditKind; left: number; example: boolean } | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
 
   const passport = useExample && data.examplePassport ? data.examplePassport : data.passport;
-  const credit = useExample && data.exampleCredit ? data.exampleCredit : data.credit;
+
   const errText = (e?: string) =>
     e && e in w.errors
       ? w.errors[e as keyof typeof w.errors]
@@ -162,6 +160,7 @@ export function WalletView({
                   <p className="font-display text-accent text-4xl font-extrabold">
                     {rs(data.provider.available, lang)}
                   </p>
+                  <p className="text-muted text-sm">{t.market.withdraw.beforeFee}</p>
                 </div>
                 <button
                   type="button"
@@ -179,7 +178,7 @@ export function WalletView({
               <Stat label={w.releasedGross} value={data.provider.releasedGross} />
               <Stat label={w.fees} value={data.provider.fees} />
               <Stat label={w.earned} value={data.provider.earnedNet} />
-              <Stat label={w.paidOut} value={data.provider.paidOut} />
+              <Stat label={w.paidOut} value={data.provider.received} />
             </dl>
           </div>
         ) : (
@@ -297,94 +296,12 @@ export function WalletView({
           </div>
         </section>
 
-        <section id="credit" aria-labelledby="cr-h" className="notch-frame">
-          <div className="notch-card terrace-edge h-full p-6">
-            <div className="flex flex-wrap items-start justify-between gap-2">
-              <h2 id="cr-h" className="font-display text-2xl font-bold">
-                {t.credit.title}
-              </h2>
-              <span className="inline-flex items-center gap-1.5 text-sm font-semibold">
-                <Landmark size={16} aria-hidden /> {t.credit.partner}{" "}
-                <span className="demo-tag">{t.common.demo}</span>
-              </span>
-            </div>
-            <p className="mt-1 text-[0.95rem]">{t.credit.simple.what}</p>
-            <ol className="mt-3 grid gap-2 sm:grid-cols-3">
-              {t.credit.simple.steps.map((st, i) => (
-                <li key={st} className="bg-surface-2 flex gap-2 rounded-[10px] p-3 text-sm">
-                  <span className="bg-accent text-accent-contrast grid h-6 w-6 shrink-0 place-items-center rounded-full text-xs font-bold">
-                    {i + 1}
-                  </span>{" "}
-                  {st}
-                </li>
-              ))}
-            </ol>
-            <div className="mt-3">
-              <p className="text-sm font-semibold">{t.credit.simple.progress(passport.completedJobs)}</p>
-              <div className="bg-line mt-1 h-2.5 max-w-sm overflow-hidden rounded-full">
-                <div
-                  className="bg-accent h-full rounded-full"
-                  style={{ width: `${Math.min(100, Math.round((passport.completedJobs / 3) * 100))}%` }}
-                />
-              </div>
-            </div>
-            <p className="border-accent bg-accent-soft mt-3 rounded-[10px] border-l-4 p-3 text-sm">
-              <strong>{t.credit.simple.exampleTitle}: </strong>
-              {t.credit.simple.example}
-            </p>
-            <p className="text-muted mt-2 text-xs">
-              {t.credit.lead} {t.credit.simple.partnerNote}
-            </p>
-            <p className="text-muted mt-4 text-xs font-semibold tracking-wider uppercase">
-              {t.credit.limit}
-              {passport.isExample ? ` · ${t.passport.example}` : ""}
-            </p>
-            <p className="font-display text-accent text-4xl font-extrabold">
-              {credit.eligible ? rs(credit.limit, lang) : t.credit.notYet}
-            </p>
-            {credit.jobsNeeded > 0 && (
-              <p className="mt-1 text-sm font-semibold">{t.credit.jobsNeeded(credit.jobsNeeded)}</p>
-            )}
-            {credit.halved && credit.eligible && <p className="mt-1 text-sm">{t.credit.halved}</p>}
-            {credit.capped && <p className="mt-1 text-sm">{t.credit.capped}</p>}
-            <details className="bg-surface-2 mt-4 rounded-[4px] p-3 text-sm">
-              <summary className="cursor-pointer font-semibold">{t.credit.howTitle}</summary>
-              <ul className="text-muted mt-2 list-disc space-y-1 pl-5">
-                <li>{t.credit.rule1(rs(credit.base, lang))}</li>
-                <li>{t.credit.rule2}</li>
-                <li>{t.credit.rule3}</li>
-                <li>{t.credit.rule4}</li>
-              </ul>
-            </details>
-            <button
-              type="button"
-              className="btn btn-primary mt-5"
-              disabled={!credit.eligible || !isProvider}
-              onClick={() => setApplyOpen(true)}
-            >
-              {t.credit.apply}
-            </button>
-            {data.applications.length > 0 && (
-              <div className="border-line mt-5 border-t pt-3">
-                <p className="text-muted text-xs font-semibold tracking-wider uppercase">
-                  {t.credit.applications}
-                </p>
-                <ul className="mt-1 space-y-1 text-sm">
-                  {data.applications.map((a) => (
-                    <li key={a.id} className="flex justify-between gap-2">
-                      <span>
-                        {rs(a.amount, lang)} · {t.credit.monthsN(a.months)}
-                      </span>
-                      <span className="text-muted">
-                        {t.credit.status} · {npDate(a.createdAt, lang)}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-          </div>
-        </section>
+        <CreditPanel
+          data={data}
+          hasRole={{ applicant: isProvider, recruiter: isRecruiter }}
+          initial={working ? "applicant" : "recruiter"}
+          onApply={(kind, left, example) => setApplying({ kind, left, example })}
+        />
       </div>
 
       {/* receipts + payouts */}
@@ -435,8 +352,13 @@ export function WalletView({
                   <li key={p.id} className="border-line rounded-[4px] border p-3">
                     <span className="flex justify-between font-semibold">
                       <span>{t.booking.methods[p.method]}</span>
-                      <span>{rs(p.amount, lang)}</span>
+                      <span>{rs(p.amount - p.fee, lang)}</span>
                     </span>
+                    {p.fee > 0 && (
+                      <span className="text-muted block text-xs">
+                        {t.market.withdraw.feeOf(rs(p.fee, lang))}
+                      </span>
+                    )}
                     <span className="text-muted block text-xs">
                       {p.ref} · {npDate(p.createdAt, lang)}
                     </span>
@@ -458,6 +380,7 @@ export function WalletView({
       {withdrawOpen && (
         <WithdrawDialog
           max={data.provider.available}
+          taxed={data.provider}
           onClose={() => setWithdrawOpen(false)}
           errText={errText}
           onSubmit={async (amount, method) => {
@@ -472,14 +395,15 @@ export function WalletView({
           }}
         />
       )}
-      {applyOpen && (
+      {applying && (
         <ApplyDialog
-          limit={credit.limit}
-          onClose={() => setApplyOpen(false)}
+          limit={applying.left}
+          onClose={() => setApplying(null)}
           onSubmit={async (amount, months, purpose) => {
-            const r = await moneyPost({ action: "credit", amount, months, purpose, example: useExample });
+            const { kind, example } = applying;
+            const r = await moneyPost({ action: "credit", kind, amount, months, purpose, example });
             if (r.ok) {
-              setApplyOpen(false);
+              setApplying(null);
               setNotice(t.credit.submitted);
               router.refresh();
               return null;
@@ -535,11 +459,13 @@ function Modal({
 
 function WithdrawDialog({
   max,
+  taxed,
   onClose,
   onSubmit,
   errText,
 }: {
   max: number;
+  taxed: { untaxed: number; taxedBefore: number };
   onClose: () => void;
   onSubmit: (a: number, m: "esewa_sandbox" | "khalti_sandbox") => Promise<string | null>;
   errText: (e?: string) => string;
@@ -550,13 +476,15 @@ function WithdrawDialog({
   const [method, setMethod] = useState<"esewa_sandbox" | "khalti_sandbox">("esewa_sandbox");
   const [err, setErr] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const x = t.market.withdraw;
+  const { fee } = withdrawalFee(amount, taxed);
   return (
     <Modal title={w.withdrawTitle} onClose={onClose}>
       <form
         className="mt-4 space-y-4"
         onSubmit={async (e) => {
           e.preventDefault();
-          if (amount < 100) return setErr(errText("payout_min"));
+          if (amount < MIN_WITHDRAW) return setErr(errText("payout_min"));
           if (amount > max) return setErr(errText("payout_too_much"));
           setBusy(true);
           setErr(await onSubmit(amount, method));
@@ -570,13 +498,24 @@ function WithdrawDialog({
             min={100}
             max={max}
             value={amount}
-            onChange={(e) => setAmount(Number(e.target.value) || 0)}
+            onChange={(e) => setAmount(Math.floor(Number(e.target.value)) || 0)}
             className="input font-display text-xl font-bold"
           />
           <span className="field-hint">
             {w.available}: {rs(max, lang)}
           </span>
         </label>
+        <dl className="bg-surface-2 rounded-[4px] p-3 text-sm" aria-live="polite" data-withdraw-sum>
+          <div className="flex justify-between gap-3">
+            <dt>{x.fee}</dt>
+            <dd className="font-semibold">− {rs(fee, lang)}</dd>
+          </div>
+          <div className="mt-1 flex justify-between gap-3 font-semibold">
+            <dt>{x.receive}</dt>
+            <dd className="font-display text-xl font-extrabold">{rs(Math.max(0, amount - fee), lang)}</dd>
+          </div>
+          {taxed.untaxed > 0 && <p className="text-muted mt-1.5 text-xs">{x.lowered}</p>}
+        </dl>
         <fieldset>
           <legend className="field-label">{w.to}</legend>
           <div className="flex flex-wrap gap-2">

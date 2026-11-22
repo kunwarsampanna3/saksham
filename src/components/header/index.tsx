@@ -66,52 +66,33 @@ export function Header() {
 
         <nav aria-label="Primary" className="ml-1 hidden items-center gap-0.5 xl:flex">
           <CategoriesMenu />
-          {nav.map(({ href, label }) => (
+          {nav.map(({ href, label, wide }) => (
             <Link
               key={href}
               href={href}
               aria-current={isActive(href) ? "page" : undefined}
-              className={`hover:text-accent relative rounded-md px-3 py-2 text-[0.95rem] font-semibold whitespace-nowrap transition-colors ${isActive(href) ? "text-accent" : "text-text"}`}
+              className={`hover:text-accent relative rounded-md px-2 py-2 text-[0.95rem] font-semibold whitespace-nowrap transition-colors ${wide ? "hidden min-[1440px]:block" : ""} ${isActive(href) ? "text-accent" : "text-text"}`}
             >
               {label}
               {href === "/messages" && <CountBadge n={badges.messages} label={t.msg.title} />}
               {isActive(href) && (
-                <span className="bg-accent absolute inset-x-3 -bottom-[13px] h-[3px]" aria-hidden />
+                <span className="bg-accent absolute inset-x-2 -bottom-[13px] h-[3px]" aria-hidden />
               )}
             </Link>
           ))}
         </nav>
 
         <div className="ml-auto flex items-center gap-1.5 sm:gap-2">
-          {/* Wide screens: search box always visible */}
-          <form action="/explore" role="search" className="relative hidden 2xl:block">
-            <label htmlFor="hdr-q" className="sr-only">
-              {t.nav.search}
-            </label>
-            <Search
-              size={17}
-              aria-hidden
-              className="text-muted pointer-events-none absolute top-1/2 left-3 -translate-y-1/2"
-            />
-            <input
-              id="hdr-q"
-              name="q"
-              type="search"
-              placeholder={t.nav.search}
-              maxLength={80}
-              className="input !min-h-10 w-64 !pl-9 !text-[0.95rem]"
-            />
-          </form>
-          {/* Smaller screens: a button that opens the search bar below the header */}
+          {/* A button that opens the search bar below the header: the 88rem bar has no room for a search box. */}
           <button
             type="button"
-            className="border-line-strong hover:border-accent hover:bg-accent-soft inline-flex h-10 min-w-10 items-center justify-center gap-2 rounded-md border px-2.5 font-semibold 2xl:hidden"
+            className="border-line-strong hover:border-accent hover:bg-accent-soft inline-flex h-10 min-w-10 items-center justify-center gap-2 rounded-md border px-2.5 font-semibold"
             aria-expanded={searchOpen}
             aria-controls="hdr-search"
             onClick={() => setSearchOpen((s) => !s)}
           >
             <Search size={19} aria-hidden />{" "}
-            <span className="sr-only sm:not-sr-only">{t.nav.searchShort}</span>
+            <span className="sr-only lg:not-sr-only xl:sr-only">{t.nav.searchShort}</span>
           </button>
 
           {working ? (
@@ -127,10 +108,10 @@ export function Header() {
             </Link>
           )}
 
-          <div className="hidden sm:block">
+          <div className="hidden lg:block">
             <LangSwitch />
           </div>
-          <div className="hidden md:block">
+          <div className="hidden lg:block">
             <ThemeToggle />
           </div>
           <Notifications badges={badges} />
@@ -143,7 +124,7 @@ export function Header() {
           id="hdr-search"
           action="/explore"
           role="search"
-          className="border-line flex gap-2 border-t px-4 py-3 2xl:hidden"
+          className="border-line flex gap-2 border-t px-4 py-3"
         >
           <label htmlFor="hdr-q-m" className="sr-only">
             {t.nav.search}

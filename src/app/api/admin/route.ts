@@ -10,6 +10,7 @@ import { DEMO_PERSONAS, demoSeed } from "@/lib/auth/demo";
 import { resetExampleSeed, ensureExampleTasks } from "@/lib/tasks";
 import { ensureAbroadDemo } from "@/lib/seed/abroad-demo";
 import { withLock } from "@/lib/lock";
+import { logAdmin } from "@/lib/admin";
 
 const Amount = z.number().int().min(100).max(1_000_000);
 const Body = z.discriminatedUnion("action", [
@@ -41,6 +42,7 @@ export async function POST(req: NextRequest) {
     const r = (await store.listReports()).find((x) => x.id === d.id);
     if (!r) return fail(404, "not_found");
     await store.putReport({ ...r, status: d.status, updatedAt: at });
+    await logAdmin(me, "report", r.reason, d.status);
     return NextResponse.json({ ok: true });
   }
 
@@ -54,6 +56,7 @@ export async function POST(req: NextRequest) {
       updatedBy: me.id,
       updatedAt: at,
     });
+    await logAdmin(me, "price", d.category, `${d.low}–${d.high}, +${d.perDay}`);
     return NextResponse.json({ ok: true });
   }
 
@@ -69,6 +72,7 @@ export async function POST(req: NextRequest) {
     await ensureExampleTasks();
     await ensureAbroadDemo();
   });
+  await logAdmin(me, "reset_demo", "");
   // The demo accounts were re-created with new ids, so this session no longer points at a user.
   if (me.isDemo) await clearSessionCookie();
   return NextResponse.json({ ok: true, signedOut: me.isDemo });

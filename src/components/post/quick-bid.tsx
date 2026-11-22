@@ -8,6 +8,7 @@ import { CATEGORY_ICONS } from "@/components/category-icons";
 import { CATEGORIES, category, fairRange, type CategoryId, type PriceOverrideLite } from "@/lib/pricing";
 import { areasFor } from "@/lib/geo";
 import { rs, rsRange } from "@/lib/format";
+import { usePostPayment } from "./post-payment";
 
 /** Popular first; the rest are in "More categories". */
 const FEATURED: CategoryId[] = [
@@ -60,7 +61,7 @@ export function QuickBid({
   const [womenOnly, setWomenOnly] = useState(false);
   const [price, setPrice] = useState<number | null>(null);
   const [aiUsed, setAiUsed] = useState(false);
-  const [busy, setBusy] = useState<"ai" | "post" | null>(null);
+  const [busy, setBusy] = useState<"ai" | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [listening, setListening] = useState(false);
   const [canSpeak, setCanSpeak] = useState(false);
@@ -134,35 +135,37 @@ export function QuickBid({
     if (!FEATURED.includes(r.task.category)) setMore(true);
   };
 
-  const post = async () => {
+  const name = (title || text).trim().slice(0, 80);
+  const payment = usePostPayment({
+    onPosted: (id) => router.push(`/task/${id}`),
+    submit: async (post) => {
+      const r = await postJson<{ id: string; ref?: string }>("/api/tasks", {
+        category: cat,
+        title: name,
+        details: text.trim().slice(0, 2000) || name,
+        quantity: 1,
+        days,
+        city: online ? "Online" : city,
+        area: online ? undefined : area,
+        online,
+        womenOnly,
+        budget: price,
+        flexible: true,
+        aiSource: aiUsed ? "ai" : "manual",
+        post,
+      });
+      if (r.ok && r.id) return { id: r.id, ref: r.ref };
+      const errors: Record<string, string> = { ...t.post.errors, ...t.market.post.errors };
+      return { error: (r.error && errors[r.error]) || t.errors.generic };
+    },
+  });
+
+  const post = () => {
     setErr(null);
     if (!cat) return setErr(q.needCat);
-    const name = (title || text).trim().slice(0, 80);
     if (name.length < 3) return setErr(q.needText);
     if (!price || price < 100) return setErr(t.post.errors.budget);
-    setBusy("post");
-    const r = await postJson<{ id: string }>("/api/tasks", {
-      category: cat,
-      title: name,
-      details: text.trim().slice(0, 2000) || name,
-      quantity: 1,
-      days,
-      city: online ? "Online" : city,
-      area: online ? undefined : area,
-      online,
-      womenOnly,
-      budget: price,
-      flexible: true,
-      aiSource: aiUsed ? "ai" : "manual",
-    });
-    setBusy(null);
-    if (!r.ok || !r.id)
-      return setErr(
-        r.error && r.error in t.post.errors
-          ? t.post.errors[r.error as keyof typeof t.post.errors]
-          : t.errors.generic,
-      );
-    router.push(`/task/${r.id}`);
+    payment.open(name);
   };
 
   const state =
@@ -358,6 +361,7 @@ export function QuickBid({
           </div>
         </section>
 
+        {cat && payment.picker}
         {err && (
           <p role="alert" className="field-error">
             {err}
@@ -365,13 +369,13 @@ export function QuickBid({
         )}
         <button
           type="button"
-          onClick={() => void post()}
+          onClick={post}
           disabled={busy !== null || !cat}
           className="btn btn-primary !min-h-14 w-full text-lg sm:w-auto sm:px-10"
         >
-          <Send size={19} aria-hidden />{" "}
-          {busy === "post" ? q.posting : price ? q.postAt(rs(price, lang)) : q.post}
+          <Send size={19} aria-hidden /> {cat ? payment.payLabel : q.post}
         </button>
+        {payment.sheet}
       </div>
 
       {/* how it works */}

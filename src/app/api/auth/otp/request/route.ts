@@ -5,6 +5,7 @@ import { exactlyOne, takenError, targetFields, targetOf, userByTarget } from "@/
 import { issueOtp } from "@/lib/auth/otp";
 import { rateLimit } from "@/lib/auth/rate-limit";
 import { policy } from "@/lib/config";
+import { switchedOff } from "@/lib/controls";
 
 const Body = z
   .object({ ...targetFields, purpose: z.enum(["signup", "reset"]) })
@@ -15,6 +16,10 @@ export async function POST(req: NextRequest) {
   if ("res" in g) return g.res;
   const { purpose } = g.data;
   const target = targetOf(g.data);
+  if (purpose === "signup") {
+    const off = await switchedOff("signups", null);
+    if (off) return off;
+  }
 
   // At most 5 codes per number/email per hour, whatever the IP.
   const perPhone = rateLimit(`otp-target:${target}`, 5, 3600);

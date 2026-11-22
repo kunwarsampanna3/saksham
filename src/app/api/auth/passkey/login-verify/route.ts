@@ -43,6 +43,7 @@ export async function POST(req: NextRequest) {
         p.id === pk.id ? { ...p, counter: v.authenticationInfo.newCounter } : p,
       ),
     });
+    if (user.suspended) return fail(403, "suspended");
     await startSession(user);
     return NextResponse.json({ ok: true, user: toPublicUser(user) });
   } catch {

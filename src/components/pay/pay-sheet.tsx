@@ -18,6 +18,12 @@ import { VisaCard } from "./visa-card";
 
 export type Method = "esewa_sandbox" | "khalti_sandbox" | "card_sandbox";
 export type PayResult = { ok: boolean; error?: string; ref?: string; receiptHref?: string };
+export interface PayDetails {
+  rows: [label: string, value: string][];
+  note: string;
+  doneTitle: string;
+  doneNote: string;
+}
 
 const BRAND: Record<Method, string> = {
   esewa_sandbox: "bg-[#41a124]", // eSewa-style green
@@ -48,6 +54,7 @@ export function PaySheet({
   fee = 0,
   money,
   methodLabel,
+  details,
 }: {
   method: Method;
   /** When only one brand is offered, e.g. "Visa card" for hiring abroad */
@@ -64,6 +71,8 @@ export function PaySheet({
   mode?: "pay" | "release";
   fee?: number;
   money?: (n: number) => string;
+  /** Replaces the escrow wording, for payments that aren't simply "held until you approve" */
+  details?: PayDetails;
   pay: () => Promise<PayResult>;
   onDone: (r: PayResult) => void;
   onClose: () => void;
@@ -145,7 +154,7 @@ export function PaySheet({
   const release = mode === "release";
   const label = methodLabel ?? b.methods[method];
   const fmt = money ?? ((n: number) => String(n));
-  const rows: [string, string][] = release
+  const standard: [string, string][] = release
     ? [
         [s.for, taskTitle],
         [s.releaseTo, providerName],
@@ -160,6 +169,7 @@ export function PaySheet({
         [s.method, label],
         [s.serviceCharge, s.serviceFree],
       ];
+  const rows = details?.rows ?? standard;
 
   return (
     <dialog
@@ -215,7 +225,8 @@ export function PaySheet({
           )}
           <p className="bg-accent-soft mt-3 flex gap-2 rounded-[10px] p-3 text-xs">
             <LockKeyhole size={14} aria-hidden className="text-accent mt-0.5 shrink-0" />{" "}
-            {release ? s.releaseNote : method === "card_sandbox" ? b.cardNote : s.escrowNote}
+            {details?.note ??
+              (release ? s.releaseNote : method === "card_sandbox" ? b.cardNote : s.escrowNote)}
           </p>
           {err && (
             <p role="alert" className="field-error mt-3">
@@ -303,7 +314,9 @@ export function PaySheet({
           <span className="bg-accent mx-auto grid h-16 w-16 place-items-center rounded-full text-white">
             <Check size={34} aria-hidden />
           </span>
-          <p className="font-display mt-3 text-xl font-bold">{release ? s.releasedTitle : s.heldTitle}</p>
+          <p className="font-display mt-3 text-xl font-bold">
+            {details?.doneTitle ?? (release ? s.releasedTitle : s.heldTitle)}
+          </p>
           <p className="text-muted text-sm">
             {at ? npDate(at, lang) : ""} ·{" "}
             {new Date(at || Date.now()).toLocaleTimeString(lang === "ne" ? "ne-NP" : "en-GB", {
@@ -329,7 +342,8 @@ export function PaySheet({
           </dl>
           <p className="text-muted mt-3 inline-flex items-center gap-1.5 text-xs">
             <CheckCircle2 size={14} aria-hidden className="text-accent" />{" "}
-            {release ? s.releasedNote(providerName, fmt(amount - fee)) : s.heldNote(providerName)}
+            {details?.doneNote ??
+              (release ? s.releasedNote(providerName, fmt(amount - fee)) : s.heldNote(providerName))}
           </p>
           <div className="mt-4 grid grid-cols-2 gap-2">
             {result.receiptHref ? (

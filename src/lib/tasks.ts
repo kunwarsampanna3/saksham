@@ -2,7 +2,8 @@ import "server-only";
 import { randomUUID, createHash } from "node:crypto";
 import { config } from "@/lib/config";
 import { store, canSeeWomenOnly } from "@/lib/store";
-import type { Bid, Question, Task, User } from "@/lib/store/types";
+import type { Bid, PostPayment, Question, Task, User } from "@/lib/store/types";
+import { isTakenDown } from "@/lib/post-state";
 import { fairRange, category } from "@/lib/pricing";
 import { fairRangeLive } from "@/lib/prices";
 import {
@@ -183,7 +184,7 @@ export interface NewTask {
   aiSource: Task["aiSource"];
 }
 
-export async function createTask(user: User, input: NewTask): Promise<Task> {
+export async function createTask(user: User, input: NewTask, post: PostPayment): Promise<Task> {
   const online = input.online || input.city === "Online";
   const r = await fairRangeLive({
     category: input.category,
@@ -200,8 +201,8 @@ export async function createTask(user: User, input: NewTask): Promise<Task> {
     clientName: user.name,
     isExample: false,
     category: input.category,
-    title: input.title,
-    details: input.details,
+    title: maskContacts(input.title).text,
+    details: maskContacts(input.details).text,
     quantity: input.quantity,
     days: input.days,
     city: online ? "Online" : input.city,
@@ -219,6 +220,7 @@ export async function createTask(user: User, input: NewTask): Promise<Task> {
     photos: [],
     aiSource: input.aiSource,
     status: "open",
+    post,
     createdAt: now(),
     updatedAt: now(),
   };
@@ -261,6 +263,9 @@ export async function canView(task: Task, viewer: User): Promise<boolean> {
   // A hire abroad shows a person's pay and workplace, so only the two of them see it.
   if (task.abroad) return task.abroad.workerId === viewer.id;
   if (!(await sameWorld(task, viewer))) return false;
+  // A post that is over stays visible only to the applicants who made an offer on it.
+  if (isTakenDown(task) && !(await store.listBids(task.id)).some((b) => b.providerId === viewer.id))
+    return false;
   return !task.womenOnly || canSeeWomenOnly(viewer);
 }
 
@@ -543,6 +548,7 @@ export async function acceptBid(task: Task, user: User, bidId: string, seenAmoun
   const b = bids.find((x) => x.id === bidId);
   if (!b || b.status !== "active" || new Date(b.appearAt).getTime() > Date.now())
     throw new RuleError("bid_closed");
+  if (!b.isExample && (await store.getUserById(b.providerId))?.suspended) throw new RuleError("bid_closed");
   const price = agreedOn(b) ?? b.amount;
   if (seenAmount !== price) throw new RuleError("price_changed", 409, { amount: price });
   // A counter still waiting for a reply ends when the task closes.

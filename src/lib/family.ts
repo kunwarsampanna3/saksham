@@ -3,6 +3,7 @@ import { createHash, randomBytes } from "node:crypto";
 import { store } from "@/lib/store";
 import type { Booking } from "@/lib/store/types";
 import { notify, systemMessage } from "@/lib/chat";
+import { isApprovable } from "@/lib/escrow";
 
 /**
  * Hire-from-abroad family confirmation. The client creates a private link; only its SHA-256 hash is stored.
@@ -27,9 +28,21 @@ export async function bookingForToken(token: string): Promise<Booking | null> {
   return (await store.listBookings()).find((b) => b.family?.tokenHash === h) ?? null;
 }
 
+/**
+ * The steps family can look at now. On "advance" bookings: "half is finished" until the second 50% is paid,
+ * then the finished work.
+ */
+export function confirmable(b: Booking) {
+  if (b.status !== "active") return [];
+  return b.installments.filter(
+    (i) =>
+      (i.state === "held" || i.state === "delivered") &&
+      (isApprovable(b, i) || (i.label === "kept" && !!b.halfDoneAt)),
+  );
+}
+
 export async function confirmWork(b: Booking, installmentId: string, ok: boolean, note: string) {
-  const inst = b.installments.find((i) => i.id === installmentId);
-  if (!inst || (inst.state !== "held" && inst.state !== "delivered")) return null;
+  if (!confirmable(b).some((i) => i.id === installmentId)) return null;
   const at = new Date().toISOString();
   const confirmations = [
     ...(b.family?.confirmations ?? []).filter((c) => c.installmentId !== installmentId),

@@ -5,5 +5,7 @@ export async function register() {
     if (process.env.NEXT_PHASE === "phase-production-build") return;
     const { startRetention } = await import("@/lib/retention");
     startRetention();
+    const { startPostClock } = await import("@/lib/posting");
+    startPostClock();
   }
 }

@@ -3,6 +3,9 @@
  * Nepali copy is written for everyday readers (not Sanskritised); keep sentences short.
  */
 import { abroadJobsEn, abroadJobsNe } from "./abroad-jobs";
+import { adminDashEn, adminDashNe } from "./admin-dashboard";
+import { matchEn, matchNe } from "./match";
+import { marketEn, marketEventsEn, marketEventsNe, marketNe } from "./market";
 
 /** Event params and a money formatter (for notification / system-message texts). */
 type P = Record<string, string | number | undefined>;
@@ -10,6 +13,9 @@ type M = (v: string | number | undefined) => string;
 
 export const en = {
   abroadJobs: abroadJobsEn,
+  market: marketEn,
+  match: matchEn,
+  adminDash: adminDashEn,
   brand: { name: "Saksham", deva: "सक्षम", tagline: "Your skill. Your price." },
   common: {
     continue: "Continue",
@@ -272,7 +278,7 @@ export const en = {
       subline: "Find help. Find work.",
       pitch:
         "Hire skilled people near you, or earn with what you're good at. Fair prices, verified people, and payment held safely until the work is done.",
-      post: "Post your task for free",
+      post: "Post your task",
       earn: "Earn money with your skills",
       facts: [
         "Fair price shown first",
@@ -293,12 +299,12 @@ export const en = {
       trust: {
         title: "Trust and safety features for your protection",
         readMore: "Read more",
-        badgeEscrow: "Payment held in escrow",
-        badgeRelease: "Released when you're happy",
+        badgeEscrow: "Payment through Saksham",
+        badgeRelease: "Last 40% when you approve",
         items: [
           {
             t: "Secure payments",
-            d: "Your money waits in escrow. Release it only when the task is done to your satisfaction.",
+            d: "You pay in two halves. The applicant gets 30% to start and 30% at half work. The last 40% waits until you approve.",
           },
           {
             t: "Verified people",
@@ -310,7 +316,7 @@ export const en = {
           },
           {
             t: "Service Guarantee",
-            d: "Work not as agreed? Open a dispute: payment freezes and we arrange a redo or a refund.",
+            d: "Work not as agreed? Open a dispute: payment freezes and we arrange a redo, or refund what Saksham still holds.",
           },
         ],
       },
@@ -393,7 +399,7 @@ export const en = {
       addSkills: "Add skills",
       pathsTitle: "How will you use Saksham?",
       pathHire: "I need something done",
-      pathHireSub: "Post a task for free and get fair offers from verified people.",
+      pathHireSub: "Post from Rs. 1,000 for 3 days and get fair offers from verified people.",
       pathHireCta: "Post a task",
       pathWork: "I want to earn",
       pathWorkSub: "Find tasks near you, send your price and get paid safely through escrow.",
@@ -525,12 +531,12 @@ export const en = {
           "Offers are ranked by best value — price, rating, distance and verification — with a one-line reason. Counter if you like.",
         ],
         [
-          "Pay into escrow",
-          "Lock the price and pay in full, in 2 installments, or in 3 milestones. The money is held, not handed over.",
+          "Pay the 50% advance",
+          "Lock the price and pay half. The applicant gets 30% to start and Saksham holds 20%. You pay the second half when half the work is finished.",
         ],
         [
           "Approve and release",
-          "Release payment when you're happy. If the work isn't as agreed, the Service Guarantee arranges a redo or refund.",
+          "Approve the last 40% when you're happy. If the work isn't as agreed, the Service Guarantee arranges a redo or refunds what Saksham still holds.",
         ],
       ],
     },
@@ -573,10 +579,13 @@ export const en = {
     trust: {
       title: "Safe by design",
       items: [
-        ["Money held in escrow", "Your payment waits safely until you approve the work."],
+        ["Money held in escrow", "Saksham holds 20% from the advance, then the last 40% until you approve."],
         ["Verified stamp", "ID, selfie and address checks before an applicant gets the stamp."],
         ["Service Guarantee", "Work not as agreed? We arrange a redo or a refund."],
-        ["Pay in installments", "Full, 2 parts, or 30 / 40 / 30 milestones for bigger jobs."],
+        [
+          "Pay in two halves",
+          "You pay 50% and 50%. The applicant is paid 30%, 30%, then 40% when you approve.",
+        ],
       ],
       note: "eSewa and Khalti run in sandbox (demo) mode in this preview.",
     },
@@ -585,8 +594,8 @@ export const en = {
       title: "How a women-led group in Bhaktapur could grow with Saksham",
       body: [
         "Six women who sew from home take a bulk order: 40 school uniforms for a boutique. The request is women-only, so only women applicants can see it.",
-        "The boutique pays in three milestones — 30% to buy cloth, 40% at the fitting, 30% on delivery — each held in escrow until approved.",
-        "Every finished job adds to the group's Earnings Passport. After three jobs with good ratings, the Passport unlocks a pre-approved micro-loan offer (demo partner) for a second machine.",
+        "The boutique pays half in advance. The group gets 30% to buy cloth, another 30% when half the uniforms are done, and the last 40% when the delivery is approved.",
+        "Every finished job adds to the group's Earnings Passport. After ten completed jobs, the Passport unlocks a pre-approved micro-loan offer (demo partner) for a second machine.",
       ],
       disclaimer:
         "Aasha's Tailoring Group is a sample account, not a real business. The photo is a sample photo of a Kathmandu craft shop.",
@@ -595,16 +604,16 @@ export const en = {
     abroad: {
       eyebrow: "Nepalis abroad",
       title: "Working abroad? Get things done for family at home.",
-      lead: "Book a trusted person for your parents' leaking tank, a hospital visit, or a child's tuition. You pay in NPR, held in escrow. Your family confirms the work before you release payment.",
+      lead: "Book a trusted person for your parents' leaking tank, a hospital visit, or a child's tuition. You pay in NPR, half now and half midway. Your family confirms the work before you approve the last 40%.",
       exampleTag: "Example",
       exampleTitle: "Fix leaking water tank · Pokhara",
       approx: (usd: string) => `≈ US$ ${usd}`,
       rateNote: (r: number) => `Example rate: 1 USD = Rs. ${r}. Not a live exchange rate.`,
       steps: [
-        "You book and pay into escrow",
+        "You book and pay the 50% advance",
         "A verified applicant does the job",
         "Family confirms the work",
-        "You release payment",
+        "You pay the second 50%, then approve",
       ],
       cta: "Hire from abroad",
     },
@@ -619,7 +628,7 @@ export const en = {
       rating: "Average rating",
       credit: "Saksham Credit offer",
       partner: "Demo partner",
-      formula: "15% of verified earnings, from 3 jobs, full at rating 4.5+, up to Rs. 1,00,000.",
+      formula: "15% of verified earnings, from 10 jobs, full at rating 4.5+, up to Rs. 1,00,000.",
       women: "Women-led groups get a badge and can see women-only requests.",
       ctaStart: "Start offering your skills",
       ctaVerify: "Get verified",
@@ -973,7 +982,7 @@ export const en = {
         "Verified applicants with that skill get your request.",
         "They accept your price in one tap, or offer their own.",
         "You compare by best value, lowest price or top rated, and pick one.",
-        "Pay into escrow. The money is released only when you approve the work.",
+        "Pay 50% to start and 50% at half work. The last 40% is paid out only when you approve.",
       ],
     },
     title: "Post a task",
@@ -1004,7 +1013,7 @@ export const en = {
     family: "I'm booking this for family in Nepal while I'm abroad",
     country: "I live in",
     familyName: "Family member's first name",
-    familyNote: "They'll confirm the work before you release payment.",
+    familyNote: "They can confirm the work before you pay the second 50% and approve the last 40%.",
     budgetTitle: "Your budget",
     fairRange: "Fair range for this task",
     fairFrom: "From the Saksham price table — not set by AI.",
@@ -1083,8 +1092,8 @@ export const en = {
     withdrawn: "Withdrawn",
     assignedTitle: "Offer accepted",
     assignedLead: (p: string) =>
-      `Price locked at ${p}. Next, choose how to pay — full, 2 installments, or 3 milestones.`,
-    choosePlan: "Choose payment plan",
+      `Price locked at ${p}. The job starts when the recruiter pays the 50% advance.`,
+    choosePlan: "Pay 50% advance",
     makeOffer: "Make an offer",
     yourOffer: "Your offer",
     updateOffer: "Update offer",
@@ -1125,11 +1134,15 @@ export const en = {
     awaiting: "Waiting for the recruiter's answer.",
     escrow: "Escrow",
     escrowSteps: ["Held", "Delivered", "Released"],
-    escrowLead: "When you book, your payment is held by Saksham and only released when you approve the work.",
+    escrowLead:
+      "The applicant gets 30% when hired and 30% at half work. Saksham holds the rest until each step is done.",
     escrowNotYet: "Not funded yet",
     guarantee: "Service Guarantee",
     guaranteeLead: "If the work isn't as agreed, we arrange a redo or a refund.",
     errors: {
+      applying_paused: marketEn.blocked.applying,
+      maintenance: marketEn.blocked.maintenance.title,
+      busy: marketEn.blocked.busy.title,
       id_required: "Finish KYC (ID card + selfie) before making offers.",
       kyc_required: "Finish KYC (ID card + selfie) before you hire.",
       provider_only: "Switch to Applicant mode first.",
@@ -1151,15 +1164,11 @@ export const en = {
   },
   booking: {
     title: "Book and pay",
-    lead: "Choose how to pay. Your money is held in escrow and only released when you approve the work.",
+    lead: "Pay 50% now to start the job. You pay the other 50% when the applicant has finished half of the work.",
     agreed: "Agreed price",
     with: (n: string) => `with ${n}`,
     planTitle: "Payment plan",
-    plans: {
-      full: { title: "Pay in full", sub: "One payment into escrow now" },
-      two: { title: "2 installments", sub: "50% now, 50% on completion" },
-      milestones: { title: "3 milestones", sub: "30% to start, 40% midway, 30% on completion" },
-    },
+
     labels: {
       full: "Full payment",
       first: "First half",
@@ -1167,6 +1176,9 @@ export const en = {
       start: "Start (materials)",
       middle: "Midway",
       finish: "Completion",
+      advance: "Advance to the applicant",
+      kept: "Held from the advance",
+      half: "Half of the work",
     },
     due: (d: string) => `Due ${d}`,
     payNow: "Pay now",
@@ -1217,8 +1229,7 @@ export const en = {
     sandboxNote: "Sandbox · demo — no real money moves in this preview.",
     youPay: "You pay in total",
     providerGets: (n: string) => `${n} receives`,
-    feeLine:
-      "Saksham service fee (example 7%) is taken from the applicant's payout, not added to your price.",
+
     confirm: (p: string) => `Confirm and pay ${p}`,
     paying: "Processing…",
     sandboxTitle: (m: string) => `${m} Sandbox`,
@@ -1228,8 +1239,8 @@ export const en = {
   },
   payments: {
     title: "Payment schedule",
-    leadClient: "Pay each installment into escrow, then release it when the work is done.",
-    leadProvider: "Money is held safely in escrow. Mark work delivered; the recruiter releases it to you.",
+    leadClient: "See what you have paid, what Saksham holds, and what to do next.",
+    leadProvider: "See what you have been paid, what Saksham holds, and what to do next.",
     states: {
       scheduled: "Scheduled",
       held: "Held in escrow",
@@ -1280,6 +1291,9 @@ export const en = {
     errors: {
       reauth_required: "Please confirm with your MPIN.",
       out_of_order: "Pay installments in order.",
+      half_not_reported: marketEn.money.halfNotReported,
+      maintenance: marketEn.blocked.maintenance.title,
+      busy: marketEn.blocked.busy.title,
       bad_state: "That step isn't available right now.",
       booking_locked: "Payments are frozen while a dispute is open.",
       reason: "Describe the problem in at least 10 characters.",
@@ -1292,6 +1306,7 @@ export const en = {
   },
   events: {
     // p = params, m = money formatter. Used for notifications and chat system messages.
+    ...marketEventsEn,
     bid_new: (p: P, m: M) => `New offer from ${p.provider ?? "an applicant"}: ${m(p.amount)}`,
     bid_updated: (p: P, m: M) => `Offer updated: ${m(p.amount)}`,
     counter_new: (p: P, m: M) => `Recruiter countered at ${m(p.amount)}`,
@@ -1307,9 +1322,9 @@ export const en = {
     booked: (p: P, m: M) => `Booked — ${m(p.amount)} held in escrow (total ${m(p.total)})`,
     paid: (p: P, m: M) => `${m(p.amount)} paid into escrow`,
     delivered: (p: P, m: M) => `Work delivered for ${m(p.amount)} — ready to release`,
-    released: (p: P, m: M) => `${m(p.amount)} released (${m(p.net)} after fee)`,
+    released: (p: P, m: M) => `${m(p.amount)} released to the applicant`,
     abroad_applied: (p: P) => `${p.name} applied for your job abroad: ${p.job}`,
-    abroad_hired: (p: P, m: M) => `You are hired: ${p.job}. ${m(p.amount)} is in escrow`,
+    abroad_hired: (p: P, m: M) => `You are hired: ${p.job}. Pay ${m(p.amount)}, with the 50% advance paid`,
     abroad_declined: (p: P) => `Not selected this time: ${p.job}`,
     abroad_filled: (p: P) => `All places are filled: ${p.job}`,
     dispute_opened: () => `A dispute was opened — payments are frozen`,
@@ -1415,10 +1430,10 @@ export const en = {
     continue: "Continue to post the task",
     how: "How it works from abroad",
     steps: [
-      "Describe the job and pay into escrow in NPR",
+      "Describe the job and pay the 50% advance in NPR",
       "A verified applicant near your family does it",
       "Your family confirms on a private link — no app needed",
-      "You release payment from wherever you are",
+      "You pay the second 50% and approve, from wherever you are",
     ],
     confirmTitle: "Family confirmation",
     confirmLead: (n: string) =>
@@ -1446,7 +1461,7 @@ export const en = {
         },
         {
           t: "You pay by card, safely",
-          b: "Visa, Mastercard or a dollar card. The money waits in escrow until the work is done.",
+          b: "Visa, Mastercard or a dollar card. 50% to start, 50% when half the work is done.",
         },
       ],
       exampleTitle: "Example",
@@ -1461,7 +1476,7 @@ export const en = {
         },
         {
           q: "How do I know it's really done?",
-          a: "Your family confirms on a private link. You release the money only after that.",
+          a: "Your family confirms on a private link, at half work and at the end. Then you pay or approve.",
         },
         {
           q: "What if it isn't done properly?",
@@ -1569,12 +1584,12 @@ export const en = {
       "eSewa and Khalti run in sandbox (demo) mode — balances are real escrow records, but no money moves.",
     tabs: { provider: "Earnings", client: "Spending" },
     available: "Available to withdraw",
-    earned: "Earned (after fee)",
+    earned: "Income after 7%",
     inEscrow: "In escrow for you",
     scheduled: "Still to be paid in",
-    paidOut: "Withdrawn",
+    paidOut: "Received by withdrawal",
     releasedGross: "Released to you",
-    fees: "Service fees (example 7%)",
+    fees: "7% fees paid",
     paidIn: "Paid into escrow",
     clientEscrow: "Held in escrow",
     released: "Released to applicants",
@@ -1593,14 +1608,16 @@ export const en = {
     asProvider: "as applicant",
     feesTitle: "Fees",
     feesBody:
-      "Saksham's service fee is an example 7%, taken from the applicant's payout when money is released. Recruiters pay the agreed price — nothing is added.",
+      "Saksham keeps 7% of an applicant's income when they withdraw it. Recruiters pay the agreed price, plus Rs. 1,000 (3 days) or Rs. 4,000 (10 days) to post a job.",
     errors: {
       payout_min: "The minimum withdrawal is Rs. 100.",
       payout_too_much: "That's more than your available balance.",
       provider_only: "Switch to an applicant account first.",
       reauth_required: "Please confirm with your MPIN.",
       credit_not_eligible: "No credit offer is available yet.",
-      credit_amount: "Choose an amount between Rs. 1,000 and your limit.",
+      credit_amount: "Choose an amount between Rs. 1,000 and what's left of your limit.",
+      maintenance: marketEn.blocked.maintenance.title,
+      busy: marketEn.blocked.busy.title,
       purpose: "Tell the partner what it's for (at least 3 characters).",
       not_completed: "You can rate once the job is complete.",
       already_rated: "You've already rated this job.",
@@ -1629,15 +1646,23 @@ export const en = {
   credit: {
     title: "Saksham Credit",
     partner: "Demo partner",
-    lead: "A pre-approved micro-loan offer based on your Earnings Passport. Worked out by a fixed formula, not by AI.",
-    limit: "Your offer",
-    notYet: "No offer yet",
+    lead: "Worked out by a fixed formula, not by AI.",
+    limit: "Your limit",
+    notYet: "Locked",
     howTitle: "How it's worked out",
-    rule1: (b: string) => `15% of verified earnings, rounded to Rs. 1,000 → ${b}`,
-    rule2: "Needs at least 3 completed jobs",
-    rule3: "Full amount at an average rating of 4.5 or higher; otherwise half",
-    rule4: "Capped at Rs. 1,00,000",
-    jobsNeeded: (n: number) => `Complete ${n} more job${n === 1 ? "" : "s"} to unlock an offer.`,
+    rules: {
+      applicant: [
+        "At least 10 completed jobs",
+        "15% of verified earnings, rounded to Rs. 1,000",
+        "Full amount at an average rating of 4.5 or higher; otherwise half",
+        "Up to Rs. 1,00,000",
+      ],
+      recruiter: [
+        "At least 50 posted jobs. Cancelled and taken-down posts don't count",
+        "15% of what you have paid applicants through Saksham, rounded to Rs. 1,000",
+        "Up to Rs. 1,00,000",
+      ],
+    },
     halved: "Your rating is under 4.5, so the offer starts at half.",
     capped: "Capped at Rs. 1,00,000.",
     apply: "Apply via partner (demo)",
@@ -1653,18 +1678,7 @@ export const en = {
     submitted:
       "Submitted to the demo partner. No real lender received this — Saksham has no lending partnership.",
     applications: "Applications",
-    status: "Submitted (demo)",
     simple: {
-      what: "A small loan offer to grow your work, like buying a sewing machine, a laptop or tools. It's based on the jobs you've really done on Saksham.",
-      steps: [
-        "Finish jobs on Saksham and get paid through escrow",
-        "Your Earnings Passport records them",
-        "After 3 jobs, you get a loan offer you can apply for",
-      ],
-      exampleTitle: "Example",
-      example:
-        "You earned Rs. 60,000 from 5 jobs with a 4.6★ rating. 15% of 60,000 = Rs. 9,000, and your rating is above 4.5, so your offer is Rs. 9,000.",
-      progress: (done: number) => `Jobs completed: ${Math.min(done, 3)} of 3`,
       partnerNote:
         "Saksham doesn't lend money itself. Real loans would come from a licensed partner. This one is a demo.",
     },
@@ -1765,6 +1779,9 @@ export type Dict = Widen<typeof en>;
 
 export const ne: Dict = {
   abroadJobs: abroadJobsNe,
+  market: marketNe,
+  match: matchNe,
+  adminDash: adminDashNe,
   brand: { name: "सक्षम", deva: "सक्षम", tagline: "तपाईंको सीप। तपाईंको मूल्य।" },
   common: {
     continue: "अगाडि बढ्नुहोस्",
@@ -2024,7 +2041,7 @@ export const ne: Dict = {
       subline: "सहयोग पाउनुहोस्। काम पाउनुहोस्।",
       pitch:
         "नजिकैका सीपालु मानिसलाई काम दिनुहोस्, वा आफूलाई आउने सीपबाट कमाउनुहोस्। उचित मूल्य, प्रमाणित मानिस, र काम नसकिँदासम्म भुक्तानी सुरक्षित।",
-      post: "निःशुल्क काम पोस्ट गर्नुहोस्",
+      post: "काम पोस्ट गर्नुहोस्",
       earn: "आफ्नो सीपबाट कमाउनुहोस्",
       facts: ["उचित मूल्य पहिले देखिन्छ", "पैसा एस्क्रोमा सुरक्षित", "नेपाली र अंग्रेजी", "प्रमाणित मानिस"],
       firstTitle: "केही सेकेन्डमै पहिलो काम पोस्ट गर्नुहोस्",
@@ -2036,10 +2053,13 @@ export const ne: Dict = {
       trust: {
         title: "तपाईंको सुरक्षाका लागि भरोसा र सुरक्षा सुविधा",
         readMore: "थप पढ्नुहोस्",
-        badgeEscrow: "भुक्तानी एस्क्रोमा सुरक्षित",
-        badgeRelease: "चित्त बुझेपछि मात्र छोडिन्छ",
+        badgeEscrow: "सक्षममार्फत भुक्तानी",
+        badgeRelease: "स्वीकृत गरेपछि अन्तिम ४०%",
         items: [
-          { t: "सुरक्षित भुक्तानी", d: "तपाईंको पैसा एस्क्रोमा रहन्छ। काम चित्त बुझ्दो गरी सकिएपछि मात्र छोड्नुहोस्।" },
+          {
+            t: "सुरक्षित भुक्तानी",
+            d: "तपाईं दुई भागमा तिर्नुहुन्छ। आवेदकले सुरुमा ३०% र आधा काममा ३०% पाउँछन्। अन्तिम ४०% तपाईंको स्वीकृतिसम्म रहन्छ।",
+          },
           {
             t: "प्रमाणित मानिस",
             d: "पैसा लिने काम गर्नुअघि परिचयपत्र, सेल्फी र ठेगाना जाँच हुन्छ, त्यसैले को आउँदैछ थाहा हुन्छ।",
@@ -2050,7 +2070,7 @@ export const ne: Dict = {
           },
           {
             t: "सेवा ग्यारेन्टी",
-            d: "भनेजस्तो काम भएन? विवाद खोल्नुहोस्: भुक्तानी रोकिन्छ र हामी फेरि काम वा पैसा फिर्ता मिलाउँछौँ।",
+            d: "भनेजस्तो काम भएन? विवाद खोल्नुहोस्: भुक्तानी रोकिन्छ र हामी फेरि काम वा सक्षमसँग बाँकी पैसा फिर्ता मिलाउँछौँ।",
           },
         ],
       },
@@ -2133,7 +2153,7 @@ export const ne: Dict = {
       addSkills: "सीप थप्नुहोस्",
       pathsTitle: "तपाईं सक्षम कसरी प्रयोग गर्नुहुन्छ?",
       pathHire: "मलाई काम गराउनु छ",
-      pathHireSub: "निःशुल्क काम पोस्ट गर्नुहोस् र प्रमाणित मानिसबाट उचित प्रस्ताव पाउनुहोस्।",
+      pathHireSub: "३ दिनका लागि रु. १,००० देखि पोस्ट गर्नुहोस् र प्रमाणित मानिसबाट उचित प्रस्ताव पाउनुहोस्।",
       pathHireCta: "काम पोस्ट गर्नुहोस्",
       pathWork: "म कमाउन चाहन्छु",
       pathWorkSub: "नजिकैका काम खोज्नुहोस्, आफ्नो मूल्य पठाउनुहोस् र एस्क्रोमार्फत सुरक्षित भुक्तानी पाउनुहोस्।",
@@ -2258,10 +2278,13 @@ export const ne: Dict = {
           "तुलना र मोलमोलाइ",
           "प्रस्तावहरू मूल्य, रेटिङ, दूरी र प्रमाणीकरणका आधारमा मिलाइन्छन्, एक लाइनको कारणसहित। चाहे काउन्टर गर्नुहोस्।",
         ],
-        ["एस्क्रोमा तिर्नुहोस्", "मूल्य पक्का गर्नुहोस् — एकैपटक, २ किस्ता वा ३ चरणमा। पैसा राखिन्छ, सिधै दिइँदैन।"],
+        [
+          "५०% अग्रिम तिर्नुहोस्",
+          "मूल्य पक्का गरी आधा तिर्नुहोस्। सुरुमा आवेदकले ३०% पाउँछन्, २०% सक्षमसँग रहन्छ। आधा काम सकिएपछि दोस्रो आधा तिर्नुहोस्।",
+        ],
         [
           "स्वीकृत गरी पैसा छोड्नुहोस्",
-          "सन्तुष्ट भएपछि भुक्तानी छोड्नुहोस्। सम्झौताअनुसार नभए सेवा ग्यारेन्टीले फेरि काम वा फिर्ता मिलाउँछ।",
+          "सन्तुष्ट भएपछि अन्तिम ४०% स्वीकृत गर्नुहोस्। सम्झौताअनुसार नभए सेवा ग्यारेन्टीले फेरि काम वा सक्षमसँग बाँकी पैसा फिर्ता मिलाउँछ।",
         ],
       ],
     },
@@ -2304,10 +2327,10 @@ export const ne: Dict = {
     trust: {
       title: "सुरक्षित बनावट",
       items: [
-        ["एस्क्रोमा पैसा सुरक्षित", "तपाईंले काम स्वीकृत नगरेसम्म भुक्तानी सुरक्षित रहन्छ।"],
+        ["एस्क्रोमा पैसा सुरक्षित", "सक्षमले अग्रिमको २०%, अनि अन्तिम ४०% स्वीकृत नभएसम्म राख्छ।"],
         ["प्रमाणित छाप", "छाप पाउनुअघि परिचयपत्र, सेल्फी र ठेगाना जाँच।"],
         ["सेवा ग्यारेन्टी", "सम्झौताअनुसार काम भएन? फेरि काम वा पैसा फिर्ता।"],
-        ["किस्तामा भुक्तानी", "एकैपटक, २ भाग, वा ठूला कामका लागि ३०/४०/३० चरण।"],
+        ["दुई भागमा भुक्तानी", "तपाईं ५०% र ५०% तिर्नुहुन्छ। आवेदकले ३०%, ३०% र स्वीकृत भएपछि ४०% पाउँछन्।"],
       ],
       note: "यस पूर्वावलोकनमा eSewa र Khalti स्यान्डबक्स (डेमो) मोडमा चल्छन्।",
     },
@@ -2316,8 +2339,8 @@ export const ne: Dict = {
       title: "भक्तपुरको महिला नेतृत्वको समूह सक्षमसँग कसरी बढ्न सक्छ",
       body: [
         "घरबाटै सिलाइ गर्ने छ जना महिलाले एउटा बुटिकबाट ४० वटा स्कुल पोशाकको ठूलो अर्डर लिन्छन्। अनुरोध महिला मात्रका लागि भएकाले महिला आवेदकले मात्र देख्छन्।",
-        "बुटिकले तीन चरणमा तिर्छ — कपडा किन्न ३०%, नाप मिलाउँदा ४०%, बुझाउँदा ३०% — हरेक पटक स्वीकृत नभएसम्म एस्क्रोमा।",
-        "हरेक काम समूहको कमाइ पासपोर्टमा जोडिन्छ। राम्रो रेटिङसहित तीन काम पुगेपछि दोस्रो मेसिन किन्न पूर्व-स्वीकृत सानो ऋण प्रस्ताव (डेमो साझेदार) खुल्छ।",
+        "बुटिकले आधा अग्रिम तिर्छ। समूहले कपडा किन्न ३०%, आधा पोशाक सकिँदा थप ३०%, र बुझाएको काम स्वीकृत भएपछि बाँकी ४०% पाउँछ।",
+        "हरेक काम समूहको कमाइ पासपोर्टमा जोडिन्छ। दस काम पूरा भएपछि दोस्रो मेसिन किन्न पूर्व-स्वीकृत सानो ऋण प्रस्ताव (डेमो साझेदार) खुल्छ।",
       ],
       disclaimer:
         "आशाको सिलाइ समूह नमुना खाता हो, वास्तविक व्यवसाय होइन। फोटो काठमाडौंको एउटा हस्तकला पसलको नमुना फोटो हो।",
@@ -2326,16 +2349,16 @@ export const ne: Dict = {
     abroad: {
       eyebrow: "विदेशमा रहेका नेपाली",
       title: "विदेशमा हुनुहुन्छ? घरपरिवारका काम यहीँबाट गराउनुहोस्।",
-      lead: "बुबाआमाको चुहिने ट्याङ्की, अस्पताल जाँच वा बच्चाको ट्युसनका लागि भरपर्दो मान्छे बुक गर्नुहोस्। नेपाली रुपैयाँमा तिर्नुहोस्, एस्क्रोमा सुरक्षित। परिवारले काम पुष्टि गरेपछि मात्र पैसा छोड्नुहोस्।",
+      lead: "बुबाआमाको चुहिने ट्याङ्की, अस्पताल जाँच वा बच्चाको ट्युसनका लागि भरपर्दो मान्छे बुक गर्नुहोस्। नेपाली रुपैयाँमा आधा अहिले, आधा बीचमा तिर्नुहोस्। परिवारले पुष्टि गरेपछि अन्तिम ४०% स्वीकृत गर्नुहोस्।",
       exampleTag: "नमुना",
       exampleTitle: "चुहिने पानी ट्याङ्की मर्मत · पोखरा",
       approx: (usd: string) => `≈ US$ ${usd}`,
       rateNote: (r: number) => `नमुना दर: १ USD = रु. ${toDeva(r)}। यो चालु विनिमय दर होइन।`,
       steps: [
-        "तपाईं बुक गरेर एस्क्रोमा तिर्नुहुन्छ",
+        "तपाईं बुक गरेर ५०% अग्रिम तिर्नुहुन्छ",
         "प्रमाणित आवेदकले काम गर्छन्",
         "परिवारले काम पुष्टि गर्छ",
-        "तपाईं भुक्तानी छोड्नुहुन्छ",
+        "तपाईं दोस्रो ५०% तिरेर स्वीकृत गर्नुहुन्छ",
       ],
       cta: "विदेशबाट काम लगाउनुहोस्",
     },
@@ -2350,7 +2373,7 @@ export const ne: Dict = {
       rating: "औसत रेटिङ",
       credit: "सक्षम क्रेडिट प्रस्ताव",
       partner: "डेमो साझेदार",
-      formula: "प्रमाणित कमाइको १५%, ३ काम पुगेपछि, रेटिङ ४.५+ मा पूरा, रु. १,००,००० सम्म।",
+      formula: "प्रमाणित कमाइको १५%, १० काम पुगेपछि, रेटिङ ४.५+ मा पूरा, रु. १,००,००० सम्म।",
       women: "महिला नेतृत्वका समूहले ब्याज पाउँछन् र महिला मात्रका अनुरोध देख्न सक्छन्।",
       ctaStart: "आफ्नो सीप बेच्न सुरु गर्नुहोस्",
       ctaVerify: "प्रमाणित हुनुहोस्",
@@ -2696,7 +2719,7 @@ export const ne: Dict = {
         "त्यो सीप भएका प्रमाणित आवेदकले अनुरोध पाउँछन्।",
         "उनीहरू एकै ट्यापमा तपाईंको मूल्य स्वीकार्छन्, वा आफ्नो मूल्य पठाउँछन्।",
         "उत्तम मूल्य, सस्तो वा उच्च रेटिङ अनुसार हेरेर एक जना छान्नुहोस्।",
-        "एस्क्रोमा तिर्नुहोस्। काम स्वीकृत गरेपछि मात्र पैसा छोडिन्छ।",
+        "सुरुमा ५०%, आधा काममा ५०% तिर्नुहोस्। अन्तिम ४०% स्वीकृत गरेपछि मात्र दिइन्छ।",
       ],
     },
     title: "काम पोस्ट गर्नुहोस्",
@@ -2727,7 +2750,7 @@ export const ne: Dict = {
     family: "म विदेशमा छु, नेपालमा परिवारका लागि बुक गर्दै छु",
     country: "म बस्ने देश",
     familyName: "परिवारको सदस्यको नाम",
-    familyNote: "तपाईंले भुक्तानी छोड्नुअघि उहाँले काम पुष्टि गर्नुहुन्छ।",
+    familyNote: "तपाईंले दोस्रो ५०% तिर्नु र अन्तिम ४०% स्वीकृत गर्नुअघि उहाँले पुष्टि गर्न सक्नुहुन्छ।",
     budgetTitle: "तपाईंको बजेट",
     fairRange: "यो कामको उचित दायरा",
     fairFrom: "सक्षमको मूल्य तालिकाबाट — AI ले होइन।",
@@ -2805,7 +2828,7 @@ export const ne: Dict = {
     declined: "बन्द",
     withdrawn: "फिर्ता लिइएको",
     assignedTitle: "प्रस्ताव स्वीकृत",
-    assignedLead: (p: string) => `मूल्य ${p} मा पक्का भयो। अब कसरी तिर्ने छान्नुहोस् — एकैपटक, २ किस्ता वा ३ चरण।`,
+    assignedLead: (p: string) => `मूल्य ${p} मा पक्का भयो। भर्नाकर्ताले ५०% अग्रिम तिरेपछि काम सुरु हुन्छ।`,
     choosePlan: "भुक्तानी योजना छान्नुहोस्",
     makeOffer: "प्रस्ताव पठाउनुहोस्",
     yourOffer: "तपाईंको प्रस्ताव",
@@ -2847,11 +2870,14 @@ export const ne: Dict = {
     awaiting: "भर्नाकर्ताको उत्तर कुर्दै।",
     escrow: "एस्क्रो",
     escrowSteps: ["राखिएको", "काम बुझाइएको", "छोडिएको"],
-    escrowLead: "बुक गर्दा तपाईंको भुक्तानी सक्षमले राख्छ र तपाईंले काम स्वीकृत गरेपछि मात्र छोडिन्छ।",
+    escrowLead: "आवेदकले सुरुमा ३०% र आधा काममा ३०% पाउँछन्। बाँकी सक्षमले हरेक चरण नसकिएसम्म राख्छ।",
     escrowNotYet: "अहिलेसम्म जम्मा भएको छैन",
     guarantee: "सेवा ग्यारेन्टी",
     guaranteeLead: "सम्झौताअनुसार काम भएन भने फेरि काम वा पैसा फिर्ता।",
     errors: {
+      applying_paused: marketNe.blocked.applying,
+      maintenance: marketNe.blocked.maintenance.title,
+      busy: marketNe.blocked.busy.title,
       id_required: "प्रस्ताव पठाउनुअघि KYC (परिचयपत्र + सेल्फी) पूरा गर्नुहोस्।",
       kyc_required: "मान्छे काममा लगाउनुअघि KYC (परिचयपत्र + सेल्फी) पूरा गर्नुहोस्।",
       provider_only: "पहिले आवेदक मोडमा जानुहोस्।",
@@ -2873,15 +2899,11 @@ export const ne: Dict = {
   },
   booking: {
     title: "बुक गरेर तिर्नुहोस्",
-    lead: "कसरी तिर्ने छान्नुहोस्। तपाईंको पैसा एस्क्रोमा राखिन्छ र काम स्वीकृत गरेपछि मात्र छोडिन्छ।",
+    lead: "काम सुरु गर्न अहिले ५०% तिर्नुहोस्। आवेदकले आधा काम सकेपछि बाँकी ५०% तिर्नुहुन्छ।",
     agreed: "तय भएको मूल्य",
     with: (n: string) => `${n} सँग`,
     planTitle: "भुक्तानी योजना",
-    plans: {
-      full: { title: "एकैपटक पूरा", sub: "अहिले एस्क्रोमा एक पटक भुक्तानी" },
-      two: { title: "२ किस्ता", sub: "अहिले ५०%, काम सकेपछि ५०%" },
-      milestones: { title: "३ चरण", sub: "सुरुमा ३०%, बीचमा ४०%, सकेपछि ३०%" },
-    },
+
     labels: {
       full: "पूरा भुक्तानी",
       first: "पहिलो आधा",
@@ -2889,6 +2911,9 @@ export const ne: Dict = {
       start: "सुरु (सामग्री)",
       middle: "बीचमा",
       finish: "काम सकिँदा",
+      advance: "आवेदकलाई अग्रिम",
+      kept: "अग्रिमबाट राखिएको",
+      half: "आधा काम",
     },
     due: (d: string) => `${d} सम्म`,
     payNow: "अहिले तिर्नुहोस्",
@@ -2939,7 +2964,7 @@ export const ne: Dict = {
     sandboxNote: "स्यान्डबक्स · डेमो — यस पूर्वावलोकनमा वास्तविक पैसा चल्दैन।",
     youPay: "तपाईंले जम्मा तिर्ने",
     providerGets: (n: string) => `${n} ले पाउने`,
-    feeLine: "सक्षम सेवा शुल्क (नमुना ७%) आवेदकको भुक्तानीबाट कटिन्छ, तपाईंको मूल्यमा थपिँदैन।",
+
     confirm: (p: string) => `पुष्टि गरी ${p} तिर्नुहोस्`,
     paying: "प्रक्रिया हुँदै…",
     sandboxTitle: (m: string) => `${m} स्यान्डबक्स`,
@@ -2949,8 +2974,8 @@ export const ne: Dict = {
   },
   payments: {
     title: "भुक्तानी तालिका",
-    leadClient: "हरेक किस्ता एस्क्रोमा तिर्नुहोस्, काम सकिएपछि छोड्नुहोस्।",
-    leadProvider: "पैसा एस्क्रोमा सुरक्षित छ। काम बुझाएको चिन्ह लगाउनुहोस्; भर्नाकर्ताले तपाईंलाई छोड्नुहुन्छ।",
+    leadClient: "कति तिर्नुभयो, सक्षमसँग कति छ र अब के गर्ने हेर्नुहोस्।",
+    leadProvider: "कति पाउनुभयो, सक्षमसँग कति छ र अब के गर्ने हेर्नुहोस्।",
     states: {
       scheduled: "तालिकामा",
       held: "एस्क्रोमा राखिएको",
@@ -2997,6 +3022,9 @@ export const ne: Dict = {
     errors: {
       reauth_required: "कृपया MPIN ले पुष्टि गर्नुहोस्।",
       out_of_order: "किस्ता क्रमैसँग तिर्नुहोस्।",
+      half_not_reported: marketNe.money.halfNotReported,
+      maintenance: marketNe.blocked.maintenance.title,
+      busy: marketNe.blocked.busy.title,
       bad_state: "यो चरण अहिले उपलब्ध छैन।",
       booking_locked: "विवाद खुला हुँदा भुक्तानी रोकिन्छ।",
       reason: "समस्या कम्तीमा १० अक्षरमा लेख्नुहोस्।",
@@ -3008,6 +3036,7 @@ export const ne: Dict = {
     },
   },
   events: {
+    ...marketEventsNe,
     bid_new: (p: P, m: M) => `${p.provider ?? "आवेदक"} बाट नयाँ प्रस्ताव: ${m(p.amount)}`,
     bid_updated: (p: P, m: M) => `प्रस्ताव बदलियो: ${m(p.amount)}`,
     counter_new: (p: P, m: M) => `भर्नाकर्ताले ${m(p.amount)} भन्नुभयो`,
@@ -3023,9 +3052,9 @@ export const ne: Dict = {
     booked: (p: P, m: M) => `बुक भयो — ${m(p.amount)} एस्क्रोमा (जम्मा ${m(p.total)})`,
     paid: (p: P, m: M) => `${m(p.amount)} एस्क्रोमा जम्मा`,
     delivered: (p: P, m: M) => `${m(p.amount)} को काम बुझाइयो — छोड्न तयार`,
-    released: (p: P, m: M) => `${m(p.amount)} छोडियो (शुल्कपछि ${m(p.net)})`,
+    released: (p: P, m: M) => `${m(p.amount)} आवेदकलाई छोडियो`,
     abroad_applied: (p: P) => `${p.name} ले विदेशको काममा आवेदन दिनुभयो: ${p.job}`,
-    abroad_hired: (p: P, m: M) => `तपाईं छानिनुभयो: ${p.job}। ${m(p.amount)} एस्क्रोमा छ`,
+    abroad_hired: (p: P, m: M) => `तपाईं छानिनुभयो: ${p.job}। ज्याला ${m(p.amount)}, ५०% अग्रिम तिरियो`,
     abroad_declined: (p: P) => `यसपटक छानिनुभएन: ${p.job}`,
     abroad_filled: (p: P) => `सबै जना पुगे: ${p.job}`,
     dispute_opened: () => `विवाद खोलियो — भुक्तानी रोकियो`,
@@ -3131,10 +3160,10 @@ export const ne: Dict = {
     continue: "काम पोस्ट गर्न अगाडि बढ्नुहोस्",
     how: "विदेशबाट कसरी चल्छ",
     steps: [
-      "काम लेखेर नेपाली रुपैयाँमा एस्क्रोमा तिर्नुहोस्",
+      "काम लेखेर नेपाली रुपैयाँमा ५०% अग्रिम तिर्नुहोस्",
       "परिवार नजिकको प्रमाणित आवेदकले काम गर्छन्",
       "परिवारले गोप्य लिंकमा पुष्टि गर्छ — एप चाहिँदैन",
-      "तपाईं जहाँबाट पनि भुक्तानी छोड्नुहुन्छ",
+      "तपाईं जहाँबाट पनि दोस्रो ५०% तिरेर स्वीकृत गर्नुहुन्छ",
     ],
     confirmTitle: "परिवारको पुष्टि",
     confirmLead: (n: string) => `यो गोप्य लिंक ${n} सँग साझा गर्नुहोस्। उहाँले खाता बिना काम पुष्टि गर्न सक्नुहुन्छ।`,
@@ -3152,7 +3181,7 @@ export const ne: Dict = {
         { t: "काम बताउनुहोस्", b: 'कतार, जापान वा जहाँबाट पनि: "पोखरामा बुबाआमाको पानी ट्याङ्की बनाइदिनुहोस्।"' },
         { t: "नजिकैको प्रमाणित मान्छेले गर्छन्", b: "तपाईंको परिवार नजिकका, परिचयपत्र र सेल्फी जाँच भएका व्यक्ति।" },
         { t: "परिवारले पुष्टि गर्छ", b: 'उहाँहरूले गोप्य लिङ्क पाउनुहुन्छ र "काम भयो" थिच्नुहुन्छ। एप वा खाता चाहिँदैन।' },
-        { t: "कार्डबाट सुरक्षित तिर्नुहोस्", b: "Visa, Mastercard वा डलर कार्ड। काम नसकिएसम्म पैसा एस्क्रोमा रहन्छ।" },
+        { t: "कार्डबाट सुरक्षित तिर्नुहोस्", b: "Visa, Mastercard वा डलर कार्ड। सुरुमा ५०%, आधा काम सकिएपछि ५०%।" },
       ],
       exampleTitle: "उदाहरण",
       example:
@@ -3163,7 +3192,7 @@ export const ne: Dict = {
         { q: "काम कसले गर्छ?", a: "परिवार नजिकका, KYC (परिचयपत्र र सेल्फी) पूरा गरेका आवेदक। छान्नुअघि रेटिङ देख्नुहुन्छ।" },
         {
           q: "काम साँच्चै भयो भनेर कसरी थाहा पाउने?",
-          a: "परिवारले गोप्य लिङ्कमा पुष्टि गर्नुहुन्छ। त्यसपछि मात्र तपाईं पैसा छोड्नुहुन्छ।",
+          a: "परिवारले गोप्य लिङ्कमा आधा काम र अन्त्यमा पुष्टि गर्नुहुन्छ। त्यसपछि तपाईं तिर्नु वा स्वीकृत गर्नुहुन्छ।",
         },
         {
           q: "राम्रोसँग भएन भने?",
@@ -3262,12 +3291,12 @@ export const ne: Dict = {
     sandbox: "eSewa र Khalti स्यान्डबक्स (डेमो) मोडमा छन् — हिसाब वास्तविक एस्क्रो रेकर्डबाट हो, तर पैसा चल्दैन।",
     tabs: { provider: "कमाइ", client: "खर्च" },
     available: "निकाल्न मिल्ने",
-    earned: "कमाइ (शुल्कपछि)",
+    earned: "७% पछिको कमाइ",
     inEscrow: "तपाईंका लागि एस्क्रोमा",
     scheduled: "तिर्न बाँकी",
-    paidOut: "निकालिएको",
+    paidOut: "निकालेर पाएको",
     releasedGross: "तपाईंलाई छोडिएको",
-    fees: "सेवा शुल्क (नमुना ७%)",
+    fees: "तिरेको ७% शुल्क",
     paidIn: "एस्क्रोमा तिरिएको",
     clientEscrow: "एस्क्रोमा राखिएको",
     released: "आवेदकलाई छोडिएको",
@@ -3286,14 +3315,16 @@ export const ne: Dict = {
     asProvider: "आवेदकको रूपमा",
     feesTitle: "शुल्क",
     feesBody:
-      "सक्षमको सेवा शुल्क नमुना ७% हो, पैसा छोड्दा आवेदकको भुक्तानीबाट कटिन्छ। भर्नाकर्ताले तय मूल्य मात्र तिर्छन् — केही थपिँदैन।",
+      "आवेदकले कमाइ निकाल्दा सक्षमले त्यसको ७% लिन्छ। भर्नाकर्ताले तय मूल्य र काम पोस्ट गर्न रु. १,००० (३ दिन) वा रु. ४,००० (१० दिन) तिर्छन्।",
     errors: {
       payout_min: "कम्तीमा रु. १०० निकाल्न सकिन्छ।",
       payout_too_much: "यो तपाईंको उपलब्ध रकमभन्दा बढी भयो।",
       provider_only: "पहिले आवेदक खातामा जानुहोस्।",
       reauth_required: "कृपया MPIN ले पुष्टि गर्नुहोस्।",
       credit_not_eligible: "अहिलेसम्म क्रेडिट प्रस्ताव छैन।",
-      credit_amount: "रु. १,००० देखि तपाईंको सीमासम्मको रकम छान्नुहोस्।",
+      credit_amount: "रु. १,००० देखि बाँकी सीमासम्मको रकम छान्नुहोस्।",
+      maintenance: marketNe.blocked.maintenance.title,
+      busy: marketNe.blocked.busy.title,
       purpose: "के का लागि भन्ने लेख्नुहोस् (कम्तीमा ३ अक्षर)।",
       not_completed: "काम पूरा भएपछि रेटिङ दिन सकिन्छ।",
       already_rated: "तपाईंले यो कामको रेटिङ दिइसक्नुभयो।",
@@ -3321,15 +3352,23 @@ export const ne: Dict = {
   credit: {
     title: "सक्षम क्रेडिट",
     partner: "डेमो साझेदार",
-    lead: "तपाईंको कमाइ पासपोर्टमा आधारित पूर्व-स्वीकृत सानो ऋण प्रस्ताव। निश्चित सूत्रले निकालिएको, AI ले होइन।",
-    limit: "तपाईंको प्रस्ताव",
-    notYet: "अहिलेसम्म प्रस्ताव छैन",
+    lead: "निश्चित सूत्रले निकालिएको, AI ले होइन।",
+    limit: "तपाईंको सीमा",
+    notYet: "बन्द छ",
     howTitle: "यो कसरी निकालियो",
-    rule1: (b: string) => `प्रमाणित कमाइको १५%, रु. १,००० मा मिलाइएको → ${b}`,
-    rule2: "कम्तीमा ३ काम पूरा हुनुपर्छ",
-    rule3: "औसत रेटिङ ४.५ वा बढी भए पूरा रकम; नत्र आधा",
-    rule4: "बढीमा रु. १,००,०००",
-    jobsNeeded: (n: number) => `प्रस्ताव खोल्न अझै ${toDeva(n)} काम पूरा गर्नुहोस्।`,
+    rules: {
+      applicant: [
+        "कम्तीमा १० काम पूरा",
+        "प्रमाणित कमाइको १५%, रु. १,००० मा मिलाइएको",
+        "औसत रेटिङ ४.५ वा बढी भए पूरा रकम; नत्र आधा",
+        "बढीमा रु. १,००,०००",
+      ],
+      recruiter: [
+        "कम्तीमा ५० काम पोस्ट। रद्द र हटाइएका पोस्ट गनिँदैनन्",
+        "सक्षमबाट आवेदकलाई तिरेको रकमको १५%, रु. १,००० मा मिलाइएको",
+        "बढीमा रु. १,००,०००",
+      ],
+    },
     halved: "तपाईंको रेटिङ ४.५ भन्दा कम भएकाले प्रस्ताव आधाबाट सुरु हुन्छ।",
     capped: "रु. १,००,००० मा सीमित।",
     apply: "साझेदारमार्फत आवेदन (डेमो)",
@@ -3344,18 +3383,7 @@ export const ne: Dict = {
     submit: "डेमो साझेदारलाई पठाउनुहोस्",
     submitted: "डेमो साझेदारलाई पठाइयो। कुनै वास्तविक ऋणदाताले यो पाएनन् — सक्षमको कुनै ऋण साझेदारी छैन।",
     applications: "आवेदनहरू",
-    status: "पठाइएको (डेमो)",
     simple: {
-      what: "आफ्नो काम बढाउन सानो ऋणको प्रस्ताव, जस्तै सिलाई मेसिन, ल्यापटप वा औजार किन्न। यो सक्षममा तपाईंले साँच्चै गरेका काममा आधारित हुन्छ।",
-      steps: [
-        "सक्षममा काम सक्नुहोस् र एस्क्रोबाट भुक्तानी पाउनुहोस्",
-        "तपाईंको Earnings Passport ले ती काम राख्छ",
-        "३ काम पछि, आवेदन दिन मिल्ने ऋण प्रस्ताव पाउनुहुन्छ",
-      ],
-      exampleTitle: "उदाहरण",
-      example:
-        "तपाईंले ५ कामबाट रु. ६०,००० कमाउनुभयो, रेटिङ ४.६★। ६०,००० को १५% = रु. ९,०००, रेटिङ ४.५ भन्दा माथि भएकाले प्रस्ताव रु. ९,०००।",
-      progress: (done: number) => `पूरा भएका काम: ३ मध्ये ${toDeva(Math.min(done, 3))}`,
       partnerNote: "सक्षम आफैं ऋण दिँदैन। वास्तविक ऋण इजाजतप्राप्त साझेदारबाट आउनेछ। यो डेमो हो।",
     },
   },

@@ -4,6 +4,7 @@ import { guard } from "@/lib/auth/http";
 import { loadTask, ruleResponse, cleanText } from "@/lib/task-api";
 import { placeBid } from "@/lib/tasks";
 import { withLock } from "@/lib/lock";
+import { switchedOff } from "@/lib/controls";
 
 const Body = z.object({
   amount: z.number().int().min(100, "amount_range").max(10_000_000, "amount_range"),
@@ -20,6 +21,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     return await withLock(`task:${id}`, async () => {
       const l = await loadTask(id);
       if ("res" in l) return l.res;
+      const off = await switchedOff("applying", l.user);
+      if (off) return off;
       const b = await placeBid(l.task, l.user, { ...g.data, message: cleanText(g.data.message, 1000) });
       return NextResponse.json({ ok: true, id: b.id });
     });
