@@ -24,6 +24,8 @@ const nextConfig: NextConfig = {
   serverExternalPackages: ["@vladmandic/face-api", "@tensorflow/tfjs", "@tensorflow/tfjs-core", "@tensorflow/tfjs-backend-wasm"],
   // Lets the dev server be opened through GitHub Codespaces' forwarded address.
   allowedDevOrigins: ["*.app.github.dev"],
+  // Middleware sees /api uploads too; its default 10 MB limit would cut off uploads the routes accept (20 MB).
+  experimental: { middlewareClientMaxBodySize: "21mb" },
   images: {
     formats: ["image/avif", "image/webp"],
     remotePatterns: [

@@ -108,6 +108,16 @@ Also landed early because later steps depend on them: the Claude integration (`/
 | Price table | Example starting prices, editable by admins at /admin; plain code applies them |
 | Demo reset | Admin button, DEMO_MODE only: wipes demo-account and example data and re-seeds it. Real accounts are untouched |
 
+## Free demo on Render
+
+New → Web Service → this repo, instance type **Free**.
+
+- Build command: `npm ci --include=dev && npm run build`
+- Start command: `npx next start -p $PORT`
+- Environment: `NODE_VERSION=22`, `DEMO_MODE=true`, `SESSION_SECRET` (Generate), `SITE_PASSWORD` (12+ characters)
+
+Data resets whenever the free server restarts or sleeps. Testers share the demo admin, so never upload real IDs there.
+
 ## Before launch
 
 - `DEMO_MODE=false`, real `APP_ORIGIN`, a fresh `SESSION_SECRET`
