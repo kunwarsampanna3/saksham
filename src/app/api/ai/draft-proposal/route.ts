@@ -22,8 +22,18 @@ export async function POST(req: NextRequest) {
   const rl = rateLimit(`ai-proposal:${l.user.id}`, 30, 3600);
   if (!rl.ok) return fail(429, "rate_limited", { retryAfter: rl.retryAfter });
   const ai = await aiDraftProposal(
-    { taskTitle: l.task.title, taskDetails: l.task.details, amount: g.data.amount, days: g.data.days, providerName: l.user.name },
+    {
+      taskTitle: l.task.title,
+      taskDetails: l.task.details,
+      amount: g.data.amount,
+      days: g.data.days,
+      providerName: l.user.name,
+    },
     g.data.lang,
   );
-  return NextResponse.json({ ok: true, source: ai ? "ai" : "fallback", text: ai ?? templateProposal(g.data, g.data.lang) });
+  return NextResponse.json({
+    ok: true,
+    source: ai ? "ai" : "fallback",
+    text: ai ?? templateProposal(g.data, g.data.lang),
+  });
 }

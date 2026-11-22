@@ -18,12 +18,18 @@ export default async function VerificationPage() {
   const role = kycRole(user.roles);
   return (
     <div>
-      <div className="relative overflow-hidden border-b border-line">
+      <div className="border-line relative overflow-hidden border-b">
         <Contours seed={88} centers={1} rings={9} />
-        <span lang="ne" aria-hidden className="deva-giant absolute -right-4 top-2 text-[7rem] sm:text-[11rem]">विश्वास</span>
-        <div className="relative mx-auto max-w-[88rem] px-4 pb-8 pt-10 sm:px-6">
+        <span
+          lang="ne"
+          aria-hidden
+          className="deva-giant absolute top-2 -right-4 text-[7rem] sm:text-[11rem]"
+        >
+          विश्वास
+        </span>
+        <div className="relative mx-auto max-w-[88rem] px-4 pt-10 pb-8 sm:px-6">
           <h1 className="font-display text-4xl font-extrabold sm:text-5xl">{v.kycTitle[role]}</h1>
-          <p className="mt-2 max-w-2xl text-lg text-muted">{v.kycLead[role]}</p>
+          <p className="text-muted mt-2 max-w-2xl text-lg">{v.kycLead[role]}</p>
         </div>
       </div>
       <div className="mx-auto max-w-[88rem] px-4 py-10 sm:px-6">

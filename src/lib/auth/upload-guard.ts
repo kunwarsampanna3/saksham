@@ -6,13 +6,17 @@ import { currentUser } from "./current-user";
 import type { User } from "@/lib/store/types";
 
 /** Guard for multipart uploads: same origin, signed in, rate-limited per user and IP. */
-export async function uploadGuard(req: NextRequest, name: string): Promise<{ user: User; form: FormData } | { res: Response }> {
+export async function uploadGuard(
+  req: NextRequest,
+  name: string,
+): Promise<{ user: User; form: FormData } | { res: Response }> {
   if (!sameOrigin(req)) return { res: fail(403, "bad_origin") };
   const user = await currentUser();
   if (!user) return { res: fail(401, "signed_out") };
   const a = rateLimit(`${name}:u:${user.id}`, 10, 3600);
   const b = rateLimit(`${name}:ip:${clientIp(req)}`, 20, 3600);
-  if (!a.ok || !b.ok) return { res: fail(429, "rate_limited", { retryAfter: Math.max(a.retryAfter, b.retryAfter) }) };
+  if (!a.ok || !b.ok)
+    return { res: fail(429, "rate_limited", { retryAfter: Math.max(a.retryAfter, b.retryAfter) }) };
   const len = Number(req.headers.get("content-length") ?? 0);
   if (len > 20 * 1024 * 1024) return { res: fail(413, "file_too_big") };
   try {

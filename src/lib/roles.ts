@@ -2,7 +2,8 @@
 export type KycRole = "client" | "provider" | "both";
 
 export function kycRole(roles: readonly string[]): KycRole {
-  const c = roles.includes("client"), p = roles.includes("provider");
+  const c = roles.includes("client"),
+    p = roles.includes("provider");
   return c && p ? "both" : p ? "provider" : "client";
 }
 

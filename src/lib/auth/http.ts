@@ -4,7 +4,13 @@ import { z } from "zod";
 import { config } from "@/lib/config";
 import { rateLimit } from "./rate-limit";
 
-export type ApiError = { ok: false; error: string; field?: string; retryAfter?: number; [k: string]: unknown };
+export type ApiError = {
+  ok: false;
+  error: string;
+  field?: string;
+  retryAfter?: number;
+  [k: string]: unknown;
+};
 
 export function fail(status: number, error: string, extra: Record<string, unknown> = {}) {
   return NextResponse.json({ ok: false, error, ...extra } satisfies ApiError, { status });

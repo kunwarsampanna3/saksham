@@ -18,7 +18,7 @@ export async function AuthShell({ children, below }: { children: ReactNode; belo
   const p = photo("login");
 
   const Visual = ({ variant }: { variant: "panel" | "header" }) => (
-    <div className="absolute inset-0 overflow-hidden bg-forest">
+    <div className="bg-forest absolute inset-0 overflow-hidden">
       {p ? (
         <>
           <Image
@@ -29,20 +29,27 @@ export async function AuthShell({ children, below }: { children: ReactNode; belo
             sizes={variant === "panel" ? "(min-width: 1024px) 42vw, 0px" : "100vw"}
             className="object-cover"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-forest/90 via-forest/30 to-forest/10" aria-hidden />
+          <div
+            className="from-forest/90 via-forest/30 to-forest/10 absolute inset-0 bg-gradient-to-t"
+            aria-hidden
+          />
         </>
       ) : (
         <TerraceArt />
       )}
       {p?.isSample && (
-        <span className="demo-tag absolute right-3 top-3 z-10 !bg-black/55 !text-white !border-white/40">{t.common.samplePhoto}</span>
+        <span className="demo-tag absolute top-3 right-3 z-10 !border-white/40 !bg-black/55 !text-white">
+          {t.common.samplePhoto}
+        </span>
       )}
     </div>
   );
 
   return (
     <div className="relative min-h-dvh lg:grid lg:grid-cols-12">
-      <a href="#auth-main" className="skip-link">{t.nav.skip}</a>
+      <a href="#auth-main" className="skip-link">
+        {t.nav.skip}
+      </a>
 
       {/* Desktop photo panel */}
       <aside className="relative hidden lg:col-span-5 lg:block xl:col-span-5" aria-label={t.brand.tagline}>
@@ -51,8 +58,12 @@ export async function AuthShell({ children, below }: { children: ReactNode; belo
           <div className="relative z-10 flex h-full flex-col justify-between p-10 text-white">
             <Logo onDark />
             <div className={p ? "" : "mb-48"}>
-              <p lang="ne" className="deva text-leaf text-lg font-semibold">तपाईंको सीप। तपाईंको मूल्य।</p>
-              <p className="font-display mt-1 max-w-md text-4xl font-bold leading-[1.05] xl:text-5xl">{t.login.photoCaption}</p>
+              <p lang="ne" className="deva text-leaf text-lg font-semibold">
+                तपाईंको सीप। तपाईंको मूल्य।
+              </p>
+              <p className="font-display mt-1 max-w-md text-4xl leading-[1.05] font-bold xl:text-5xl">
+                {t.login.photoCaption}
+              </p>
             </div>
           </div>
         </div>
@@ -71,21 +82,25 @@ export async function AuthShell({ children, below }: { children: ReactNode; belo
 
       <main id="auth-main" className="relative lg:col-span-7 lg:flex lg:min-h-dvh lg:flex-col">
         <div className="hidden items-center justify-end gap-2 p-6 lg:flex">
-          <Link href="/" className="btn btn-quiet mr-auto"><ArrowLeft size={16} aria-hidden /> {t.home.landing.back}</Link>
+          <Link href="/" className="btn btn-quiet mr-auto">
+            <ArrowLeft size={16} aria-hidden /> {t.home.landing.back}
+          </Link>
           <LangSwitch />
           <ThemeToggle />
         </div>
         <div className="relative -mt-10 px-4 pb-10 sm:px-8 lg:mt-0 lg:flex lg:flex-1 lg:items-start lg:justify-center lg:pt-[6vh]">
-          <div className="relative mx-auto w-full max-w-[30rem] sheet-in lg:animate-none">
+          <div className="sheet-in relative mx-auto w-full max-w-[30rem] lg:animate-none">
             <div className="notch-frame">
-              <div className="notch-card terrace-edge relative overflow-hidden px-5 pb-8 pt-7 sm:px-8 sm:pt-9">
+              <div className="notch-card terrace-edge relative overflow-hidden px-5 pt-7 pb-8 sm:px-8 sm:pt-9">
                 <Contours seed={21} centers={1} rings={6} className="opacity-70" />
                 <div className="relative">{children}</div>
               </div>
             </div>
             {below}
             <div className="mt-6 flex items-center justify-center gap-3 lg:hidden">
-              <Link href="/" className="btn btn-quiet"><ArrowLeft size={16} aria-hidden /> {t.home.landing.back}</Link>
+              <Link href="/" className="btn btn-quiet">
+                <ArrowLeft size={16} aria-hidden /> {t.home.landing.back}
+              </Link>
               <ThemeToggle />
             </div>
           </div>
@@ -105,7 +120,7 @@ function TerraceArt() {
       <span className="deva-giant absolute -bottom-[0.18em] -left-[0.06em] text-[11rem] [-webkit-text-stroke-color:rgba(108,195,106,.35)] lg:text-[16rem]">
         सक्षम
       </span>
-      <div className="absolute bottom-0 right-0 flex w-2/3 flex-col items-end">
+      <div className="absolute right-0 bottom-0 flex w-2/3 flex-col items-end">
         {[38, 54, 70, 86, 100].map((w, i) => (
           <div
             key={w}

@@ -6,7 +6,9 @@ import { issueOtp } from "@/lib/auth/otp";
 import { rateLimit } from "@/lib/auth/rate-limit";
 import { policy } from "@/lib/config";
 
-const Body = z.object({ ...targetFields, purpose: z.enum(["signup", "reset"]) }).refine(exactlyOne, { message: "target_required" });
+const Body = z
+  .object({ ...targetFields, purpose: z.enum(["signup", "reset"]) })
+  .refine(exactlyOne, { message: "target_required" });
 
 export async function POST(req: NextRequest) {
   const g = await guard(req, { name: "otp-request", schema: Body, limit: 6, windowSec: 60 });

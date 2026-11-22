@@ -20,7 +20,10 @@ function ring(cx: number, cy: number, r: number, wobble: number, rand: () => num
   // Catmull-Rom → cubic Bézier for a smooth closed loop
   let d = `M${p[0][0].toFixed(1)},${p[0][1].toFixed(1)}`;
   for (let i = 0; i < pts; i++) {
-    const p0 = p[(i - 1 + pts) % pts], p1 = p[i], p2 = p[(i + 1) % pts], p3 = p[(i + 2) % pts];
+    const p0 = p[(i - 1 + pts) % pts],
+      p1 = p[i],
+      p2 = p[(i + 1) % pts],
+      p3 = p[(i + 2) % pts];
     const c1 = [p1[0] + (p2[0] - p0[0]) / 6, p1[1] + (p2[1] - p0[1]) / 6];
     const c2 = [p2[0] - (p3[0] - p1[0]) / 6, p2[1] - (p3[1] - p1[1]) / 6];
     d += ` C${c1[0].toFixed(1)},${c1[1].toFixed(1)} ${c2[0].toFixed(1)},${c2[1].toFixed(1)} ${p2[0].toFixed(1)},${p2[1].toFixed(1)}`;
@@ -29,14 +32,28 @@ function ring(cx: number, cy: number, r: number, wobble: number, rand: () => num
 }
 
 export function Contours({
-  seed = 7, className = "", animate = false, centers = 2, rings = 9,
-}: { seed?: number; className?: string; animate?: boolean; centers?: number; rings?: number }) {
+  seed = 7,
+  className = "",
+  animate = false,
+  centers = 2,
+  rings = 9,
+}: {
+  seed?: number;
+  className?: string;
+  animate?: boolean;
+  centers?: number;
+  rings?: number;
+}) {
   const rand = rng(seed);
   const paths: { d: string; delay: number }[] = [];
   for (let c = 0; c < centers; c++) {
-    const cx = 150 + rand() * 900, cy = 100 + rand() * 400;
+    const cx = 150 + rand() * 900,
+      cy = 100 + rand() * 400;
     for (let k = 1; k <= rings; k++) {
-      paths.push({ d: ring(cx, cy, k * 34 + rand() * 10, 0.28 + k * 0.012, rand), delay: (c * rings + k) * 0.06 });
+      paths.push({
+        d: ring(cx, cy, k * 34 + rand() * 10, 0.28 + k * 0.012, rand),
+        delay: (c * rings + k) * 0.06,
+      });
     }
   }
   return (

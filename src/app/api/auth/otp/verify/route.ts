@@ -5,7 +5,9 @@ import { otpSchema } from "@/lib/validation";
 import { exactlyOne, targetFields, targetOf } from "@/lib/auth/target";
 import { checkOtp, setVerifiedTicket } from "@/lib/auth/otp";
 
-const Body = z.object({ ...targetFields, purpose: z.enum(["signup", "reset"]), code: otpSchema }).refine(exactlyOne, { message: "target_required" });
+const Body = z
+  .object({ ...targetFields, purpose: z.enum(["signup", "reset"]), code: otpSchema })
+  .refine(exactlyOne, { message: "target_required" });
 
 export async function POST(req: NextRequest) {
   const g = await guard(req, { name: "otp-verify", schema: Body, limit: 15, windowSec: 60 });

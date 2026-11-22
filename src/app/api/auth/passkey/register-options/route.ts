@@ -18,7 +18,11 @@ export async function POST(req: NextRequest) {
     userID: new TextEncoder().encode(user.id),
     attestationType: "none",
     excludeCredentials: user.passkeys.map((p) => ({ id: p.id, transports: p.transports })),
-    authenticatorSelection: { residentKey: "required", userVerification: "required", authenticatorAttachment: "platform" },
+    authenticatorSelection: {
+      residentKey: "required",
+      userVerification: "required",
+      authenticatorAttachment: "platform",
+    },
   });
   await stashChallenge(options.challenge, "register", user.id);
   return NextResponse.json({ ok: true, options });

@@ -8,7 +8,9 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   return (
     <>
       <Header />
-      <main id="main" tabIndex={-1} className="outline-none">{children}</main>
+      <main id="main" tabIndex={-1} className="outline-none">
+        {children}
+      </main>
       <Footer />
       <Assistant />
     </>

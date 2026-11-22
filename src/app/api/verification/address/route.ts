@@ -5,7 +5,10 @@ import { currentUser } from "@/lib/auth/current-user";
 import { submit, statusFor } from "@/lib/verification";
 
 const Body = z.object({
-  ward: z.string().trim().regex(/^\d{1,2}$/, "ward"),
+  ward: z
+    .string()
+    .trim()
+    .regex(/^\d{1,2}$/, "ward"),
   tole: z.string().trim().min(2, "tole").max(80, "tole"),
   landmark: z.string().trim().max(80).optional().default(""),
 });
@@ -18,7 +21,13 @@ export async function POST(req: NextRequest) {
   if (!user) return fail(401, "signed_out");
   if (!user.area) return fail(409, "location_first");
   await submit(user, "address", {
-    fields: { city: user.city, area: user.area, ward: g.data.ward, tole: g.data.tole, landmark: g.data.landmark },
+    fields: {
+      city: user.city,
+      area: user.area,
+      ward: g.data.ward,
+      tole: g.data.tole,
+      landmark: g.data.landmark,
+    },
   });
   return NextResponse.json({ ok: true, status: await statusFor(user) });
 }

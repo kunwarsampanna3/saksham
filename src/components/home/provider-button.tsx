@@ -7,7 +7,13 @@ import { postJson, useUser } from "@/components/providers";
 import type { PublicUser } from "@/lib/store/types";
 
 /** Adds the provider role to a client account, switches to it, then opens verification. */
-export function ProviderButton({ label, className = "btn btn-primary" }: { label: string; className?: string }) {
+export function ProviderButton({
+  label,
+  className = "btn btn-primary",
+}: {
+  label: string;
+  className?: string;
+}) {
   const { setUser } = useUser();
   const router = useRouter();
   const [busy, setBusy] = useState(false);
@@ -20,7 +26,11 @@ export function ProviderButton({ label, className = "btn btn-primary" }: { label
         setBusy(true);
         const r = await postJson<{ user: PublicUser }>("/api/auth/role", { role: "provider", enable: true });
         setBusy(false);
-        if (r.ok) { setUser(r.user); router.push("/verification"); router.refresh(); }
+        if (r.ok) {
+          setUser(r.user);
+          router.push("/verification");
+          router.refresh();
+        }
       }}
     >
       {label} <ArrowRight size={18} aria-hidden />

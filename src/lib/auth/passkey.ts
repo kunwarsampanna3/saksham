@@ -21,11 +21,17 @@ export async function stashChallenge(challenge: string, kind: "register" | "logi
     .setExpirationTime("5m")
     .sign(key());
   (await cookies()).set(COOKIE, jwt, {
-    httpOnly: true, secure: config.isProd, sameSite: "strict", path: "/api/auth/passkey", maxAge: 300,
+    httpOnly: true,
+    secure: config.isProd,
+    sameSite: "strict",
+    path: "/api/auth/passkey",
+    maxAge: 300,
   });
 }
 
-export async function takeChallenge(kind: "register" | "login"): Promise<{ challenge: string; uid: string | null } | null> {
+export async function takeChallenge(
+  kind: "register" | "login",
+): Promise<{ challenge: string; uid: string | null } | null> {
   const jar = await cookies();
   const token = jar.get(COOKIE)?.value;
   jar.set(COOKIE, "", { path: "/api/auth/passkey", maxAge: 0 });

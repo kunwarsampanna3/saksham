@@ -33,7 +33,14 @@ export async function POST(req: NextRequest) {
     await store.updateUser(user.id, {
       passkeys: [
         ...user.passkeys.filter((p) => p.id !== c.id),
-        { id: c.id, publicKey: b64url.encode(c.publicKey), counter: c.counter, transports: c.transports, label, createdAt: new Date().toISOString() },
+        {
+          id: c.id,
+          publicKey: b64url.encode(c.publicKey),
+          counter: c.counter,
+          transports: c.transports,
+          label,
+          createdAt: new Date().toISOString(),
+        },
       ],
     });
     return NextResponse.json({ ok: true });

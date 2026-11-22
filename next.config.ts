@@ -21,7 +21,12 @@ const nextConfig: NextConfig = {
   poweredByHeader: false,
   reactStrictMode: true,
   // Face matching for KYC runs on the server with WebAssembly; keep these packages out of the bundle.
-  serverExternalPackages: ["@vladmandic/face-api", "@tensorflow/tfjs", "@tensorflow/tfjs-core", "@tensorflow/tfjs-backend-wasm"],
+  serverExternalPackages: [
+    "@vladmandic/face-api",
+    "@tensorflow/tfjs",
+    "@tensorflow/tfjs-core",
+    "@tensorflow/tfjs-backend-wasm",
+  ],
   // Lets the dev server be opened through GitHub Codespaces' forwarded address.
   allowedDevOrigins: ["*.app.github.dev"],
   // Middleware sees /api uploads too; its default 10 MB limit would cut off uploads the routes accept (20 MB).
@@ -42,8 +47,13 @@ const nextConfig: NextConfig = {
           { key: "X-Content-Type-Options", value: "nosniff" },
           { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
           { key: "X-Frame-Options", value: "DENY" },
-          { key: "Permissions-Policy", value: "camera=(self), microphone=(self), geolocation=(self), publickey-credentials-get=(self)" },
-          ...(isDev ? [] : [{ key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains; preload" }]),
+          {
+            key: "Permissions-Policy",
+            value: "camera=(self), microphone=(self), geolocation=(self), publickey-credentials-get=(self)",
+          },
+          ...(isDev
+            ? []
+            : [{ key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains; preload" }]),
         ],
       },
     ];

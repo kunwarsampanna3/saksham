@@ -25,7 +25,11 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     const fn = { pay: payInstallment, deliver: markDelivered, release }[g.data.action];
     const b = await fn(l.booking, l.user, g.data.installmentId);
     const kind = g.data.action === "pay" ? "hold" : g.data.action === "release" ? "release" : null;
-    const rec = kind ? (await store.listReceipts(b.id)).filter((r) => r.kind === kind && r.installmentId === g.data.installmentId).at(-1) : undefined;
+    const rec = kind
+      ? (await store.listReceipts(b.id))
+          .filter((r) => r.kind === kind && r.installmentId === g.data.installmentId)
+          .at(-1)
+      : undefined;
     return NextResponse.json({ ok: true, status: b.status, ref: rec?.ref, receiptId: rec?.id });
   } catch (e) {
     return ruleResponse(e);

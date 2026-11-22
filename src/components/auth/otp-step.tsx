@@ -9,8 +9,16 @@ import { postJson, useI18n } from "@/components/providers";
  * we show it in a clearly labelled sandbox box — no real SMS is sent.
  */
 export function OtpStep({
-  target, purpose, onVerified, onChangeNumber,
-}: { target: { phone: string } | { email: string }; purpose: "signup" | "reset"; onVerified: () => void; onChangeNumber: () => void }) {
+  target,
+  purpose,
+  onVerified,
+  onChangeNumber,
+}: {
+  target: { phone: string } | { email: string };
+  purpose: "signup" | "reset";
+  onVerified: () => void;
+  onChangeNumber: () => void;
+}) {
   const viaEmail = "email" in target;
   const { t } = useI18n();
   const id = useId();
@@ -23,7 +31,10 @@ export function OtpStep({
 
   const send = async () => {
     setError(null);
-    const r = await postJson<{ devCode?: string; resendIn?: number; retryAfter?: number }>("/api/auth/otp/request", { ...target, purpose });
+    const r = await postJson<{ devCode?: string; resendIn?: number; retryAfter?: number }>(
+      "/api/auth/otp/request",
+      { ...target, purpose },
+    );
     if (r.ok) {
       setSent(true);
       setDevCode(r.devCode ?? null);
@@ -47,7 +58,12 @@ export function OtpStep({
 
   // Send once on mount. (React runs effects twice in dev; a second request would only hit the 30 s cooldown.)
   const autoSent = useRef(false);
-  useEffect(() => { if (autoSent.current) return; autoSent.current = true; void send(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, []);
+  useEffect(() => {
+    if (autoSent.current) return;
+    autoSent.current = true;
+    void send();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- send only once, on mount
+  }, []);
   useEffect(() => {
     if (cooldown <= 0) return;
     const tm = setInterval(() => setCooldown((c) => Math.max(0, c - 1)), 1000);
@@ -55,9 +71,17 @@ export function OtpStep({
   }, [cooldown > 0]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const verify = async (c = code) => {
-    if (!/^\d{6}$/.test(c)) { setError(t.errors.otp_format); return; }
-    setBusy(true); setError(null);
-    const r = await postJson<{ attemptsLeft?: number }>("/api/auth/otp/verify", { ...target, purpose, code: c });
+    if (!/^\d{6}$/.test(c)) {
+      setError(t.errors.otp_format);
+      return;
+    }
+    setBusy(true);
+    setError(null);
+    const r = await postJson<{ attemptsLeft?: number }>("/api/auth/otp/verify", {
+      ...target,
+      purpose,
+      code: c,
+    });
     setBusy(false);
     if (r.ok) return onVerified();
     if (r.error === "otp_wrong") setError(t.otp.wrong(r.attemptsLeft ?? 0));
@@ -66,24 +90,41 @@ export function OtpStep({
     else setError(r.error === "offline" ? t.errors.offline : t.errors.generic);
   };
 
-  const pretty = "email" in target ? target.email : `+977 ${target.phone.slice(0, 3)} ${target.phone.slice(3, 6)} ${target.phone.slice(6)}`;
+  const pretty =
+    "email" in target
+      ? target.email
+      : `+977 ${target.phone.slice(0, 3)} ${target.phone.slice(3, 6)} ${target.phone.slice(6)}`;
 
   return (
-    <form className="space-y-5" onSubmit={(e) => { e.preventDefault(); void verify(); }} noValidate>
+    <form
+      className="space-y-5"
+      onSubmit={(e) => {
+        e.preventDefault();
+        void verify();
+      }}
+      noValidate
+    >
       <p className="text-muted">
         {sent ? (viaEmail && !devCode ? t.otp.sentToEmail(pretty) : t.otp.sentTo(pretty)) : t.common.loading}{" "}
-        <button type="button" className="font-semibold text-accent underline-offset-4 hover:underline" onClick={onChangeNumber}>
+        <button
+          type="button"
+          className="text-accent font-semibold underline-offset-4 hover:underline"
+          onClick={onChangeNumber}
+        >
           {viaEmail ? t.otp.changeEmail : t.otp.changeNumber}
         </button>
       </p>
 
       {devCode && (
-        <div className="flex items-start gap-3 rounded-md border border-dashed border-[#c58a00] bg-[#fff8e6] p-3 text-[#4d3500] dark:bg-[#2c2208] dark:text-[#f6d27a]" role="status">
+        <div
+          className="flex items-start gap-3 rounded-md border border-dashed border-[#c58a00] bg-[#fff8e6] p-3 text-[#4d3500] dark:bg-[#2c2208] dark:text-[#f6d27a]"
+          role="status"
+        >
           <FlaskConical size={20} aria-hidden className="mt-0.5 shrink-0" />
           <div>
             <p className="text-sm font-semibold">
-              <span className="demo-tag mr-2">{t.common.sandbox}</span>{t.otp.sandboxCode}:{" "}
-              <span className="font-display text-lg tracking-[0.2em]">{devCode}</span>
+              <span className="demo-tag mr-2">{t.common.sandbox}</span>
+              {t.otp.sandboxCode}: <span className="font-display text-lg tracking-[0.2em]">{devCode}</span>
             </p>
             <p className="text-sm">{viaEmail ? t.otp.sandboxEmailNote : t.otp.sandboxNote}</p>
           </div>
@@ -91,10 +132,12 @@ export function OtpStep({
       )}
 
       <div>
-        <label htmlFor={id} className="field-label">{t.otp.code}</label>
+        <label htmlFor={id} className="field-label">
+          {t.otp.code}
+        </label>
         <input
           id={id}
-          className="input max-w-[16rem] text-center font-display text-2xl tracking-[0.5em]"
+          className="input font-display max-w-[16rem] text-center text-2xl tracking-[0.5em]"
           inputMode="numeric"
           autoComplete="one-time-code"
           pattern="\d{6}"
@@ -109,7 +152,11 @@ export function OtpStep({
             if (v.length === 6) void verify(v);
           }}
         />
-        {error && <p id={`${id}-err`} role="alert" className="field-error">{error}</p>}
+        {error && (
+          <p id={`${id}-err`} role="alert" className="field-error">
+            {error}
+          </p>
+        )}
       </div>
 
       <div className="flex flex-wrap items-center gap-3">

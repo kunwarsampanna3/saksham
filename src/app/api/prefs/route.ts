@@ -4,7 +4,10 @@ import { guard } from "@/lib/auth/http";
 import { getSession } from "@/lib/auth/session";
 import { store } from "@/lib/store";
 
-const Body = z.object({ lang: z.enum(["en", "ne"]).optional(), theme: z.enum(["light", "dark", "system"]).optional() });
+const Body = z.object({
+  lang: z.enum(["en", "ne"]).optional(),
+  theme: z.enum(["light", "dark", "system"]).optional(),
+});
 
 /** Language and theme preference. Stored in cookies (and on the account when signed in). */
 export async function POST(req: NextRequest) {

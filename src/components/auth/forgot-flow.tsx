@@ -25,7 +25,8 @@ export function ForgotFlow() {
   const steps = [t.signup.steps[0], t.signup.steps[1], t.signup.steps[3]];
 
   const save = async (mpin: string) => {
-    setBusy(true); setErr(null);
+    setBusy(true);
+    setErr(null);
     const r = await postJson<{ user: PublicUser }>("/api/auth/reset-mpin", { mpin });
     setBusy(false);
     if (r.ok) {
@@ -35,35 +36,74 @@ export function ForgotFlow() {
       return;
     }
     if (r.error === "mpin_weak") setErr(t.signup.weak);
-    else if (r.error === "otp_required") { setErr(t.errors.otp_required); setStep(0); }
-    else setErr(r.error === "offline" ? t.errors.offline : t.errors.generic);
+    else if (r.error === "otp_required") {
+      setErr(t.errors.otp_required);
+      setStep(0);
+    } else setErr(r.error === "offline" ? t.errors.offline : t.errors.generic);
   };
 
   return (
     <div>
-      <h1 className="font-display text-[2rem] font-extrabold sm:text-[2.3rem]">{step === 2 ? t.forgot.newTitle : t.forgot.title}</h1>
-      <div className="mt-5"><TerraceSteps steps={steps} current={step} label={t.forgot.title} /></div>
+      <h1 className="font-display text-[2rem] font-extrabold sm:text-[2.3rem]">
+        {step === 2 ? t.forgot.newTitle : t.forgot.title}
+      </h1>
+      <div className="mt-5">
+        <TerraceSteps steps={steps} current={step} label={t.forgot.title} />
+      </div>
 
       {step === 0 && (
-        <form className="space-y-6" noValidate onSubmit={(e) => {
-          e.preventDefault();
-          if (channel === "phone" && !isNepalMobile(phone)) return setPhoneErr(t.errors.phone_invalid);
-          if (channel === "email" && !isEmailAddress(email)) return setPhoneErr(t.errors.email_invalid);
-          setStep(1);
-        }}>
+        <form
+          className="space-y-6"
+          noValidate
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (channel === "phone" && !isNepalMobile(phone)) return setPhoneErr(t.errors.phone_invalid);
+            if (channel === "email" && !isEmailAddress(email)) return setPhoneErr(t.errors.email_invalid);
+            setStep(1);
+          }}
+        >
           <p className="text-muted">{t.forgot.lead}</p>
-          <IdentityInput channel={channel} onChannel={(c) => { setChannel(c); setPhoneErr(null); setErr(null); }}
-            phone={phone} onPhone={(v) => { setPhone(v); setPhoneErr(null); }}
-            email={email} onEmail={(v) => { setEmail(v); setPhoneErr(null); }}
-            error={phoneErr ?? err} autoFocus />
-          <button type="submit" className="btn btn-primary w-full sm:w-auto sm:min-w-44">{t.common.continue}</button>
+          <IdentityInput
+            channel={channel}
+            onChannel={(c) => {
+              setChannel(c);
+              setPhoneErr(null);
+              setErr(null);
+            }}
+            phone={phone}
+            onPhone={(v) => {
+              setPhone(v);
+              setPhoneErr(null);
+            }}
+            email={email}
+            onEmail={(v) => {
+              setEmail(v);
+              setPhoneErr(null);
+            }}
+            error={phoneErr ?? err}
+            autoFocus
+          />
+          <button type="submit" className="btn btn-primary w-full sm:w-auto sm:min-w-44">
+            {t.common.continue}
+          </button>
         </form>
       )}
-      {step === 1 && <OtpStep target={targetBody(channel, phone, email) as { phone: string } | { email: string }} purpose="reset" onVerified={() => setStep(2)} onChangeNumber={() => setStep(0)} />}
-      {step === 2 && <SetMpin submitLabel={t.common.save} onSubmit={(p) => void save(p)} serverError={err} busy={busy} />}
+      {step === 1 && (
+        <OtpStep
+          target={targetBody(channel, phone, email) as { phone: string } | { email: string }}
+          purpose="reset"
+          onVerified={() => setStep(2)}
+          onChangeNumber={() => setStep(0)}
+        />
+      )}
+      {step === 2 && (
+        <SetMpin submitLabel={t.common.save} onSubmit={(p) => void save(p)} serverError={err} busy={busy} />
+      )}
 
-      <p className="mt-6 border-t border-line pt-5 text-[0.95rem]">
-        <Link href="/login" className="font-semibold text-accent underline-offset-4 hover:underline">← {t.login.submit}</Link>
+      <p className="border-line mt-6 border-t pt-5 text-[0.95rem]">
+        <Link href="/login" className="text-accent font-semibold underline-offset-4 hover:underline">
+          ← {t.login.submit}
+        </Link>
       </p>
     </div>
   );

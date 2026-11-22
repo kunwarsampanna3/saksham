@@ -10,7 +10,10 @@ import { notify } from "@/lib/chat";
 import { cleanText } from "@/lib/task-api";
 
 const Body = z.discriminatedUnion("action", [
-  z.object({ action: z.literal("contacts"), contacts: z.array(z.object({ name: z.string().trim().min(2).max(60), phone: z.string().max(20) })).max(3) }),
+  z.object({
+    action: z.literal("contacts"),
+    contacts: z.array(z.object({ name: z.string().trim().min(2).max(60), phone: z.string().max(20) })).max(3),
+  }),
   z.object({
     action: z.literal("report"),
     targetUserId: z.string().uuid().optional(),
@@ -54,8 +57,15 @@ export async function POST(req: NextRequest) {
       }
       if (d.targetTaskId && !(await store.getTask(d.targetTaskId))) return fail(404, "not_found");
       const r = await store.putReport({
-        id: randomUUID(), reporterId: user.id, targetUserId: d.targetUserId, targetTaskId: d.targetTaskId,
-        reason: d.reason, details: cleanText(d.details, 2000), status: "open", createdAt: now, updatedAt: now,
+        id: randomUUID(),
+        reporterId: user.id,
+        targetUserId: d.targetUserId,
+        targetTaskId: d.targetTaskId,
+        reason: d.reason,
+        details: cleanText(d.details, 2000),
+        status: "open",
+        createdAt: now,
+        updatedAt: now,
       });
       return NextResponse.json({ ok: true, id: r.id });
     }
@@ -70,7 +80,13 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ ok: true });
     case "sos":
       // DEMO ALERT: logged and shown to the user only. A real build would SMS trusted contacts with a live link.
-      await notify(user.id, "system", "sos_demo", { contacts: (user.trustedContacts ?? []).length }, "/safety");
+      await notify(
+        user.id,
+        "system",
+        "sos_demo",
+        { contacts: (user.trustedContacts ?? []).length },
+        "/safety",
+      );
       return NextResponse.json({ ok: true, demo: true, contacts: (user.trustedContacts ?? []).length });
   }
 }

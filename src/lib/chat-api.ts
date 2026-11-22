@@ -7,7 +7,9 @@ import type { Conversation, User } from "@/lib/store/types";
 import { isParty } from "@/lib/chat";
 
 /** Signed-in participant of a conversation; anyone else gets 404. */
-export async function loadConversation(id: string): Promise<{ user: User; conv: Conversation } | { res: NextResponse }> {
+export async function loadConversation(
+  id: string,
+): Promise<{ user: User; conv: Conversation } | { res: NextResponse }> {
   const user = await currentUser();
   if (!user) return { res: fail(401, "signed_out") };
   if (!/^[0-9a-f-]{36}$/.test(id)) return { res: fail(404, "not_found") };

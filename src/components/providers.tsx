@@ -7,7 +7,11 @@ import type { PublicUser } from "@/lib/store/types";
 import type { ThemePref } from "@/lib/i18n/server";
 
 /* ------------------------------------------------------------------ i18n */
-interface I18n { lang: Lang; t: Dict; setLang: (l: Lang) => void }
+interface I18n {
+  lang: Lang;
+  t: Dict;
+  setLang: (l: Lang) => void;
+}
 const I18nCtx = createContext<I18n | null>(null);
 export function useI18n() {
   const v = useContext(I18nCtx);
@@ -16,7 +20,11 @@ export function useI18n() {
 }
 
 /* ----------------------------------------------------------------- theme */
-interface Theme { pref: ThemePref; resolved: "light" | "dark"; setPref: (p: ThemePref) => void }
+interface Theme {
+  pref: ThemePref;
+  resolved: "light" | "dark";
+  setPref: (p: ThemePref) => void;
+}
 const ThemeCtx = createContext<Theme | null>(null);
 export function useTheme() {
   const v = useContext(ThemeCtx);
@@ -25,7 +33,10 @@ export function useTheme() {
 }
 
 /* ------------------------------------------------------------------ user */
-interface UserCtxV { user: PublicUser | null; setUser: (u: PublicUser | null) => void }
+interface UserCtxV {
+  user: PublicUser | null;
+  setUser: (u: PublicUser | null) => void;
+}
 const UserCtx = createContext<UserCtxV | null>(null);
 export function useUser() {
   const v = useContext(UserCtx);
@@ -34,7 +45,10 @@ export function useUser() {
 }
 
 /* ------------------------------------------------------------------ city */
-interface CityV { city: string; setCity: (c: string) => void }
+interface CityV {
+  city: string;
+  setCity: (c: string) => void;
+}
 const CityCtx = createContext<CityV | null>(null);
 export function useCity() {
   const v = useContext(CityCtx);
@@ -43,7 +57,10 @@ export function useCity() {
 }
 
 /** Small JSON POST helper used by every client form. Never throws; returns the parsed body. */
-export async function postJson<T = Record<string, unknown>>(url: string, body: unknown): Promise<T & { ok: boolean; error?: string; status: number }> {
+export async function postJson<T = Record<string, unknown>>(
+  url: string,
+  body: unknown,
+): Promise<T & { ok: boolean; error?: string; status: number }> {
   try {
     const res = await fetch(url, {
       method: "POST",
@@ -59,8 +76,18 @@ export async function postJson<T = Record<string, unknown>>(url: string, body: u
 }
 
 export function Providers({
-  children, initialLang, initialTheme, initialUser, initialCity,
-}: { children: ReactNode; initialLang: Lang; initialTheme: ThemePref; initialUser: PublicUser | null; initialCity: string }) {
+  children,
+  initialLang,
+  initialTheme,
+  initialUser,
+  initialCity,
+}: {
+  children: ReactNode;
+  initialLang: Lang;
+  initialTheme: ThemePref;
+  initialUser: PublicUser | null;
+  initialCity: string;
+}) {
   const router = useRouter();
   const [lang, setLangState] = useState<Lang>(initialLang);
   const [pref, setPrefState] = useState<ThemePref>(initialTheme);
@@ -70,11 +97,14 @@ export function Providers({
   const [city, setCityState] = useState(initialCity);
   useEffect(() => setUser(initialUser), [initialUser]);
 
-  const setCity = useCallback((c: string) => {
-    setCityState(c);
-    document.cookie = `city=${encodeURIComponent(c)}; path=/; max-age=31536000; samesite=lax`;
-    router.refresh(); // server sections (e.g. tasks near you) re-render for the new city
-  }, [router]);
+  const setCity = useCallback(
+    (c: string) => {
+      setCityState(c);
+      document.cookie = `city=${encodeURIComponent(c)}; path=/; max-age=31536000; samesite=lax`;
+      router.refresh(); // server sections (e.g. tasks near you) re-render for the new city
+    },
+    [router],
+  );
 
   useEffect(() => {
     const mq = window.matchMedia("(prefers-color-scheme: dark)");
@@ -89,11 +119,14 @@ export function Providers({
     document.documentElement.dataset.theme = resolved;
   }, [resolved]);
 
-  const setLang = useCallback((l: Lang) => {
-    setLangState(l);
-    document.documentElement.lang = l;
-    void postJson("/api/prefs", { lang: l }).then(() => router.refresh());
-  }, [router]);
+  const setLang = useCallback(
+    (l: Lang) => {
+      setLangState(l);
+      document.documentElement.lang = l;
+      void postJson("/api/prefs", { lang: l }).then(() => router.refresh());
+    },
+    [router],
+  );
 
   const setPref = useCallback((p: ThemePref) => {
     setPrefState(p);

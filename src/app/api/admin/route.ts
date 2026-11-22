@@ -11,8 +11,18 @@ import { resetExampleSeed, ensureExampleTasks } from "@/lib/tasks";
 
 const Amount = z.number().int().min(100).max(1_000_000);
 const Body = z.discriminatedUnion("action", [
-  z.object({ action: z.literal("report"), id: z.string().uuid(), status: z.enum(["reviewing", "actioned", "dismissed"]) }),
-  z.object({ action: z.literal("price"), category: z.enum(CATEGORY_IDS), low: Amount, high: Amount, perDay: Amount }),
+  z.object({
+    action: z.literal("report"),
+    id: z.string().uuid(),
+    status: z.enum(["reviewing", "actioned", "dismissed"]),
+  }),
+  z.object({
+    action: z.literal("price"),
+    category: z.enum(CATEGORY_IDS),
+    low: Amount,
+    high: Amount,
+    perDay: Amount,
+  }),
   z.object({ action: z.literal("reset-demo") }),
 ]);
 
@@ -34,14 +44,22 @@ export async function POST(req: NextRequest) {
 
   if (d.action === "price") {
     if (d.low >= d.high) return fail(400, "low_high");
-    await store.putPriceOverride({ category: d.category, low: d.low, high: d.high, perDay: d.perDay, updatedBy: me.id, updatedAt: at });
+    await store.putPriceOverride({
+      category: d.category,
+      low: d.low,
+      high: d.high,
+      perDay: d.perDay,
+      updatedBy: me.id,
+      updatedAt: at,
+    });
     return NextResponse.json({ ok: true });
   }
 
   // reset-demo: DEMO_MODE only. Removes demo-account and example data, then re-seeds.
   if (!config.demoMode) return fail(403, "demo_only");
   const ids = (await Promise.all(Object.values(DEMO_PERSONAS).map((p) => store.getUserByPhone(p.phone))))
-    .filter((u) => u?.isDemo).map((u) => u!.id);
+    .filter((u) => u?.isDemo)
+    .map((u) => u!.id);
   await store.purgeDemoData(ids);
   await store.resetDemo(await demoSeed());
   resetExampleSeed();

@@ -22,10 +22,32 @@ export function maskEmail(email: string): string {
   return user && domain ? `${user[0]}•••@${domain}` : "";
 }
 
-export const emailSchema = z.string().trim().toLowerCase().max(254)
+export const emailSchema = z
+  .string()
+  .trim()
+  .toLowerCase()
+  .max(254)
   .regex(/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/, "email_invalid");
 
-const WEAK_MPINS = new Set(["0000", "1111", "2222", "3333", "4444", "5555", "6666", "7777", "8888", "9999", "1234", "4321", "0123", "9876", "1212", "2580", "1122"]);
+const WEAK_MPINS = new Set([
+  "0000",
+  "1111",
+  "2222",
+  "3333",
+  "4444",
+  "5555",
+  "6666",
+  "7777",
+  "8888",
+  "9999",
+  "1234",
+  "4321",
+  "0123",
+  "9876",
+  "1212",
+  "2580",
+  "1122",
+]);
 
 export function mpinProblem(pin: string): "format" | "weak" | null {
   if (!/^\d{4}$/.test(pin)) return "format";
@@ -57,9 +79,30 @@ export const nameSchema = z
   .regex(/^[\p{L}\p{M}][\p{L}\p{M} .'’-]*$/u, "name_chars");
 
 export const NEPAL_CITIES = [
-  "Kathmandu", "Lalitpur", "Bhaktapur", "Pokhara", "Biratnagar", "Birgunj", "Dharan", "Bharatpur",
-  "Butwal", "Hetauda", "Janakpur", "Nepalgunj", "Itahari", "Dhangadhi", "Bhairahawa", "Damak",
-  "Birendranagar", "Tulsipur", "Ghorahi", "Banepa", "Dhulikhel", "Gorkha", "Ilam", "Other",
+  "Kathmandu",
+  "Lalitpur",
+  "Bhaktapur",
+  "Pokhara",
+  "Biratnagar",
+  "Birgunj",
+  "Dharan",
+  "Bharatpur",
+  "Butwal",
+  "Hetauda",
+  "Janakpur",
+  "Nepalgunj",
+  "Itahari",
+  "Dhangadhi",
+  "Bhairahawa",
+  "Damak",
+  "Birendranagar",
+  "Tulsipur",
+  "Ghorahi",
+  "Banepa",
+  "Dhulikhel",
+  "Gorkha",
+  "Ilam",
+  "Other",
 ] as const;
 export const citySchema = z.enum(NEPAL_CITIES);
 

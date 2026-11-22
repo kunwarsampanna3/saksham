@@ -14,9 +14,12 @@ const ALL_WEEK: ExampleProvider["week"] = [true, true, true, true, true, true, t
 export async function toRealProvider(u: User): Promise<ExampleProvider> {
   const cats = (u.categories ?? []).filter((c): c is CategoryId => (CATEGORY_IDS as string[]).includes(c));
   const ratings = await store.listRatingsFor(u.id);
-  const rating = ratings.length ? Math.round((ratings.reduce((a, r) => a + r.stars, 0) / ratings.length) * 10) / 10 : 0;
+  const rating = ratings.length
+    ? Math.round((ratings.reduce((a, r) => a + r.stars, 0) / ratings.length) * 10) / 10
+    : 0;
   const skillNames = cats.map((c) => category(c));
-  const lows = skillNames.map((c) => c.low), highs = skillNames.map((c) => c.high);
+  const lows = skillNames.map((c) => c.low),
+    highs = skillNames.map((c) => c.high);
   const now = Date.now();
   const raters = await Promise.all(ratings.slice(0, 6).map((r) => store.getUserById(r.raterId)));
   return {
@@ -24,8 +27,22 @@ export async function toRealProvider(u: User): Promise<ExampleProvider> {
     name: u.name,
     kind: "person",
     headline: {
-      en: u.headline ?? (skillNames.length ? skillNames.map((c) => c.en).slice(0, 3).join(" · ") : "Saksham applicant"),
-      ne: u.headline ?? (skillNames.length ? skillNames.map((c) => c.ne).slice(0, 3).join(" · ") : "सक्षम आवेदक"),
+      en:
+        u.headline ??
+        (skillNames.length
+          ? skillNames
+              .map((c) => c.en)
+              .slice(0, 3)
+              .join(" · ")
+          : "Saksham applicant"),
+      ne:
+        u.headline ??
+        (skillNames.length
+          ? skillNames
+              .map((c) => c.ne)
+              .slice(0, 3)
+              .join(" · ")
+          : "सक्षम आवेदक"),
     },
     bio: {
       en: `${u.name} offers ${skillNames.map((c) => c.en.toLowerCase()).join(", ") || "their skills"} in and around ${u.city}.`,
@@ -37,7 +54,12 @@ export async function toRealProvider(u: User): Promise<ExampleProvider> {
     radiusKm: u.radiusKm ?? 10,
     onlineOk: skillNames.some((c) => c.online),
     womenLed: !!u.womenLed,
-    verification: { phone: !!u.phone || !!u.verified, id: !!u.verified, selfie: !!u.verified, address: false },
+    verification: {
+      phone: !!u.phone || !!u.verified,
+      id: !!u.verified,
+      selfie: !!u.verified,
+      address: false,
+    },
     level: ratings.length >= 20 ? 3 : ratings.length >= 5 ? 2 : 1,
     rating,
     ratingCount: ratings.length,

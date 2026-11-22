@@ -85,9 +85,15 @@ const parseTaskSchema = {
   properties: {
     category: { type: "string", enum: CATEGORY_IDS },
     title: { type: "string", description: "Short task title, max 70 characters, in the user's language" },
-    details: { type: "string", description: "2–4 short sentences: what, quantity, materials, constraints. No prices." },
+    details: {
+      type: "string",
+      description: "2–4 short sentences: what, quantity, materials, constraints. No prices.",
+    },
     days: { type: "integer", description: "Estimated working days, 1 if unclear" },
-    quantity: { type: "integer", description: "Number of pieces (items, pages, devices) if the person said how many, otherwise 1" },
+    quantity: {
+      type: "integer",
+      description: "Number of pieces (items, pages, devices) if the person said how many, otherwise 1",
+    },
     online: { type: "boolean", description: "true only if the work can be done fully remotely" },
   },
 };
@@ -156,7 +162,9 @@ export function keywordParseTask(text: string): ParsedTask {
 
 const Answer = z.object({ answer: z.string().max(600) });
 const answerSchema = {
-  type: "object", additionalProperties: false, required: ["answer"],
+  type: "object",
+  additionalProperties: false,
+  required: ["answer"],
   properties: { answer: { type: "string", description: "Under 60 words" } },
 };
 
@@ -186,7 +194,10 @@ export async function aiAnswer(question: string, lang: Lang, context?: string): 
 /* =================================================================== explain fair range */
 
 /** Explains a range that plain code already computed. The numbers are passed in and must be repeated, not changed. */
-export async function aiExplainRange(input: { title: string; low: number; high: number; basis: string[] }, lang: Lang): Promise<string | null> {
+export async function aiExplainRange(
+  input: { title: string; low: number; high: number; basis: string[] },
+  lang: Lang,
+): Promise<string | null> {
   const r = await structured({
     system: `Explain a price range for a task on Saksham (Nepal) in under 50 words, in the language you are told.
 The range was calculated by a fixed price table. Repeat the given numbers exactly. Do not add, change or round any number.
@@ -202,7 +213,10 @@ Do not recommend a specific price.`,
 /* =================================================================== draft a proposal */
 
 /** Drafts a short, friendly offer message for a provider. The price and days are given; the AI must not change them. */
-export async function aiDraftProposal(input: { taskTitle: string; taskDetails: string; amount: number; days: number; providerName: string }, lang: Lang): Promise<string | null> {
+export async function aiDraftProposal(
+  input: { taskTitle: string; taskDetails: string; amount: number; days: number; providerName: string },
+  lang: Lang,
+): Promise<string | null> {
   const r = await structured({
     system: `You help an applicant in Nepal write a short offer message on Saksham, a skills marketplace.
 Write 2 to 3 friendly, specific sentences in the language you are told. Mention the given price and timeline exactly once,

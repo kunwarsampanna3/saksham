@@ -103,272 +103,580 @@
 }
 
 @layer base {
-/* ------------------------------------------------------------------ base */
-html {
-  -webkit-text-size-adjust: 100%;
-  scroll-padding-top: calc(var(--header-h) + 12px);
-}
-body {
-  background: var(--bg);
-  color: var(--text);
-  font-family: var(--font-sans);
-  font-size: 1rem;
-  line-height: 1.55;
-  overflow-x: hidden;
-  text-rendering: optimizeLegibility;
-}
-h1, h2, h3, h4, .font-display {
-  font-family: var(--font-display);
-  letter-spacing: -0.02em;
-  line-height: 1.08;
-}
-/* Devanagari needs a taller line box; never squeeze it with display tracking */
-:lang(ne), .deva {
-  font-family: var(--font-deva);
-  letter-spacing: 0;
-  line-height: 1.5;
-}
-h1:lang(ne), h2:lang(ne), h3:lang(ne) { line-height: 1.3; }
+  /* ------------------------------------------------------------------ base */
+  html {
+    -webkit-text-size-adjust: 100%;
+    scroll-padding-top: calc(var(--header-h) + 12px);
+  }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-sans);
+    font-size: 1rem;
+    line-height: 1.55;
+    overflow-x: hidden;
+    text-rendering: optimizeLegibility;
+  }
+  h1,
+  h2,
+  h3,
+  h4,
+  .font-display {
+    font-family: var(--font-display);
+    letter-spacing: -0.02em;
+    line-height: 1.08;
+  }
+  /* Devanagari needs a taller line box; never squeeze it with display tracking */
+  :lang(ne),
+  .deva {
+    font-family: var(--font-deva);
+    letter-spacing: 0;
+    line-height: 1.5;
+  }
+  h1:lang(ne),
+  h2:lang(ne),
+  h3:lang(ne) {
+    line-height: 1.3;
+  }
 
-:focus-visible {
-  outline: 3px solid var(--focus);
-  outline-offset: 2px;
-  border-radius: 2px;
-}
-::selection { background: var(--leaf); color: var(--ink); }
+  :focus-visible {
+    outline: 3px solid var(--focus);
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
+  ::selection {
+    background: var(--leaf);
+    color: var(--ink);
+  }
 
-.skip-link {
-  position: absolute; left: 12px; top: -60px; z-index: 100;
-  background: var(--forest); color: #fff; padding: 10px 16px; font-weight: 600;
-}
-.skip-link:focus { top: 12px; }
-
+  .skip-link {
+    position: absolute;
+    left: 12px;
+    top: -60px;
+    z-index: 100;
+    background: var(--forest);
+    color: #fff;
+    padding: 10px 16px;
+    font-weight: 600;
+  }
+  .skip-link:focus {
+    top: 12px;
+  }
 }
 
 @layer components {
-/* --------------------------------------------------------------- buttons */
-.btn {
-  display: inline-flex; align-items: center; justify-content: center; gap: .5rem;
-  min-height: 48px; padding: 0 1.25rem;
-  font-weight: 600; font-size: 1rem; line-height: 1;
-  border-radius: var(--radius-s);
-  transition: transform .15s ease, box-shadow .15s ease, background-color .15s ease, color .15s ease;
-  cursor: pointer; user-select: none; white-space: nowrap;
-}
-.btn:disabled, .btn[aria-disabled="true"] { opacity: .55; cursor: not-allowed; }
-.btn-primary { background: var(--accent); color: var(--accent-contrast); }
-/* Signature hover: the button lifts off a solid forest "terrace step" */
-.btn-primary:not(:disabled):hover { transform: translateY(-3px); box-shadow: 0 3px 0 0 var(--shadow-step); }
-.btn-primary:not(:disabled):active { transform: translateY(0); box-shadow: none; }
-:root[data-theme="dark"] .btn-primary:not(:disabled):hover { box-shadow: 0 3px 0 0 #2f7d45; }
-.btn-ghost { background: transparent; color: var(--text); border: 1.5px solid var(--line-strong); }
-.btn-ghost:not(:disabled):hover { border-color: var(--accent); color: var(--accent); }
-.btn-danger { background: transparent; color: var(--danger); border: 1.5px solid var(--danger); }
-.btn-danger:not(:disabled):hover { background: var(--danger-soft); }
-.btn-quiet { background: transparent; color: var(--accent); min-height: 40px; padding: 0 .5rem; }
-.btn-quiet:hover { text-decoration: underline; text-underline-offset: 4px; }
+  /* --------------------------------------------------------------- buttons */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    min-height: 48px;
+    padding: 0 1.25rem;
+    font-weight: 600;
+    font-size: 1rem;
+    line-height: 1;
+    border-radius: var(--radius-s);
+    transition:
+      transform 0.15s ease,
+      box-shadow 0.15s ease,
+      background-color 0.15s ease,
+      color 0.15s ease;
+    cursor: pointer;
+    user-select: none;
+    white-space: nowrap;
+  }
+  .btn:disabled,
+  .btn[aria-disabled="true"] {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
+  .btn-primary {
+    background: var(--accent);
+    color: var(--accent-contrast);
+  }
+  /* Signature hover: the button lifts off a solid forest "terrace step" */
+  .btn-primary:not(:disabled):hover {
+    transform: translateY(-3px);
+    box-shadow: 0 3px 0 0 var(--shadow-step);
+  }
+  .btn-primary:not(:disabled):active {
+    transform: translateY(0);
+    box-shadow: none;
+  }
+  :root[data-theme="dark"] .btn-primary:not(:disabled):hover {
+    box-shadow: 0 3px 0 0 #2f7d45;
+  }
+  .btn-ghost {
+    background: transparent;
+    color: var(--text);
+    border: 1.5px solid var(--line-strong);
+  }
+  .btn-ghost:not(:disabled):hover {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+  .btn-danger {
+    background: transparent;
+    color: var(--danger);
+    border: 1.5px solid var(--danger);
+  }
+  .btn-danger:not(:disabled):hover {
+    background: var(--danger-soft);
+  }
+  .btn-quiet {
+    background: transparent;
+    color: var(--accent);
+    min-height: 40px;
+    padding: 0 0.5rem;
+  }
+  .btn-quiet:hover {
+    text-decoration: underline;
+    text-underline-offset: 4px;
+  }
 
-/* ------------------------------------------------------------ form parts */
-.field-label { display: block; font-weight: 600; font-size: .95rem; margin-bottom: .4rem; }
-.input {
-  width: 100%; min-height: 52px; padding: 0 1rem;
-  background: var(--surface); color: var(--text);
-  border: 1.5px solid var(--line-strong); border-radius: var(--radius-s);
-  font-size: 1.05rem;
-  transition: border-color .15s ease, box-shadow .15s ease;
-}
-.input::placeholder { color: var(--text-muted); opacity: .8; }
-.input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 25%, transparent); }
-.input[aria-invalid="true"] { border-color: var(--danger); }
-.field-error { color: var(--danger); font-size: .9rem; margin-top: .35rem; font-weight: 500; }
-.field-hint { color: var(--text-muted); font-size: .88rem; margin-top: .35rem; }
+  /* ------------------------------------------------------------ form parts */
+  .field-label {
+    display: block;
+    font-weight: 600;
+    font-size: 0.95rem;
+    margin-bottom: 0.4rem;
+  }
+  .input {
+    width: 100%;
+    min-height: 52px;
+    padding: 0 1rem;
+    background: var(--surface);
+    color: var(--text);
+    border: 1.5px solid var(--line-strong);
+    border-radius: var(--radius-s);
+    font-size: 1.05rem;
+    transition:
+      border-color 0.15s ease,
+      box-shadow 0.15s ease;
+  }
+  .input::placeholder {
+    color: var(--text-muted);
+    opacity: 0.8;
+  }
+  .input:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 25%, transparent);
+  }
+  .input[aria-invalid="true"] {
+    border-color: var(--danger);
+  }
+  .field-error {
+    color: var(--danger);
+    font-size: 0.9rem;
+    margin-top: 0.35rem;
+    font-weight: 500;
+  }
+  .field-hint {
+    color: var(--text-muted);
+    font-size: 0.88rem;
+    margin-top: 0.35rem;
+  }
 
-/* MPIN boxes */
-.pin-box {
-  width: 56px; height: 64px; text-align: center;
-  font-size: 1.75rem; font-family: var(--font-display); font-weight: 700;
-  background: var(--surface); color: var(--text);
-  border: 1.5px solid var(--line-strong); border-radius: var(--radius-s);
-  caret-color: var(--accent);
-  transition: border-color .15s ease, transform .15s ease, background .15s ease;
-  -webkit-text-security: disc;
-}
-.pin-box:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 25%, transparent); }
-.pin-box[data-filled="true"] { background: var(--accent-soft); border-color: var(--accent); }
-.pin-group[aria-invalid="true"] .pin-box { border-color: var(--danger); }
-@media (max-width: 380px) { .pin-box { width: 50px; height: 58px; } }
-
+  /* MPIN boxes */
+  .pin-box {
+    width: 56px;
+    height: 64px;
+    text-align: center;
+    font-size: 1.75rem;
+    font-family: var(--font-display);
+    font-weight: 700;
+    background: var(--surface);
+    color: var(--text);
+    border: 1.5px solid var(--line-strong);
+    border-radius: var(--radius-s);
+    caret-color: var(--accent);
+    transition:
+      border-color 0.15s ease,
+      transform 0.15s ease,
+      background 0.15s ease;
+    -webkit-text-security: disc;
+  }
+  .pin-box:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 25%, transparent);
+  }
+  .pin-box[data-filled="true"] {
+    background: var(--accent-soft);
+    border-color: var(--accent);
+  }
+  .pin-group[aria-invalid="true"] .pin-box {
+    border-color: var(--danger);
+  }
+  @media (max-width: 380px) {
+    .pin-box {
+      width: 50px;
+      height: 58px;
+    }
+  }
 }
 
 @keyframes shake {
-  10%, 90% { transform: translateX(-2px); }
-  20%, 80% { transform: translateX(4px); }
-  30%, 50%, 70% { transform: translateX(-8px); }
-  40%, 60% { transform: translateX(8px); }
+  10%,
+  90% {
+    transform: translateX(-2px);
+  }
+  20%,
+  80% {
+    transform: translateX(4px);
+  }
+  30%,
+  50%,
+  70% {
+    transform: translateX(-8px);
+  }
+  40%,
+  60% {
+    transform: translateX(8px);
+  }
 }
 @layer components {
-.shake { animation: shake .5s cubic-bezier(.36,.07,.19,.97) both; }
+  .shake {
+    animation: shake 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+  }
 
-/* ------------------------------------------- stepped-notch "terrace" card */
-/* Usage: <div class="notch-frame"><div class="notch-card">…</div></div>
+  /* ------------------------------------------- stepped-notch "terrace" card */
+  /* Usage: <div class="notch-frame"><div class="notch-card">…</div></div>
    The frame draws a 1px outline that follows the clipped shape. */
-.notch-frame {
-  filter:
-    drop-shadow(1px 0 0 var(--line)) drop-shadow(-1px 0 0 var(--line))
-    drop-shadow(0 1px 0 var(--line)) drop-shadow(0 -1px 0 var(--line));
-}
-.notch-card {
-  background: var(--surface);
-  clip-path: polygon(
-    0 0,
-    calc(100% - var(--notch) * 2) 0,
-    calc(100% - var(--notch) * 2) calc(var(--notch) * .5),
-    calc(100% - var(--notch)) calc(var(--notch) * .5),
-    calc(100% - var(--notch)) var(--notch),
-    100% var(--notch),
-    100% 100%,
-    0 100%
-  );
-}
-/* flat bottom "terrace edge" accent */
-.terrace-edge { box-shadow: inset 0 -4px 0 0 var(--accent); }
+  .notch-frame {
+    filter: drop-shadow(1px 0 0 var(--line)) drop-shadow(-1px 0 0 var(--line))
+      drop-shadow(0 1px 0 var(--line)) drop-shadow(0 -1px 0 var(--line));
+  }
+  .notch-card {
+    background: var(--surface);
+    clip-path: polygon(
+      0 0,
+      calc(100% - var(--notch) * 2) 0,
+      calc(100% - var(--notch) * 2) calc(var(--notch) * 0.5),
+      calc(100% - var(--notch)) calc(var(--notch) * 0.5),
+      calc(100% - var(--notch)) var(--notch),
+      100% var(--notch),
+      100% 100%,
+      0 100%
+    );
+  }
+  /* flat bottom "terrace edge" accent */
+  .terrace-edge {
+    box-shadow: inset 0 -4px 0 0 var(--accent);
+  }
 
-/* --------------------------------------------- perforated "offer ticket" */
-.ticket {
-  --hole: 9px;
-  position: relative;
-  background: var(--surface);
-  -webkit-mask:
-    radial-gradient(circle var(--hole) at 0 50%, #0000 98%, #000) left / 51% 100% no-repeat,
-    radial-gradient(circle var(--hole) at 100% 50%, #0000 98%, #000) right / 51% 100% no-repeat;
-          mask:
-    radial-gradient(circle var(--hole) at 0 50%, #0000 98%, #000) left / 51% 100% no-repeat,
-    radial-gradient(circle var(--hole) at 100% 50%, #0000 98%, #000) right / 51% 100% no-repeat;
-}
-.perforation { border-top: 2px dashed var(--line-strong); }
+  /* --------------------------------------------- perforated "offer ticket" */
+  .ticket {
+    --hole: 9px;
+    position: relative;
+    background: var(--surface);
+    -webkit-mask:
+      radial-gradient(circle var(--hole) at 0 50%, #0000 98%, #000) left / 51% 100% no-repeat,
+      radial-gradient(circle var(--hole) at 100% 50%, #0000 98%, #000) right / 51% 100% no-repeat;
+    mask:
+      radial-gradient(circle var(--hole) at 0 50%, #0000 98%, #000) left / 51% 100% no-repeat,
+      radial-gradient(circle var(--hole) at 100% 50%, #0000 98%, #000) right / 51% 100% no-repeat;
+  }
+  .perforation {
+    border-top: 2px dashed var(--line-strong);
+  }
 
-/* Verified stamp */
-.stamp {
-  display: inline-flex; align-items: center; gap: .3rem;
-  padding: .15rem .55rem .15rem .4rem;
-  border: 1.5px solid var(--accent); color: var(--accent);
-  font-size: .75rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
-  border-radius: 3px; transform: rotate(-3deg);
-  background: color-mix(in srgb, var(--accent) 8%, transparent);
-}
+  /* Verified stamp */
+  .stamp {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.15rem 0.55rem 0.15rem 0.4rem;
+    border: 1.5px solid var(--accent);
+    color: var(--accent);
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    border-radius: 3px;
+    transform: rotate(-3deg);
+    background: color-mix(in srgb, var(--accent) 8%, transparent);
+  }
 
-/* Sandbox / demo label — every simulated part of the app wears one */
-.demo-tag {
-  display: inline-flex; align-items: center; gap: .3rem;
-  padding: .1rem .5rem; border-radius: 3px;
-  font-size: .72rem; font-weight: 700; letter-spacing: .05em; text-transform: uppercase;
-  background: #fff4d6; color: #6b4a00; border: 1px dashed #c58a00;
-}
-:root[data-theme="dark"] .demo-tag { background: #2c2208; color: #f6d27a; border-color: #8a6a1c; }
+  /* Sandbox / demo label — every simulated part of the app wears one */
+  .demo-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.1rem 0.5rem;
+    border-radius: 3px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    background: #fff4d6;
+    color: #6b4a00;
+    border: 1px dashed #c58a00;
+  }
+  :root[data-theme="dark"] .demo-tag {
+    background: #2c2208;
+    color: #f6d27a;
+    border-color: #8a6a1c;
+  }
 
-/* Huge cropped Devanagari graphic words */
-.deva-giant {
-  font-family: var(--font-deva);
-  font-weight: 700;
-  line-height: .9;
-  letter-spacing: -0.02em;
-  color: transparent;
-  -webkit-text-stroke: 1.5px var(--contour-strong, color-mix(in srgb, var(--accent) 35%, transparent));
-  user-select: none; pointer-events: none;
-  white-space: nowrap;
-}
-
+  /* Huge cropped Devanagari graphic words */
+  .deva-giant {
+    font-family: var(--font-deva);
+    font-weight: 700;
+    line-height: 0.9;
+    letter-spacing: -0.02em;
+    color: transparent;
+    -webkit-text-stroke: 1.5px var(--contour-strong, color-mix(in srgb, var(--accent) 35%, transparent));
+    user-select: none;
+    pointer-events: none;
+    white-space: nowrap;
+  }
 }
 
 /* --------------------------------------------------- contour draw-in */
 @layer components {
-.contour-path { fill: none; stroke: var(--contour); stroke-width: 1.2; vector-effect: non-scaling-stroke; }
-.contour-animate .contour-path {
-  stroke-dasharray: var(--len, 2400);
-  stroke-dashoffset: var(--len, 2400);
-  animation: draw 2.4s cubic-bezier(.6,.05,.2,1) forwards;
+  .contour-path {
+    fill: none;
+    stroke: var(--contour);
+    stroke-width: 1.2;
+    vector-effect: non-scaling-stroke;
+  }
+  .contour-animate .contour-path {
+    stroke-dasharray: var(--len, 2400);
+    stroke-dashoffset: var(--len, 2400);
+    animation: draw 2.4s cubic-bezier(0.6, 0.05, 0.2, 1) forwards;
+    animation-delay: var(--delay, 0s);
+  }
+}
+@keyframes draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes rise {
+  from {
+    transform: translateY(24px);
+    opacity: 0;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+.rise {
+  animation: rise 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) both;
   animation-delay: var(--delay, 0s);
 }
+
+@keyframes slide-up {
+  from {
+    transform: translateY(40px);
+  }
+  to {
+    transform: none;
+  }
 }
-@keyframes draw { to { stroke-dashoffset: 0; } }
+.sheet-in {
+  animation: slide-up 0.45s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
 
-@keyframes rise { from { transform: translateY(24px); opacity: 0; } to { transform: none; opacity: 1; } }
-.rise { animation: rise .7s cubic-bezier(.2,.7,.2,1) both; animation-delay: var(--delay, 0s); }
-
-@keyframes slide-up { from { transform: translateY(40px); } to { transform: none; } }
-.sheet-in { animation: slide-up .45s cubic-bezier(.2,.7,.2,1) both; }
-
-@keyframes drawer-in { from { transform: translateX(-100%); } to { transform: none; } }
-@keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
-.drawer-slide { animation: drawer-in .28s cubic-bezier(.2,.7,.2,1) both; }
-.drawer-fade { animation: fade-in .2s ease-out both; }
+@keyframes drawer-in {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: none;
+  }
+}
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+.drawer-slide {
+  animation: drawer-in 0.28s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+.drawer-fade {
+  animation: fade-in 0.2s ease-out both;
+}
 
 /* Endless vertical card scroll ("post your first task"). The list is doubled, so -50% loops seamlessly. */
-@keyframes marquee-y { from { transform: translateY(0); } to { transform: translateY(-50%); } }
-.marquee-up { animation: marquee-y 38s linear infinite; }
-.marquee-down { animation: marquee-y 42s linear infinite reverse; }
-.marquee:hover .marquee-up, .marquee:hover .marquee-down,
-.marquee:focus-within .marquee-up, .marquee:focus-within .marquee-down { animation-play-state: paused; }
+@keyframes marquee-y {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(-50%);
+  }
+}
+.marquee-up {
+  animation: marquee-y 38s linear infinite;
+}
+.marquee-down {
+  animation: marquee-y 42s linear infinite reverse;
+}
+.marquee:hover .marquee-up,
+.marquee:hover .marquee-down,
+.marquee:focus-within .marquee-up,
+.marquee:focus-within .marquee-down {
+  animation-play-state: paused;
+}
 /* Sideways card rows ("see what you can get done"). Each row is tripled, so one third loops seamlessly. */
-@keyframes slide-x { from { transform: translateX(0); } to { transform: translateX(-33.3333%); } }
-.slide-left { animation: slide-x 45s linear infinite; }
-.slide-right { animation: slide-x 50s linear infinite reverse; }
+@keyframes slide-x {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-33.3333%);
+  }
+}
+.slide-left {
+  animation: slide-x 45s linear infinite;
+}
+.slide-right {
+  animation: slide-x 50s linear infinite reverse;
+}
 /* Gentle float for the trust-section badges. */
-@keyframes float-y { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
-.float-a { animation: float-y 5s ease-in-out infinite; }
-.float-b { animation: float-y 6s ease-in-out 1s infinite; }
-.marquee-x:hover .slide-left, .marquee-x:hover .slide-right,
-.marquee-x:focus-within .slide-left, .marquee-x:focus-within .slide-right { animation-play-state: paused; }
+@keyframes float-y {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+.float-a {
+  animation: float-y 5s ease-in-out infinite;
+}
+.float-b {
+  animation: float-y 6s ease-in-out 1s infinite;
+}
+.marquee-x:hover .slide-left,
+.marquee-x:hover .slide-right,
+.marquee-x:focus-within .slide-left,
+.marquee-x:focus-within .slide-right {
+  animation-play-state: paused;
+}
 @media (prefers-reduced-motion: reduce) {
-  .slide-left, .slide-right, .float-a, .float-b { animation: none !important; }
-  .marquee-x > div { overflow-x: auto; }
-  .marquee-up, .marquee-down { animation: none !important; }
-  .marquee-col { overflow-y: auto; }
+  .slide-left,
+  .slide-right,
+  .float-a,
+  .float-b {
+    animation: none !important;
+  }
+  .marquee-x > div {
+    overflow-x: auto;
+  }
+  .marquee-up,
+  .marquee-down {
+    animation: none !important;
+  }
+  .marquee-col {
+    overflow-y: auto;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
-    animation-duration: .001ms !important;
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
     animation-iteration-count: 1 !important;
-    transition-duration: .001ms !important;
+    transition-duration: 0.001ms !important;
     scroll-behavior: auto !important;
   }
-  .contour-animate .contour-path { stroke-dashoffset: 0; }
+  .contour-animate .contour-path {
+    stroke-dashoffset: 0;
+  }
 }
 
 /* Utility: visually hidden but available to screen readers */
 .sr-only-focusable:not(:focus) {
-  position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap;
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
 }
 
 /* ------------------------------------------------------------- map pins */
 .map-pin {
-  display: block; width: 22px; height: 22px;
+  display: block;
+  width: 22px;
+  height: 22px;
   clip-path: polygon(0 0, 100% 0, 100% 70%, 50% 100%, 0 70%); /* flat-topped marker with a point */
-  border: 0; box-shadow: 0 0 0 2px #fff inset;
+  border: 0;
+  box-shadow: 0 0 0 2px #fff inset;
 }
-.map-pin--task { background: var(--paddy); }
-.map-pin--provider { background: var(--forest); outline: 2px solid var(--leaf); outline-offset: -5px; }
-.map-pin--you { background: var(--marigold); }
-.leaflet-container { font-family: var(--font-sans); background: var(--surface-2); }
-.leaflet-container a { color: var(--paddy-ink); }
-.leaflet-popup-content-wrapper, .leaflet-popup-tip { border-radius: 4px; }
-:root[data-theme="dark"] .leaflet-tile { filter: brightness(.65) invert(1) contrast(.9) hue-rotate(190deg) saturate(.35); }
-:root[data-theme="dark"] .leaflet-popup-content-wrapper, :root[data-theme="dark"] .leaflet-popup-tip { background: #112219; color: #e8f1ea; }
-:root[data-theme="dark"] .leaflet-container a { color: var(--leaf); }
-:root[data-theme="dark"] .leaflet-control-attribution { background: rgba(8,21,15,.8); color: #a8bcae; }
+.map-pin--task {
+  background: var(--paddy);
+}
+.map-pin--provider {
+  background: var(--forest);
+  outline: 2px solid var(--leaf);
+  outline-offset: -5px;
+}
+.map-pin--you {
+  background: var(--marigold);
+}
+.leaflet-container {
+  font-family: var(--font-sans);
+  background: var(--surface-2);
+}
+.leaflet-container a {
+  color: var(--paddy-ink);
+}
+.leaflet-popup-content-wrapper,
+.leaflet-popup-tip {
+  border-radius: 4px;
+}
+:root[data-theme="dark"] .leaflet-tile {
+  filter: brightness(0.65) invert(1) contrast(0.9) hue-rotate(190deg) saturate(0.35);
+}
+:root[data-theme="dark"] .leaflet-popup-content-wrapper,
+:root[data-theme="dark"] .leaflet-popup-tip {
+  background: #112219;
+  color: #e8f1ea;
+}
+:root[data-theme="dark"] .leaflet-container a {
+  color: var(--leaf);
+}
+:root[data-theme="dark"] .leaflet-control-attribution {
+  background: rgba(8, 21, 15, 0.8);
+  color: #a8bcae;
+}
 
 /* Printing (receipts): only the document itself */
 @media print {
-  body > div > header, body footer, .skip-link, nextjs-portal { display: none !important; }
-  body { background: #fff; color: #000; }
-  .notch-frame { filter: none; }
+  body > div > header,
+  body footer,
+  .skip-link,
+  nextjs-portal {
+    display: none !important;
+  }
+  body {
+    background: #fff;
+    color: #000;
+  }
+  .notch-frame {
+    filter: none;
+  }
 }
 
 /* Native selects keep a visible chevron after appearance:none */
 select.input {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2345564d' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
-  background-repeat: no-repeat; background-position: right .8rem center; background-size: 16px;
+  background-repeat: no-repeat;
+  background-position: right 0.8rem center;
+  background-size: 16px;
   padding-right: 2.4rem;
 }
 :root[data-theme="dark"] select.input {

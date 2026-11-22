@@ -12,19 +12,33 @@ export async function GET() {
   const user = await currentUser();
   if (!user) return fail(401, "signed_out");
   const convs = (await store.listConversations(user.id)).sort((a, b) => b.lastAt.localeCompare(a.lastAt));
-  const items = await Promise.all(convs.map(async (c) => {
-    const [other, task, msgs] = await Promise.all([store.getUserById(otherParty(c, user)), c.taskId ? store.getTask(c.taskId) : null, store.listMessages(c.id)]);
-    const last = msgs.sort((a, b) => a.createdAt.localeCompare(b.createdAt)).at(-1);
-    return {
-      id: c.id,
-      other: { name: other?.name ?? "—", verified: !!other?.verified },
-      role: c.clientId === user.id ? "client" : "provider",
-      task: task ? { id: task.id, title: task.title } : null,
-      last: last ? { kind: last.kind, body: last.kind === "text" ? last.body.slice(0, 80) : "", system: last.system ?? null, mine: last.senderId === user.id, at: last.createdAt } : null,
-      unread: msgs.filter((m) => !m.readBy.includes(user.id)).length,
-      lastAt: c.lastAt,
-    };
-  }));
+  const items = await Promise.all(
+    convs.map(async (c) => {
+      const [other, task, msgs] = await Promise.all([
+        store.getUserById(otherParty(c, user)),
+        c.taskId ? store.getTask(c.taskId) : null,
+        store.listMessages(c.id),
+      ]);
+      const last = msgs.sort((a, b) => a.createdAt.localeCompare(b.createdAt)).at(-1);
+      return {
+        id: c.id,
+        other: { name: other?.name ?? "—", verified: !!other?.verified },
+        role: c.clientId === user.id ? "client" : "provider",
+        task: task ? { id: task.id, title: task.title } : null,
+        last: last
+          ? {
+              kind: last.kind,
+              body: last.kind === "text" ? last.body.slice(0, 80) : "",
+              system: last.system ?? null,
+              mine: last.senderId === user.id,
+              at: last.createdAt,
+            }
+          : null,
+        unread: msgs.filter((m) => !m.readBy.includes(user.id)).length,
+        lastAt: c.lastAt,
+      };
+    }),
+  );
   return NextResponse.json({ ok: true, items }, { headers: { "Cache-Control": "private, no-store" } });
 }
 
@@ -45,11 +59,14 @@ export async function POST(req: NextRequest) {
   const bids = (await store.listBids(task.id)).filter((b) => !b.isExample && b.status !== "withdrawn");
   let clientId: string, providerId: string;
   if (task.clientId === user.id) {
-    if (!g.data.withUserId || !bids.some((b) => b.providerId === g.data.withUserId)) return fail(403, "no_offer");
-    clientId = user.id; providerId = g.data.withUserId;
+    if (!g.data.withUserId || !bids.some((b) => b.providerId === g.data.withUserId))
+      return fail(403, "no_offer");
+    clientId = user.id;
+    providerId = g.data.withUserId;
   } else {
     if (!bids.some((b) => b.providerId === user.id)) return fail(403, "offer_first");
-    clientId = task.clientId; providerId = user.id;
+    clientId = task.clientId;
+    providerId = user.id;
   }
   const c = await ensureConversation(clientId, providerId, task.id);
   return NextResponse.json({ ok: true, id: c.id });

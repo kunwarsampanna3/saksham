@@ -10,8 +10,19 @@ import { siteGate } from "@/lib/site-gate";
  */
 // The image optimizer fetches these bundled sample photos itself, without the password. Nothing private lives there.
 const SAMPLE_PHOTO = new RegExp("^/photos/[a-z0-9-]+[.]webp$");
-const NO_SESSION_CHECK = new RegExp("^/(api|_next/image|photos|icon|manifest[.]webmanifest|sw[.]js|favicon[.]ico|robots[.]txt)");
-const PUBLIC = ["/login", "/signup", "/forgot-mpin", "/credits", "/terms", "/privacy", "/offline", "/confirm"];
+const NO_SESSION_CHECK = new RegExp(
+  "^/(api|_next/image|photos|icon|manifest[.]webmanifest|sw[.]js|favicon[.]ico|robots[.]txt)",
+);
+const PUBLIC = [
+  "/login",
+  "/signup",
+  "/forgot-mpin",
+  "/credits",
+  "/terms",
+  "/privacy",
+  "/offline",
+  "/confirm",
+];
 
 export async function middleware(req: NextRequest) {
   const { pathname, search } = req.nextUrl;
@@ -20,7 +31,8 @@ export async function middleware(req: NextRequest) {
   if (blocked) return blocked;
   if (NO_SESSION_CHECK.test(pathname)) return NextResponse.next();
   // "/" itself is the public front page for visitors (it shows the app home when signed in).
-  if (pathname === "/" || PUBLIC.some((p) => pathname === p || pathname.startsWith(`${p}/`))) return NextResponse.next();
+  if (pathname === "/" || PUBLIC.some((p) => pathname === p || pathname.startsWith(`${p}/`)))
+    return NextResponse.next();
 
   const token = req.cookies.get("sk_session")?.value;
   const secret = process.env.SESSION_SECRET ?? "";
@@ -28,7 +40,9 @@ export async function middleware(req: NextRequest) {
     try {
       await jwtVerify(token, new TextEncoder().encode(secret), { issuer: "saksham", algorithms: ["HS256"] });
       return NextResponse.next();
-    } catch { /* fall through to login */ }
+    } catch {
+      /* fall through to login */
+    }
   }
   const url = req.nextUrl.clone();
   url.pathname = "/login";

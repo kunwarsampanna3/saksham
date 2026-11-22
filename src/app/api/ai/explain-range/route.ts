@@ -17,7 +17,16 @@ export async function POST(req: NextRequest) {
   const rl = rateLimit(`ai-explain:${l.user.id}`, 40, 3600);
   if (!rl.ok) return fail(429, "rate_limited", { retryAfter: rl.retryAfter });
   const t = l.task;
-  const r = await fairRangeLive({ category: t.category, days: t.days, quantity: t.quantity, city: t.city, online: t.online });
-  const text = await aiExplainRange({ title: t.title, low: t.fairLow, high: t.fairHigh, basis: r.basis }, g.data.lang);
+  const r = await fairRangeLive({
+    category: t.category,
+    days: t.days,
+    quantity: t.quantity,
+    city: t.city,
+    online: t.online,
+  });
+  const text = await aiExplainRange(
+    { title: t.title, low: t.fairLow, high: t.fairHigh, basis: r.basis },
+    g.data.lang,
+  );
   return NextResponse.json({ ok: true, source: text ? "ai" : "fallback", text, basis: r.basis });
 }

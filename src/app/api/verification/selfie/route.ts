@@ -25,7 +25,12 @@ export async function POST(req: NextRequest) {
 
     if (user.isDemo) {
       const files = await saveFiles(user.id, "selfie", [{ label: "selfie", data: clean }]);
-      await submit(user, "selfie", { files, status: "verified", simulated: true, fields: { match: "simulated" } });
+      await submit(user, "selfie", {
+        files,
+        status: "verified",
+        simulated: true,
+        fields: { match: "simulated" },
+      });
       return NextResponse.json({ ok: true, simulated: true, status: await statusFor(user) });
     }
 
@@ -36,16 +41,32 @@ export async function POST(req: NextRequest) {
 
     if (idPhoto && r.selfieFaces === 0) return fail(422, "no_face", { field: "selfie" });
     if (r.selfieFaces > 1) return fail(422, "many_faces", { field: "selfie" });
-    if (r.distance !== null && r.distance >= REVIEW_BELOW) return fail(422, "face_mismatch", { field: "selfie" });
+    if (r.distance !== null && r.distance >= REVIEW_BELOW)
+      return fail(422, "face_mismatch", { field: "selfie" });
 
     const files = await saveFiles(user.id, "selfie", [{ label: "selfie", data: clean }]);
-    const fields = { match: r.distance === null ? "manual" : "auto", distance: r.distance === null ? "" : String(r.distance), idFaces: String(r.idFaces) };
+    const fields = {
+      match: r.distance === null ? "manual" : "auto",
+      distance: r.distance === null ? "" : String(r.distance),
+      idFaces: String(r.idFaces),
+    };
     if (r.distance !== null && r.distance < MATCH_BELOW) {
-      await submit(user, "selfie", { files, status: "verified", fields, note: "Face matched the ID photo automatically." });
+      await submit(user, "selfie", {
+        files,
+        status: "verified",
+        fields,
+        note: "Face matched the ID photo automatically.",
+      });
     } else {
       await submit(user, "selfie", { files, fields }); // pending: a reviewer compares them
     }
-    return NextResponse.json({ ok: true, simulated: false, match: fields.match, distance: r.distance, status: await statusFor(user) });
+    return NextResponse.json({
+      ok: true,
+      simulated: false,
+      match: fields.match,
+      distance: r.distance,
+      status: await statusFor(user),
+    });
   } catch (e) {
     if (e instanceof UploadError) return fail(422, e.message);
     throw e;

@@ -14,7 +14,9 @@ const hash = (t: string) => createHash("sha256").update(t).digest("hex");
 export async function createFamilyLink(b: Booking, familyName: string): Promise<string> {
   const token = randomBytes(24).toString("base64url");
   await store.putBooking({
-    ...b, family: { name: familyName, tokenHash: hash(token), confirmations: b.family?.confirmations ?? [] }, updatedAt: new Date().toISOString(),
+    ...b,
+    family: { name: familyName, tokenHash: hash(token), confirmations: b.family?.confirmations ?? [] },
+    updatedAt: new Date().toISOString(),
   });
   return token;
 }
@@ -29,7 +31,10 @@ export async function confirmWork(b: Booking, installmentId: string, ok: boolean
   const inst = b.installments.find((i) => i.id === installmentId);
   if (!inst || (inst.state !== "held" && inst.state !== "delivered")) return null;
   const at = new Date().toISOString();
-  const confirmations = [...(b.family?.confirmations ?? []).filter((c) => c.installmentId !== installmentId), { installmentId, ok, note, at }];
+  const confirmations = [
+    ...(b.family?.confirmations ?? []).filter((c) => c.installmentId !== installmentId),
+    { installmentId, ok, note, at },
+  ];
   const nb = await store.putBooking({ ...b, family: { ...b.family!, confirmations }, updatedAt: at });
   const code = ok ? "family_confirmed" : "family_flagged";
   await notify(b.clientId, "payment", code, { name: b.family!.name }, `/payments/${b.id}`);

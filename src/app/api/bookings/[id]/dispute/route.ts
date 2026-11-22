@@ -6,7 +6,11 @@ import { loadBooking } from "@/lib/booking-api";
 import { openDispute, resolveDispute } from "@/lib/escrow";
 
 const Body = z.discriminatedUnion("action", [
-  z.object({ action: z.literal("open"), reason: z.string().min(10, "reason").max(2000), wanted: z.enum(["redo", "refund"]) }),
+  z.object({
+    action: z.literal("open"),
+    reason: z.string().min(10, "reason").max(2000),
+    wanted: z.enum(["redo", "refund"]),
+  }),
   z.object({ action: z.literal("resolve"), outcome: z.enum(["redo", "refund"]) }),
 ]);
 

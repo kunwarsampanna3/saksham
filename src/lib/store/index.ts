@@ -28,7 +28,16 @@ export function toPublicUser(u: User): PublicUser {
   };
 }
 
-export type { User, PublicUser, Role, OtpRecord, Verification, VerificationKind, VerificationStatus, StoredFile } from "./types";
+export type {
+  User,
+  PublicUser,
+  Role,
+  OtpRecord,
+  Verification,
+  VerificationKind,
+  VerificationStatus,
+  StoredFile,
+} from "./types";
 
 /** Women-only requests are visible to women providers only. */
 export const canSeeWomenOnly = (u: Pick<User, "gender" | "roles" | "womenLed">) =>

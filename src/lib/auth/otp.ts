@@ -50,7 +50,8 @@ export async function issueOtp(target: string, purpose: OtpPurpose): Promise<Otp
     // Email is free to send, so a configured mailbox is used even in DEMO_MODE (the code arrives for real).
     if (emailConfigured()) {
       const m = codeEmail(code, purpose);
-      if (!(await sendEmail(target, m.subject, m.text, m.html))) return { ok: false, error: "email_unavailable" };
+      if (!(await sendEmail(target, m.subject, m.text, m.html)))
+        return { ok: false, error: "email_unavailable" };
     } else if (config.demoMode) {
       devCode = code; // no mailbox configured: shown on screen, labelled "Sandbox · demo"
     } else {
@@ -66,7 +67,9 @@ export async function issueOtp(target: string, purpose: OtpPurpose): Promise<Otp
   }
 
   await store.putOtp({
-    key, phone: target, purpose,
+    key,
+    phone: target,
+    purpose,
     codeHash: hashCode(code, target),
     expiresAt: new Date(Date.now() + policy.otpTtlSeconds * 1000).toISOString(),
     attempts: 0,
@@ -75,7 +78,8 @@ export async function issueOtp(target: string, purpose: OtpPurpose): Promise<Otp
   return { ok: true, devCode, resendIn: policy.otpResendSeconds, channel: email ? "email" : "sms" };
 }
 
-export type OtpCheck = { ok: true } | { ok: false; error: "otp_expired" | "otp_wrong" | "otp_too_many"; attemptsLeft?: number };
+export type OtpCheck =
+  { ok: true } | { ok: false; error: "otp_expired" | "otp_wrong" | "otp_too_many"; attemptsLeft?: number };
 
 export async function checkOtp(target: string, purpose: OtpPurpose, code: string): Promise<OtpCheck> {
   const key = `${purpose}:${target}`;
@@ -106,7 +110,11 @@ export async function setVerifiedTicket(phone: string, purpose: OtpPurpose) {
     .setExpirationTime("15m")
     .sign(ticketKey());
   (await cookies()).set(TICKET, jwt, {
-    httpOnly: true, secure: config.isProd, sameSite: "strict", path: "/api/auth", maxAge: 15 * 60,
+    httpOnly: true,
+    secure: config.isProd,
+    sameSite: "strict",
+    path: "/api/auth",
+    maxAge: 15 * 60,
   });
 }
 

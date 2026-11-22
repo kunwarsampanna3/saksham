@@ -21,7 +21,10 @@ export const config = {
   /** Support contact shown on /contact; empty values are hidden. */
   support: { email: process.env.SUPPORT_EMAIL ?? "", phone: process.env.SUPPORT_PHONE ?? "" },
   /** Owner/admin phone numbers (10 digits, comma-separated). These accounts get /admin. */
-  ownerPhones: (process.env.OWNER_PHONES ?? "").split(",").map((p) => p.replace(/\D/g, "").slice(-10)).filter((p) => /^9[78]\d{8}$/.test(p)),
+  ownerPhones: (process.env.OWNER_PHONES ?? "")
+    .split(",")
+    .map((p) => p.replace(/\D/g, "").slice(-10))
+    .filter((p) => /^9[78]\d{8}$/.test(p)),
   supabase: {
     url: process.env.NEXT_PUBLIC_SUPABASE_URL ?? "",
     serviceKey: process.env.SUPABASE_SERVICE_ROLE_KEY ?? "",
