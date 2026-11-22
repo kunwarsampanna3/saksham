@@ -4,7 +4,7 @@ import { guard, fail } from "@/lib/auth/http";
 import { config } from "@/lib/config";
 import { store, toPublicUser } from "@/lib/store";
 import { DEMO_PERSONAS, demoSeed } from "@/lib/auth/demo";
-import { nowSec, setSessionCookie } from "@/lib/auth/session";
+import { startSession } from "@/lib/auth/session";
 import { ensureDemoVerifications } from "@/lib/verification";
 
 const Body = z.object({ persona: z.enum(["mina", "bikash", "aasha", "suman"]) });
@@ -44,6 +44,6 @@ export async function POST(req: NextRequest) {
   }
   await ensureDemoVerifications(user);
   user = (await store.getUserById(user.id)) ?? user;
-  await setSessionCookie({ sub: user.id, role: user.activeRole, mpinAt: nowSec() });
+  await startSession(user);
   return NextResponse.json({ ok: true, user: toPublicUser(user) });
 }

@@ -4,7 +4,7 @@ import { fail, sameOrigin } from "@/lib/auth/http";
 import { b64url, rp, takeChallenge } from "@/lib/auth/passkey";
 import { store, toPublicUser } from "@/lib/store";
 import { lockRemainingSeconds } from "@/lib/auth/mpin";
-import { nowSec, setSessionCookie } from "@/lib/auth/session";
+import { startSession } from "@/lib/auth/session";
 
 export async function POST(req: NextRequest) {
   if (!sameOrigin(req)) return fail(403, "bad_origin");
@@ -43,7 +43,7 @@ export async function POST(req: NextRequest) {
         p.id === pk.id ? { ...p, counter: v.authenticationInfo.newCounter } : p,
       ),
     });
-    await setSessionCookie({ sub: user.id, role: user.activeRole, mpinAt: nowSec() });
+    await startSession(user);
     return NextResponse.json({ ok: true, user: toPublicUser(user) });
   } catch {
     return fail(401, "passkey_failed");

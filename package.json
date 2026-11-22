@@ -12,7 +12,8 @@
     "fast": "npm run build && npm run start",
     "lint": "eslint .",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "test": "node --test --test-concurrency=1 tests/regressions.test.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^1.9.0",

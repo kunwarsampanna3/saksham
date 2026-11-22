@@ -46,6 +46,10 @@ export interface User {
   /** When the user accepted the Terms and Privacy Policy. */
   termsAcceptedAt?: string;
   passkeys: Passkey[];
+  /** Goes up when every session must end (MPIN reset). Missing means 0. */
+  sessionVersion?: number;
+  /** Signed-out sessions, kept until their token would have expired anyway. */
+  revokedSessions?: { sid: string; until: string }[];
   createdAt: string;
   updatedAt: string;
 }
@@ -425,6 +429,8 @@ export interface Store {
   putVerification(v: Verification): Promise<Verification>;
   deleteVerification(userId: string, kind: VerificationKind): Promise<void>;
   listPendingVerifications(): Promise<Verification[]>;
+  /** Verifications that still have files although their retention period ended before `before` (ISO time). */
+  listExpiredVerifications(before: string): Promise<Verification[]>;
   /** Private document bytes (ID photos, selfies). Never under /public. */
   putFile(path: string, data: Buffer, mime: string): Promise<void>;
   getFile(path: string): Promise<Buffer | null>;

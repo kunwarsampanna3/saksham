@@ -2,13 +2,15 @@
 
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
+import { safeNext } from "@/lib/safe-next";
 import { useI18n } from "@/components/providers";
 
 /** "Sign up | Log in" switch at the top of both screens; keeps any ?next= so people land where they wanted. */
 export function AuthSwitch({ active }: { active: "signup" | "login" }) {
   const { t } = useI18n();
   const next = useSearchParams().get("next");
-  const q = next && next.startsWith("/") && !next.startsWith("//") ? `?next=${encodeURIComponent(next)}` : "";
+  const dest = safeNext(next);
+  const q = dest !== "/" ? `?next=${encodeURIComponent(dest)}` : "";
   const item = (key: "signup" | "login", href: string, label: string) => (
     <Link
       href={`${href}${q}`}

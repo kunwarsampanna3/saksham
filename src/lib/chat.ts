@@ -81,10 +81,15 @@ export async function contactsAllowed(c: Conversation): Promise<boolean> {
   return !!b && b.clientId === c.clientId && b.providerId === c.providerId && b.status !== "refunded";
 }
 
-const PHONE = /(?:\+?977[\s-]?)?(?:9[78](?:[\s-]?\d){8})/g;
+const PHONE = /(?:\+?977[\s().\-_/]{0,3})?(?:9[78](?:[\s().\-_/]{0,3}\d){8})/g;
+/** Invisible characters that can be slipped between digits. */
+const INVISIBLE = /​|‌|‍|⁠|﻿/g;
 const EMAIL = /[\w.+-]+@[\w-]+\.[\w.]+/g;
 export function maskContacts(text: string): { text: string; masked: boolean } {
-  const latin = text.replace(/[०-९]/g, (d) => String("०१२३४५६७८९".indexOf(d)));
+  const latin = text
+    .normalize("NFKC") // full-width digits
+    .replace(INVISIBLE, "")
+    .replace(/[०-९]/g, (d) => String("०१२३४५६७८९".indexOf(d)));
   let masked = false;
   const out = latin
     .replace(PHONE, () => {

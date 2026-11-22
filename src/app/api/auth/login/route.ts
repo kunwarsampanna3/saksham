@@ -3,9 +3,10 @@ import { z } from "zod";
 import { guard, fail } from "@/lib/auth/http";
 import { mpinSchema } from "@/lib/validation";
 import { exactlyOne, targetFields, targetOf, userByTarget } from "@/lib/auth/target";
-import { store, toPublicUser } from "@/lib/store";
-import { burnTime, checkMpin, lockRemainingSeconds, lockUntilIso } from "@/lib/auth/mpin";
-import { nowSec, setSessionCookie } from "@/lib/auth/session";
+import { toPublicUser } from "@/lib/store";
+import { burnTime, tryMpin } from "@/lib/auth/mpin";
+import { startSession } from "@/lib/auth/session";
+import { withLock } from "@/lib/lock";
 import { rateLimit } from "@/lib/auth/rate-limit";
 import { policy } from "@/lib/config";
 
@@ -27,35 +28,29 @@ export async function POST(req: NextRequest) {
 
   const user = await userByTarget(phone);
   if (!user) {
-    await burnTime(mpin);
-    const prev = ghostAttempts.get(phone);
-    if (prev && prev.until > Date.now()) {
-      return fail(423, "locked", { retryAfter: Math.ceil((prev.until - Date.now()) / 1000) });
-    }
-    const n = (prev && prev.until === 0 ? prev.n : 0) + 1;
-    if (n >= policy.mpinMaxAttempts) {
-      ghostAttempts.set(phone, { n: 0, until: Date.now() + policy.mpinLockMinutes * 60_000 });
-      return fail(423, "locked", { retryAfter: policy.mpinLockMinutes * 60 });
-    }
-    ghostAttempts.set(phone, { n, until: 0 });
-    return fail(401, "wrong_credentials", { attemptsLeft: policy.mpinMaxAttempts - n });
+    // Counted one by one like real accounts, so parallel guesses look the same too.
+    return withLock(`mpin:ghost:${phone}`, async () => {
+      const prev = ghostAttempts.get(phone);
+      if (prev && prev.until > Date.now()) {
+        return fail(423, "locked", { retryAfter: Math.ceil((prev.until - Date.now()) / 1000) });
+      }
+      await burnTime(mpin);
+      const n = (prev && prev.until === 0 ? prev.n : 0) + 1;
+      if (n >= policy.mpinMaxAttempts) {
+        ghostAttempts.set(phone, { n: 0, until: Date.now() + policy.mpinLockMinutes * 60_000 });
+        return fail(423, "locked", { retryAfter: policy.mpinLockMinutes * 60 });
+      }
+      ghostAttempts.set(phone, { n, until: 0 });
+      return fail(401, "wrong_credentials", { attemptsLeft: policy.mpinMaxAttempts - n });
+    });
   }
 
-  const locked = lockRemainingSeconds(user);
-  if (locked > 0) return fail(423, "locked", { retryAfter: locked });
-
-  if (!(await checkMpin(mpin, user.mpinHash))) {
-    // A previous lock that has expired starts a fresh count.
-    const attempts = (user.lockedUntil ? 0 : user.failedAttempts) + 1;
-    if (attempts >= policy.mpinMaxAttempts) {
-      await store.updateUser(user.id, { failedAttempts: 0, lockedUntil: lockUntilIso() });
-      return fail(423, "locked", { retryAfter: policy.mpinLockMinutes * 60 });
-    }
-    await store.updateUser(user.id, { failedAttempts: attempts, lockedUntil: null });
-    return fail(401, "wrong_credentials", { attemptsLeft: policy.mpinMaxAttempts - attempts });
+  const r = await tryMpin(user.id, mpin);
+  if (!r.ok) {
+    const { ok: _ok, error, ...extra } = r;
+    return fail(error === "locked" ? 423 : 401, error, extra);
   }
-
-  const fresh = await store.updateUser(user.id, { failedAttempts: 0, lockedUntil: null });
-  await setSessionCookie({ sub: fresh.id, role: fresh.activeRole, mpinAt: nowSec() });
+  const fresh = r.user;
+  await startSession(fresh);
   return NextResponse.json({ ok: true, user: toPublicUser(fresh) });
 }

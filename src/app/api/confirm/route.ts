@@ -3,6 +3,7 @@ import { z } from "zod";
 import { guard, fail } from "@/lib/auth/http";
 import { bookingForToken, confirmWork } from "@/lib/family";
 import { cleanText } from "@/lib/task-api";
+import { withLock } from "@/lib/lock";
 
 const Body = z.object({
   token: z.string().min(20).max(64),
@@ -17,7 +18,10 @@ export async function POST(req: NextRequest) {
   if ("res" in g) return g.res;
   const b = await bookingForToken(g.data.token);
   if (!b) return fail(404, "invalid");
-  const r = await confirmWork(b, g.data.installmentId, g.data.ok, cleanText(g.data.note, 500));
+  const r = await withLock(`booking:${b.id}`, async () => {
+    const fresh = await bookingForToken(g.data.token);
+    return fresh && confirmWork(fresh, g.data.installmentId, g.data.ok, cleanText(g.data.note, 500));
+  });
   if (!r) return fail(409, "nothing_to_confirm");
   return NextResponse.json({ ok: true });
 }

@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
 import { guard, fail } from "@/lib/auth/http";
 import { otpSchema } from "@/lib/validation";
-import { exactlyOne, targetFields, targetOf } from "@/lib/auth/target";
+import { exactlyOne, targetFields, targetOf, userByTarget } from "@/lib/auth/target";
 import { checkOtp, setVerifiedTicket } from "@/lib/auth/otp";
 
 const Body = z
@@ -20,6 +20,7 @@ export async function POST(req: NextRequest) {
     const status = r.error === "otp_wrong" ? 401 : r.error === "otp_too_many" ? 429 : 410;
     return fail(status, r.error, { attemptsLeft: r.attemptsLeft });
   }
-  await setVerifiedTicket(target, purpose);
+  const account = purpose === "reset" ? await userByTarget(target) : null;
+  await setVerifiedTicket(target, purpose, account?.sessionVersion ?? 0);
   return NextResponse.json({ ok: true });
 }

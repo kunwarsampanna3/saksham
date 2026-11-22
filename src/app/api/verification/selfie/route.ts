@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { fail } from "@/lib/auth/http";
 import { uploadGuard, str, file } from "@/lib/auth/upload-guard";
-import { cleanImage, saveFiles, submit, statusFor, UploadError } from "@/lib/verification";
+import { cleanImage, IdChangedError, saveFiles, submit, statusFor, UploadError } from "@/lib/verification";
 import { compareFaces, MATCH_BELOW, REVIEW_BELOW } from "@/lib/face-match";
 import { store } from "@/lib/store";
 
@@ -21,6 +21,10 @@ export async function POST(req: NextRequest) {
   const selfie = file(form, "selfie");
   if (!selfie) return fail(422, "file_missing", { field: "selfie" });
   try {
+    // Read once: the ID we compare with must still be the ID when the result is saved.
+    const idRec = (await store.listVerifications(user.id)).find((v) => v.kind === "id");
+    if (!idRec) return fail(409, "id_first");
+    const matchedId = idRec.submittedAt;
     const clean = await cleanImage(selfie);
 
     if (user.isDemo) {
@@ -29,13 +33,13 @@ export async function POST(req: NextRequest) {
         files,
         status: "verified",
         simulated: true,
+        matchedId,
         fields: { match: "simulated" },
       });
       return NextResponse.json({ ok: true, simulated: true, status: await statusFor(user) });
     }
 
-    const idRec = (await store.listVerifications(user.id)).find((v) => v.kind === "id");
-    const front = idRec?.files.find((f) => f.label === "front");
+    const front = idRec.files.find((f) => f.label === "front");
     const idPhoto = front ? await store.getFile(front.path) : null;
     const r = idPhoto ? await compareFaces(idPhoto, clean) : { idFaces: 0, selfieFaces: 0, distance: null };
 
@@ -55,10 +59,11 @@ export async function POST(req: NextRequest) {
         files,
         status: "verified",
         fields,
+        matchedId,
         note: "Face matched the ID photo automatically.",
       });
     } else {
-      await submit(user, "selfie", { files, fields }); // pending: a reviewer compares them
+      await submit(user, "selfie", { files, fields, matchedId }); // pending: a reviewer compares them
     }
     return NextResponse.json({
       ok: true,
@@ -69,6 +74,7 @@ export async function POST(req: NextRequest) {
     });
   } catch (e) {
     if (e instanceof UploadError) return fail(422, e.message);
+    if (e instanceof IdChangedError) return fail(409, "id_first");
     throw e;
   }
 }

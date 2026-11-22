@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { CheckCircle2, Send, Sparkles } from "lucide-react";
 import { postJson, useI18n } from "@/components/providers";
 import { rs, rsRange } from "@/lib/format";
+import { offerLimits } from "@/lib/rules";
 import type { Offer } from "./live-types";
 
 /** Form where a provider sends, updates or withdraws their offer on a task. */
@@ -40,6 +41,12 @@ export function OfferForm({
   const [busy, setBusy] = useState<"send" | "ai" | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [sent, setSent] = useState(false);
+  const agreed = existing?.counter?.status === "accepted" ? existing.amount : undefined;
+  const limits = offerLimits(fairHigh, budget, agreed);
+  // A counter accepted while the form is open brings the box down to the agreed price.
+  useEffect(() => {
+    if (agreed !== undefined) setAmount(agreed);
+  }, [agreed]);
   const first = useRef(true);
   useEffect(() => {
     if (first.current) {
@@ -134,8 +141,9 @@ export function OfferForm({
             <span className="field-label">{k.amount}</span>
             <input
               type="number"
-              min={100}
-              step={50}
+              min={limits.min}
+              max={limits.max}
+              step={1}
               inputMode="numeric"
               value={amount}
               onChange={(e) => setAmount(Number(e.target.value) || 0)}
@@ -144,6 +152,9 @@ export function OfferForm({
             <span className="field-hint">
               {t.task.fairRange}: {rsRange(fairLow, fairHigh, lang)}
             </span>
+            {agreed !== undefined && (
+              <span className="field-hint block">{k.agreedMax(rs(agreed, lang))}</span>
+            )}
           </label>
           <label className="block">
             <span className="field-label">{k.offerDays}</span>

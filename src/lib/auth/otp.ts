@@ -6,6 +6,7 @@ import { config, policy } from "@/lib/config";
 import { store } from "@/lib/store";
 import type { OtpPurpose } from "@/lib/store/types";
 import { codeEmail, emailConfigured, sendEmail } from "./email";
+import { withLock } from "@/lib/lock";
 
 const pepper = () => config.sessionSecret;
 const hashCode = (code: string, target: string) =>
@@ -33,7 +34,11 @@ async function sendSms(phone: string, text: string): Promise<boolean> {
   return false;
 }
 
-export async function issueOtp(target: string, purpose: OtpPurpose): Promise<OtpSendResult> {
+export function issueOtp(target: string, purpose: OtpPurpose): Promise<OtpSendResult> {
+  return withLock(`otp:${purpose}:${target}`, () => issueNow(target, purpose));
+}
+
+async function issueNow(target: string, purpose: OtpPurpose): Promise<OtpSendResult> {
   const key = `${purpose}:${target}`;
   const existing = await store.getOtp(key);
   if (existing) {
@@ -81,7 +86,12 @@ export async function issueOtp(target: string, purpose: OtpPurpose): Promise<Otp
 export type OtpCheck =
   { ok: true } | { ok: false; error: "otp_expired" | "otp_wrong" | "otp_too_many"; attemptsLeft?: number };
 
-export async function checkOtp(target: string, purpose: OtpPurpose, code: string): Promise<OtpCheck> {
+/** One check at a time per code, so it works once and every wrong try is counted. */
+export function checkOtp(target: string, purpose: OtpPurpose, code: string): Promise<OtpCheck> {
+  return withLock(`otp:${purpose}:${target}`, () => checkNow(target, purpose, code));
+}
+
+async function checkNow(target: string, purpose: OtpPurpose, code: string): Promise<OtpCheck> {
   const key = `${purpose}:${target}`;
   const rec = await store.getOtp(key);
   if (!rec || new Date(rec.expiresAt).getTime() < Date.now()) return { ok: false, error: "otp_expired" };
@@ -103,8 +113,9 @@ export async function checkOtp(target: string, purpose: OtpPurpose, code: string
 const TICKET = "sk_verified";
 const ticketKey = () => new TextEncoder().encode(`${config.sessionSecret}:ticket`);
 
-export async function setVerifiedTicket(phone: string, purpose: OtpPurpose) {
-  const jwt = await new SignJWT({ purpose })
+/** `ver` is the account's sessionVersion (reset only). A reset raises it, which also uses the ticket up. */
+export async function setVerifiedTicket(phone: string, purpose: OtpPurpose, ver = 0) {
+  const jwt = await new SignJWT({ purpose, ver })
     .setProtectedHeader({ alg: "HS256" })
     .setSubject(phone)
     .setExpirationTime("15m")
@@ -118,12 +129,16 @@ export async function setVerifiedTicket(phone: string, purpose: OtpPurpose) {
   });
 }
 
-export async function readVerifiedTicket(purpose: OtpPurpose): Promise<string | null> {
+export async function readVerifiedTicket(
+  purpose: OtpPurpose,
+): Promise<{ target: string; ver: number } | null> {
   const token = (await cookies()).get(TICKET)?.value;
   if (!token) return null;
   try {
     const { payload } = await jwtVerify(token, ticketKey(), { algorithms: ["HS256"] });
-    return payload.purpose === purpose && typeof payload.sub === "string" ? payload.sub : null;
+    if (payload.purpose !== purpose || typeof payload.sub !== "string" || typeof payload.ver !== "number")
+      return null;
+    return { target: payload.sub, ver: payload.ver };
   } catch {
     return null;
   }

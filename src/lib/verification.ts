@@ -3,6 +3,8 @@ import { randomUUID } from "node:crypto";
 import sharp from "sharp";
 import { config } from "@/lib/config";
 import { store } from "@/lib/store";
+import { withLock } from "@/lib/lock";
+import { purgeExpired } from "@/lib/retention";
 import type { StoredFile, User, Verification, VerificationKind, VerificationStatus } from "@/lib/store/types";
 
 /**
@@ -105,18 +107,43 @@ export async function saveFiles(
   return out;
 }
 
-/** Replace a verification (deleting any old documents first). */
-export async function submit(
-  user: User,
-  kind: VerificationKind,
-  data: {
-    files?: StoredFile[];
-    fields?: Record<string, string>;
-    status?: VerificationStatus;
-    simulated?: boolean;
-    note?: string;
-  },
-) {
+/** The ID was replaced while a selfie was being compared with it. */
+export class IdChangedError extends Error {}
+
+interface Submission {
+  files?: StoredFile[];
+  fields?: Record<string, string>;
+  status?: VerificationStatus;
+  simulated?: boolean;
+  note?: string;
+  /** Selfie only: `submittedAt` of the ID the face was compared with. */
+  matchedId?: string;
+}
+
+/**
+ * Replace a verification (deleting any old documents first).
+ * A selfie match belongs to one ID: a new ID deletes it, and a match against a replaced ID is refused.
+ */
+export function submit(user: User, kind: VerificationKind, data: Submission) {
+  return withLock(`verify:${user.id}`, async () => {
+    const list = await store.listVerifications(user.id);
+    if (kind === "selfie") {
+      const id = list.find((v) => v.kind === "id");
+      if (!id || id.submittedAt !== data.matchedId) {
+        for (const f of data.files ?? []) await store.deleteFile(f.path);
+        throw new IdChangedError("id_changed");
+      }
+    }
+    if (kind === "id") {
+      const selfie = list.find((v) => v.kind === "selfie");
+      for (const f of selfie?.files ?? []) await store.deleteFile(f.path);
+      if (selfie) await store.deleteVerification(user.id, "selfie");
+    }
+    return replace(user, kind, data);
+  });
+}
+
+async function replace(user: User, kind: VerificationKind, data: Submission) {
   const prev = (await store.listVerifications(user.id)).find((v) => v.kind === kind);
   for (const f of prev?.files ?? []) await store.deleteFile(f.path);
   const now = new Date().toISOString();
@@ -141,7 +168,11 @@ export async function submit(
 const purgeDate = () => new Date(Date.now() + RETENTION_DAYS * 86_400_000).toISOString();
 
 /** A reviewer (or, in DEMO_MODE only, the simulated demo reviewer) decides on a pending item. */
-export async function decide(
+export function decide(...args: Parameters<typeof decideNow>) {
+  return withLock(`verify:${args[0]}`, () => decideNow(...args));
+}
+
+async function decideNow(
   userId: string,
   kind: VerificationKind,
   decision: "verified" | "rejected",
@@ -164,7 +195,11 @@ export async function decide(
   return updated;
 }
 
-export async function withdraw(user: User, kind: VerificationKind) {
+export function withdraw(user: User, kind: VerificationKind) {
+  return withLock(`verify:${user.id}`, () => withdrawNow(user, kind));
+}
+
+async function withdrawNow(user: User, kind: VerificationKind) {
   const v = (await store.listVerifications(user.id)).find((x) => x.kind === kind);
   for (const f of v?.files ?? []) await store.deleteFile(f.path);
   await store.deleteVerification(user.id, kind);
@@ -182,17 +217,6 @@ export async function recomputeBadges(userId: string) {
   const list = await store.listVerifications(userId);
   const ok = (k: VerificationKind) => list.some((v) => v.kind === k && v.status === "verified");
   await store.updateUser(userId, { verified: ok("id") && ok("selfie"), womenLed: ok("womenGroup") });
-}
-
-/** Delete document files whose retention period has passed (decision kept, images gone). */
-async function purgeExpired(userId: string) {
-  const now = Date.now();
-  for (const v of await store.listVerifications(userId)) {
-    if (v.purgeAfter && new Date(v.purgeAfter).getTime() < now && v.files.length) {
-      for (const f of v.files) await store.deleteFile(f.path);
-      await store.putVerification({ ...v, files: [] });
-    }
-  }
 }
 
 /** Demo personas start with sensible verification states (simulated, no documents). */

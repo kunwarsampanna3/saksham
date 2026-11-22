@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Store, Laptop, Scissors, Plane, ChevronRight } from "lucide-react";
 import { postJson, useI18n, useUser } from "@/components/providers";
 import type { PublicUser } from "@/lib/store/types";
-import { safeNext } from "./login-form";
+import { safeNext } from "@/lib/safe-next";
 
 /** Rendered only when the server says DEMO_MODE=true. Removed entirely in production. */
 export function DemoPanel({ mpin, next }: { mpin: string; next?: string }) {

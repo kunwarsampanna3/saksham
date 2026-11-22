@@ -5,6 +5,7 @@ import { currentUser } from "@/lib/auth/current-user";
 import { requireFreshMpin } from "@/lib/booking-api";
 import { ruleResponse, cleanText } from "@/lib/task-api";
 import { applyForCredit, requestPayout } from "@/lib/wallet";
+import { withLock } from "@/lib/lock";
 
 const Body = z.discriminatedUnion("action", [
   z.object({
@@ -30,18 +31,20 @@ export async function POST(req: NextRequest) {
   const stale = await requireFreshMpin();
   if (stale) return stale;
   try {
-    if (g.data.action === "payout") {
-      const p = await requestPayout(user, g.data.amount, g.data.method);
-      return NextResponse.json({ ok: true, id: p.id, ref: p.ref });
-    }
-    const a = await applyForCredit(
-      user,
-      g.data.amount,
-      g.data.months,
-      cleanText(g.data.purpose, 300),
-      g.data.example,
-    );
-    return NextResponse.json({ ok: true, id: a.id });
+    return await withLock(`wallet:${user.id}`, async () => {
+      if (g.data.action === "payout") {
+        const p = await requestPayout(user, g.data.amount, g.data.method);
+        return NextResponse.json({ ok: true, id: p.id, ref: p.ref });
+      }
+      const a = await applyForCredit(
+        user,
+        g.data.amount,
+        g.data.months,
+        cleanText(g.data.purpose, 300),
+        g.data.example,
+      );
+      return NextResponse.json({ ok: true, id: a.id });
+    });
   } catch (e) {
     return ruleResponse(e);
   }

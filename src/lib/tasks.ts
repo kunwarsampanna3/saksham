@@ -5,7 +5,13 @@ import { store, canSeeWomenOnly } from "@/lib/store";
 import type { Bid, Question, Task, User } from "@/lib/store/types";
 import { fairRange, category } from "@/lib/pricing";
 import { fairRangeLive } from "@/lib/prices";
-import { rankBids, counterWithinTolerance, COUNTER_TOLERANCE, type ReasonCode } from "@/lib/rules";
+import {
+  rankBids,
+  counterWithinTolerance,
+  offerLimits,
+  COUNTER_TOLERANCE,
+  type ReasonCode,
+} from "@/lib/rules";
 import { CITY_COORDS, areasFor, haversineKm } from "@/lib/geo";
 import { EXAMPLE_TASKS } from "@/lib/seed/tasks";
 import {
@@ -15,7 +21,7 @@ import {
   providerCoords,
 } from "@/lib/seed/providers";
 import { statusFor } from "@/lib/verification";
-import { isBlocked, notify, systemMessage } from "@/lib/chat";
+import { isBlocked, maskContacts, notify, systemMessage } from "@/lib/chat";
 
 /* ================================================================ helpers */
 const now = () => new Date().toISOString();
@@ -357,10 +363,12 @@ export async function rankedOffers(task: Task, viewer: User): Promise<OfferView[
     providerName: r.bid.b.providerName,
     profileHref: r.bid.s.href,
     isExample: r.bid.b.isExample,
-    amount: r.bid.amount,
+    // For the hired applicant, always the price that was locked.
+    amount: r.bid.b.id === task.acceptedBidId ? (task.agreedPrice ?? r.bid.amount) : r.bid.amount,
     days: r.bid.b.days,
     // Offer messages are visible to the client and to the provider who wrote them; others see price and stats only.
-    message: owner || r.bid.b.providerId === viewer.id ? r.bid.b.message : "",
+    // Masked here as well, for offers saved before messages were masked on saving.
+    message: owner || r.bid.b.providerId === viewer.id ? maskContacts(r.bid.b.message).text : "",
     status: r.bid.b.status,
     counter: owner || r.bid.b.providerId === viewer.id ? r.bid.b.counter : undefined,
     rating: r.bid.s.rating,
@@ -389,6 +397,9 @@ export class RuleError extends Error {
 }
 
 /** A provider makes (or updates) an offer. Requires a verified ID, per the Verification center unlocks. */
+/** The price both sides agreed through a counter, if they did. */
+const agreedOn = (b: Bid) => (b.counter?.status === "accepted" ? b.counter.amount : undefined);
+
 export async function placeBid(
   task: Task,
   user: User,
@@ -402,13 +413,24 @@ export async function placeBid(
   if (kyc.id.status !== "verified" || kyc.selfie.status !== "verified")
     throw new RuleError("id_required", 403);
   if (task.clientId && (await isBlocked(task.clientId, user.id))) throw new RuleError("not_found", 404);
-  if (input.amount < 100 || input.amount > task.fairHigh * 10)
-    throw new RuleError("amount_range", 422, { field: "amount" });
+  const own = (await store.listBids(task.id))
+    .filter((b) => b.providerId === user.id)
+    .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
+  const active = own.find((b) => b.status !== "withdrawn");
+  if (active?.counter?.status === "pending") throw new RuleError("counter_pending");
 
-  const mine = (await store.listBids(task.id)).find(
-    (b) => b.providerId === user.id && b.status !== "withdrawn",
-  );
-  if (mine?.counter?.status === "pending") throw new RuleError("counter_pending");
+  // Withdrawn offers count too: withdrawing and offering again must not escape an agreed price.
+  const agreed = own
+    .filter((b) => agreedOn(b) !== undefined)
+    .sort((a, b) => agreedOn(a)! - agreedOn(b)!)[0]?.counter;
+  const { min, max } = offerLimits(task.fairHigh, task.budget, agreed?.amount);
+  if (input.amount < min || input.amount > max) {
+    const code = agreed && input.amount > max ? "above_agreed" : "amount_range";
+    throw new RuleError(code, 422, { field: "amount" });
+  }
+
+  // One row per applicant per task, so a new offer after withdrawing reuses the withdrawn row.
+  const mine = active ?? own[0];
   const b: Bid = {
     id: mine?.id ?? randomUUID(),
     taskId: task.id,
@@ -417,15 +439,15 @@ export async function placeBid(
     isExample: false,
     amount: Math.round(input.amount),
     days: input.days,
-    message: input.message,
+    message: maskContacts(input.message).text,
     status: "active",
-    counter: undefined,
+    counter: agreed && { ...agreed, amount: Math.round(input.amount) },
     appearAt: mine?.appearAt ?? now(),
     createdAt: mine?.createdAt ?? now(),
     updatedAt: now(),
   };
   const saved = await store.putBid(b);
-  const code = mine ? "bid_updated" : "bid_new";
+  const code = active ? "bid_updated" : "bid_new";
   await notify(
     task.clientId,
     "bid",
@@ -444,6 +466,7 @@ export async function placeBid(
 export async function withdrawBid(task: Task, user: User, bidId: string) {
   const b = (await store.listBids(task.id)).find((x) => x.id === bidId);
   if (!b || b.providerId !== user.id) throw new RuleError("not_found", 404);
+  if (task.status !== "open") throw new RuleError("task_closed");
   if (b.status !== "active") throw new RuleError("bid_closed");
   return store.putBid({ ...b, status: "withdrawn", updatedAt: now() });
 }
@@ -458,6 +481,7 @@ export async function counterBid(task: Task, user: User, bidId: string, amount: 
   const b = (await store.listBids(task.id)).find((x) => x.id === bidId);
   if (!b || b.status !== "active") throw new RuleError("bid_closed");
   if (b.counter?.status === "pending") throw new RuleError("counter_pending");
+  if (b.counter?.status === "accepted") throw new RuleError("counter_agreed");
   if (amount >= b.amount) throw new RuleError("counter_not_lower", 422, { field: "amount" });
   if (amount < b.amount * 0.5) throw new RuleError("counter_too_low", 422, { field: "amount" });
   const auto = counterWithinTolerance(b.amount, amount);
@@ -484,6 +508,8 @@ export async function counterBid(task: Task, user: User, bidId: string, amount: 
 export async function respondCounter(task: Task, user: User, bidId: string, accept: boolean) {
   const b = (await store.listBids(task.id)).find((x) => x.id === bidId);
   if (!b || b.providerId !== user.id) throw new RuleError("not_found", 404);
+  if (task.status !== "open") throw new RuleError("task_closed");
+  if (b.status !== "active") throw new RuleError("bid_closed");
   if (b.counter?.status !== "pending") throw new RuleError("no_counter");
   const updated: Bid = {
     ...b,
@@ -504,7 +530,7 @@ export async function respondCounter(task: Task, user: User, bidId: string, acce
 }
 
 /** Client accepts an offer. The price locks (counter price if one was accepted); other offers close. */
-export async function acceptBid(task: Task, user: User, bidId: string) {
+export async function acceptBid(task: Task, user: User, bidId: string, seenAmount: number) {
   if (!isOwner(task, user)) throw new RuleError("forbidden", 403);
   if (task.status !== "open") throw new RuleError("task_closed");
   // Clients finish KYC (ID card + selfie) before they hire.
@@ -515,11 +541,16 @@ export async function acceptBid(task: Task, user: User, bidId: string) {
   const b = bids.find((x) => x.id === bidId);
   if (!b || b.status !== "active" || new Date(b.appearAt).getTime() > Date.now())
     throw new RuleError("bid_closed");
-  const price = b.counter?.status === "accepted" ? b.counter.amount : b.amount;
+  const price = agreedOn(b) ?? b.amount;
+  if (seenAmount !== price) throw new RuleError("price_changed", 409, { amount: price });
+  // A counter still waiting for a reply ends when the task closes.
+  const closed = (x: Bid): Bid["counter"] =>
+    x.counter?.status === "pending" ? { ...x.counter, status: "declined" } : x.counter;
   for (const other of bids) {
-    if (other.id === b.id) await store.putBid({ ...other, status: "accepted", updatedAt: now() });
+    if (other.id === b.id)
+      await store.putBid({ ...other, counter: closed(other), status: "accepted", updatedAt: now() });
     else if (other.status === "active") {
-      await store.putBid({ ...other, status: "declined", updatedAt: now() });
+      await store.putBid({ ...other, counter: closed(other), status: "declined", updatedAt: now() });
       await notify(other.providerId, "bid", "bid_declined", { task: task.title }, `/task/${task.id}`);
     }
   }

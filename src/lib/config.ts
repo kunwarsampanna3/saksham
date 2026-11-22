@@ -7,6 +7,8 @@ export const config = {
   isProd: process.env.NODE_ENV === "production",
   appOrigin: process.env.APP_ORIGIN || process.env.RENDER_EXTERNAL_URL || "http://localhost:3000",
   sessionSecret: process.env.SESSION_SECRET ?? "",
+  /** A header your proxy overwrites with the visitor's IP. Empty: no IP header is trusted (see auth/http.ts). */
+  trustedIpHeader: process.env.TRUSTED_IP_HEADER ?? "",
   anthropicModel: process.env.ANTHROPIC_MODEL || "claude-opus-5-5",
   hasAnthropic: Boolean(process.env.ANTHROPIC_API_KEY),
   /** Outgoing email for sign-in codes (Resend key, or SMTP such as Gmail with an app password). */

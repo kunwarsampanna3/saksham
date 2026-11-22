@@ -67,6 +67,8 @@ type Row = {
   categories: string[] | null;
   marketing_opt_in: boolean | null;
   terms_accepted_at: string | null;
+  session_version: number | null;
+  revoked_sessions: User["revokedSessions"] | null;
   passkeys?: {
     credential_id: string;
     public_key: string;
@@ -108,6 +110,8 @@ function toUser(r: Row): User {
     termsAcceptedAt: r.terms_accepted_at ?? undefined,
     createdAt: r.created_at,
     updatedAt: r.updated_at,
+    sessionVersion: r.session_version ?? 0,
+    revokedSessions: r.revoked_sessions ?? [],
     passkeys: (r.passkeys ?? []).map<Passkey>((p) => ({
       id: p.credential_id,
       publicKey: p.public_key,
@@ -145,6 +149,8 @@ function toRow(u: Partial<User>): Partial<Row> {
   if (u.trustedContacts !== undefined) r.trusted_contacts = u.trustedContacts;
   if (u.verified !== undefined) r.verified = u.verified;
   if (u.womenLed !== undefined) r.women_led = u.womenLed;
+  if (u.sessionVersion !== undefined) r.session_version = u.sessionVersion;
+  if (u.revokedSessions !== undefined) r.revoked_sessions = u.revokedSessions;
   return r;
 }
 
@@ -218,6 +224,7 @@ type BaseMethods = Omit<
   | "putVerification"
   | "deleteVerification"
   | "listPendingVerifications"
+  | "listExpiredVerifications"
   | "putFile"
   | "getFile"
   | "deleteFile"
@@ -397,7 +404,17 @@ const verificationMethods = {
     return Buffer.from(await data.arrayBuffer());
   },
   async deleteFile(path: string) {
-    await db().storage.from(BUCKET).remove([path]);
+    const { error } = await db().storage.from(BUCKET).remove([path]);
+    if (error) throw new Error(error.message); // retention must not record a deletion that didn't happen
+  },
+  async listExpiredVerifications(before: string) {
+    const { data, error } = await db()
+      .from("verifications")
+      .select("*")
+      .lt("purge_after", before)
+      .neq("files", "[]");
+    if (error) throw new Error(error.message);
+    return (data as VRow[]).map(toV);
   },
 } satisfies Pick<
   Store,
@@ -405,6 +422,7 @@ const verificationMethods = {
   | "putVerification"
   | "deleteVerification"
   | "listPendingVerifications"
+  | "listExpiredVerifications"
   | "putFile"
   | "getFile"
   | "deleteFile"

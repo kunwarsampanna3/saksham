@@ -63,28 +63,84 @@ const safePath = (p: string) => {
  * module, so the cache and the write queue live on globalThis — otherwise one route could miss (or overwrite)
  * another route's changes.
  */
-const shared = globalThis as unknown as { __sakshamFileDb?: { cache: DB | null; writing: Promise<void> } };
-const state = (shared.__sakshamFileDb ??= { cache: null, writing: Promise.resolve() });
+interface FileState {
+  cache: DB | null;
+  loading: Promise<DB> | null;
+  /** The file as it was when this process loaded it; copied to db.json.bak before the first save. */
+  original: string | null;
+  writing: Promise<void>;
+}
+const shared = globalThis as unknown as { __sakshamFileDb?: FileState };
+const state = (shared.__sakshamFileDb ??= {
+  cache: null,
+  loading: null,
+  original: null,
+  writing: Promise.resolve(),
+});
+
+const damaged = (cause?: unknown) =>
+  new Error(
+    `[saksham] ${FILE} is damaged, so nothing was loaded or saved. The file was left as it is. ` +
+      `Repair it, or copy ${FILE}.bak over it (the copy from before the previous run's first save).`,
+    { cause },
+  );
+
+/** Only a file that doesn't exist means "start empty". Any other problem stops, so it can't be saved over. */
+async function readDb(): Promise<DB> {
+  let raw: string;
+  try {
+    raw = await fs.readFile(FILE, "utf8");
+  } catch (e) {
+    if ((e as NodeJS.ErrnoException).code === "ENOENT") return { users: [], otps: [] };
+    throw e;
+  }
+  let db: Partial<DB> | null;
+  try {
+    db = JSON.parse(raw.replace(/^﻿/, "")); // Notepad may add a byte-order mark
+  } catch (e) {
+    throw damaged(e);
+  }
+  if (!Array.isArray(db?.users) || !Array.isArray(db?.otps)) throw damaged();
+  state.original = raw;
+  return db as DB;
+}
 
 async function load(): Promise<DB> {
   if (state.cache) return state.cache;
-  try {
-    state.cache = JSON.parse(await fs.readFile(FILE, "utf8")) as DB;
-  } catch {
-    state.cache = { users: [], otps: [] };
+  // Requests arriving during start-up share one read, so they all change the same copy.
+  state.loading ??= readDb().finally(() => (state.loading = null));
+  return (state.cache ??= await state.loading);
+}
+
+/** Windows briefly locks files while antivirus or sync tools look at them, so try a few times. */
+async function replaceFile(from: string, to: string) {
+  for (let attempt = 1; ; attempt++) {
+    try {
+      return await fs.rename(from, to);
+    } catch (e) {
+      const code = (e as NodeJS.ErrnoException).code ?? "";
+      if (attempt >= 5 || !["EPERM", "EBUSY", "EACCES"].includes(code)) throw e;
+      await new Promise((resolve) => setTimeout(resolve, attempt * 50));
+    }
   }
-  return state.cache;
 }
 
 function persist(db: DB): Promise<void> {
-  // Serialise writes so concurrent requests can't interleave partial files.
-  state.writing = state.writing.then(async () => {
+  const write = async () => {
     await fs.mkdir(path.dirname(FILE), { recursive: true });
+    if (state.original !== null) {
+      await fs.writeFile(`${FILE}.bak`, state.original, "utf8");
+      state.original = null;
+    }
     const tmp = `${FILE}.${process.pid}.tmp`;
-    await fs.writeFile(tmp, JSON.stringify(db, null, 2), "utf8");
-    await fs.rename(tmp, FILE);
-  });
-  return state.writing;
+    // flush: the bytes are on disk before they replace the good file.
+    await fs.writeFile(tmp, JSON.stringify(db, null, 2), { encoding: "utf8", flush: true });
+    await replaceFile(tmp, FILE);
+  };
+  // One write at a time. A failed write fails its own caller only; the next write still runs.
+  const result = state.writing.then(write);
+  state.writing = result.catch(() => undefined);
+  return result;
 }
 
 const now = () => new Date().toISOString();
@@ -379,6 +435,11 @@ export const fileStore: Store = {
     const db = await load();
     db.verifications = (db.verifications ?? []).filter((x) => !(x.userId === userId && x.kind === kind));
     await persist(db);
+  },
+  async listExpiredVerifications(before) {
+    return ((await load()).verifications ?? []).filter(
+      (v) => v.files.length > 0 && !!v.purgeAfter && v.purgeAfter < before,
+    );
   },
   async listPendingVerifications() {
     return ((await load()).verifications ?? []).filter((v) => v.status === "pending");

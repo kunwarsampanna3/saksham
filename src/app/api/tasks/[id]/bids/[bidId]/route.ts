@@ -3,11 +3,13 @@ import { z } from "zod";
 import { guard } from "@/lib/auth/http";
 import { loadTask, ruleResponse } from "@/lib/task-api";
 import { acceptBid, counterBid, respondCounter, withdrawBid } from "@/lib/tasks";
+import { withLock } from "@/lib/lock";
 
 const Body = z.discriminatedUnion("action", [
   z.object({ action: z.literal("counter"), amount: z.number().int().min(100).max(10_000_000) }),
   z.object({ action: z.literal("respond"), accept: z.boolean() }),
-  z.object({ action: z.literal("accept") }),
+  // The price on the recruiter's screen. It must still be the price, or nothing is accepted.
+  z.object({ action: z.literal("accept"), amount: z.number().int().positive() }),
   z.object({ action: z.literal("withdraw") }),
 ]);
 
@@ -16,26 +18,28 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   const g = await guard(req, { name: "bid-action", schema: Body, limit: 30 });
   if ("res" in g) return g.res;
   const { id, bidId } = await params;
-  const l = await loadTask(id);
-  if ("res" in l) return l.res;
-  const { task, user } = l;
   try {
-    switch (g.data.action) {
-      case "counter": {
-        const r = await counterBid(task, user, bidId, g.data.amount);
-        return NextResponse.json({ ok: true, counter: r.bid.counter, auto: r.auto });
+    return await withLock(`task:${id}`, async () => {
+      const l = await loadTask(id);
+      if ("res" in l) return l.res;
+      const { task, user } = l;
+      switch (g.data.action) {
+        case "counter": {
+          const r = await counterBid(task, user, bidId, g.data.amount);
+          return NextResponse.json({ ok: true, counter: r.bid.counter, auto: r.auto });
+        }
+        case "respond":
+          await respondCounter(task, user, bidId, g.data.accept);
+          return NextResponse.json({ ok: true });
+        case "accept": {
+          const t = await acceptBid(task, user, bidId, g.data.amount);
+          return NextResponse.json({ ok: true, agreedPrice: t.agreedPrice, next: `/booking/${t.id}` });
+        }
+        case "withdraw":
+          await withdrawBid(task, user, bidId);
+          return NextResponse.json({ ok: true });
       }
-      case "respond":
-        await respondCounter(task, user, bidId, g.data.accept);
-        return NextResponse.json({ ok: true });
-      case "accept": {
-        const t = await acceptBid(task, user, bidId);
-        return NextResponse.json({ ok: true, agreedPrice: t.agreedPrice, next: `/booking/${t.id}` });
-      }
-      case "withdraw":
-        await withdrawBid(task, user, bidId);
-        return NextResponse.json({ ok: true });
-    }
+    });
   } catch (e) {
     return ruleResponse(e);
   }

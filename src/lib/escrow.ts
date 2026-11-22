@@ -235,23 +235,28 @@ async function event(
 }
 
 /**
- * Resolve a dispute. Admins in step 9; in DEMO_MODE either party may resolve as the "demo reviewer" (labelled).
+ * Resolve a dispute. An admin who isn't a party; in DEMO_MODE a demo account that is a party may resolve as the
+ * "demo reviewer" (labelled). Real accounts never resolve their own.
  *  - redo: work continues, money stays where it is.
  *  - refund: everything still in escrow (held/delivered) goes back to the client; released money is not clawed back.
  */
 export async function resolveDispute(b: Booking, user: User, outcome: "redo" | "refund") {
-  const allowed = user.isAdmin || (config.demoMode && roleIn(b, user) !== null);
+  const party = roleIn(b, user) !== null;
+  // Nobody judges their own dispute, except demo accounts playing the "demo reviewer".
+  const allowed = party ? config.demoMode && user.isDemo : user.isAdmin;
   if (!allowed) throw new RuleError("forbidden", 403);
-  const d = (await store.listDisputes(b.id)).find((x) => x.status === "open");
-  if (!d) throw new RuleError("no_dispute");
+  if (b.status !== "disputed") throw new RuleError("no_dispute");
+  const open = (await store.listDisputes(b.id)).filter((x) => x.status === "open");
+  if (!open.length) throw new RuleError("no_dispute");
   const task = await store.getTask(b.taskId);
   if (outcome === "redo") {
-    await store.putDispute({
-      ...d,
-      status: "redo_arranged",
-      resolution: user.isAdmin ? "Redo arranged by Saksham" : "Redo arranged (demo reviewer)",
-      resolvedAt: now(),
-    });
+    for (const d of open)
+      await store.putDispute({
+        ...d,
+        status: "redo_arranged",
+        resolution: party ? "Redo arranged (demo reviewer)" : "Redo arranged by Saksham",
+        resolvedAt: now(),
+      });
     const nb = await store.putBooking({ ...b, status: "active", updatedAt: now() });
     if (task) await store.putTask({ ...task, status: "in_progress", updatedAt: now() });
     await event(nb, "client", "dispute_redo", {});
@@ -268,12 +273,13 @@ export async function resolveDispute(b: Booking, user: User, outcome: "redo" | "
     // Unpaid (scheduled) installments stay "scheduled" and are shown as cancelled once the booking is refunded.
   }
   nb = await store.putBooking({ ...nb, status: "refunded", updatedAt: now() });
-  await store.putDispute({
-    ...d,
-    status: "refunded",
-    resolution: user.isAdmin ? "Refunded by Saksham" : "Refunded (demo reviewer)",
-    resolvedAt: now(),
-  });
+  for (const d of open)
+    await store.putDispute({
+      ...d,
+      status: "refunded",
+      resolution: party ? "Refunded (demo reviewer)" : "Refunded by Saksham",
+      resolvedAt: now(),
+    });
   if (task) await store.putTask({ ...task, status: "cancelled", updatedAt: now() });
   await event(nb, "client", "dispute_refund", {});
   await notify(nb.providerId, "payment", "dispute_refund", { task: task?.title ?? "" }, `/payments/${nb.id}`);

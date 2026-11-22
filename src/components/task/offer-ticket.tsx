@@ -53,7 +53,8 @@ export function OfferTicket({
   const k = t.task;
   const [why, setWhy] = useState(o.best);
   const [countering, setCountering] = useState(false);
-  const [amount, setAmount] = useState(Math.round((o.amount * 0.95) / 100) * 100);
+  const counterMin = Math.max(100, Math.ceil(o.amount * 0.5));
+  const [amount, setAmount] = useState(Math.max(counterMin, Math.floor((o.amount * 0.95) / 10) * 10));
   const [busy, setBusy] = useState(false);
   const closed = o.status !== "active";
   const run = async (b: Record<string, unknown>) => {
@@ -204,7 +205,7 @@ export function OfferTicket({
             <div className="flex flex-wrap items-center gap-2 px-6 pt-3 pb-5">
               {owner && (
                 <>
-                  {!o.counter || o.counter.status === "declined" ? (
+                  {o.amount > counterMin && (!o.counter || o.counter.status === "declined") ? (
                     countering ? (
                       <form
                         className="flex flex-wrap items-center gap-2"
@@ -219,9 +220,9 @@ export function OfferTicket({
                         <input
                           id={`c-${o.id}`}
                           type="number"
-                          min={Math.ceil(o.amount * 0.5)}
+                          min={counterMin}
                           max={o.amount - 1}
-                          step={50}
+                          step={1}
                           value={amount}
                           onChange={(e) => setAmount(Number(e.target.value) || 0)}
                           className="input font-display !min-h-10 w-32 font-bold"
@@ -246,8 +247,9 @@ export function OfferTicket({
                     className="btn btn-primary ml-auto !min-h-10"
                     disabled={busy}
                     onClick={() => {
-                      if (window.confirm(k.acceptConfirm(o.providerName, rs(o.amount, lang))))
-                        void run({ action: "accept" });
+                      const seen = o.amount;
+                      if (window.confirm(k.acceptConfirm(o.providerName, rs(seen, lang))))
+                        void run({ action: "accept", amount: seen });
                     }}
                   >
                     <CheckCircle2 size={16} aria-hidden /> {k.accept}

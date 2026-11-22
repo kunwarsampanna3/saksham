@@ -113,6 +113,16 @@ function reasonFor(codes: ReasonCode[]): string {
   return s ? s[0].toUpperCase() + s.slice(1) + "." : "Balanced on price, rating and distance.";
 }
 
+/* ---------------------------------------------------------------- offers */
+/**
+ * What an offer may be. Once a counter is accepted, the agreed price is the ceiling.
+ * Before that: 10× the fair range, or double the posted price if that is higher, so the posted price and the
+ * "+5/10/20%" buttons always work.
+ */
+export function offerLimits(fairHigh: number, budget: number | null, agreed?: number) {
+  return { min: 100, max: agreed ?? Math.min(10_000_000, Math.max(fairHigh * 10, (budget ?? 0) * 2)) };
+}
+
 /* ------------------------------------------------------------- counters */
 /** A counter-offer is auto-acceptable when within ~7% of the provider's bid. */
 export const COUNTER_TOLERANCE = 0.07;

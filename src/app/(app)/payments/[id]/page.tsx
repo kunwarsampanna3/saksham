@@ -65,6 +65,7 @@ export default async function PaymentsPage({ params }: { params: Promise<{ id: s
           providerIsExample={booking.providerIsExample}
           method={booking.method}
           demoMode={config.demoMode}
+          canResolveDemo={config.demoMode && user.isDemo}
           installments={booking.installments}
           receipts={receipts
             .sort((a, b) => a.createdAt.localeCompare(b.createdAt))

@@ -9,9 +9,13 @@
 const MIN_LENGTH = 12;
 
 const deny = (status: number, message: string, headers: Record<string, string> = {}) =>
-  new Response(message, { status, headers: { "Cache-Control": "no-store", "X-Robots-Tag": "noindex", ...headers } });
+  new Response(message, {
+    status,
+    headers: { "Cache-Control": "no-store", "X-Robots-Tag": "noindex", ...headers },
+  });
 
-const digest = async (text: string) => new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text)));
+const digest = async (text: string) =>
+  new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text)));
 
 /** The password from a Basic auth header, or null when there isn't a readable one. */
 function sentPassword(header: string | null): string | null {
@@ -32,7 +36,8 @@ export async function siteGate(authorization: string | null): Promise<Response |
     const publicDemo = process.env.RENDER === "true" && process.env.DEMO_MODE === "true";
     return publicDemo ? deny(503, "Locked: set SITE_PASSWORD before sharing this demo.") : null;
   }
-  if (password.length < MIN_LENGTH) return deny(503, `Locked: SITE_PASSWORD needs at least ${MIN_LENGTH} characters.`);
+  if (password.length < MIN_LENGTH)
+    return deny(503, `Locked: SITE_PASSWORD needs at least ${MIN_LENGTH} characters.`);
 
   const sent = sentPassword(authorization);
   if (sent !== null) {
@@ -40,5 +45,7 @@ export async function siteGate(authorization: string | null): Promise<Response |
     const [a, b] = await Promise.all([digest(sent), digest(password)]);
     if (a.reduce((diff, byte, i) => diff | (byte ^ b[i]), 0) === 0) return null;
   }
-  return deny(401, "Password required.", { "WWW-Authenticate": 'Basic realm="Saksham demo", charset="UTF-8"' });
+  return deny(401, "Password required.", {
+    "WWW-Authenticate": 'Basic realm="Saksham demo", charset="UTF-8"',
+  });
 }

@@ -2,6 +2,7 @@ import { type NextRequest } from "next/server";
 import { fail } from "@/lib/auth/http";
 import { currentUser } from "@/lib/auth/current-user";
 import { store } from "@/lib/store";
+import { isExpired } from "@/lib/retention";
 
 /** Private document viewer: only the owner (or an admin, via ?user=) can fetch an uploaded image. */
 export async function GET(req: NextRequest, { params }: { params: Promise<{ fileId: string }> }) {
@@ -11,7 +12,10 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ file
   if (!/^[0-9a-f-]{36}$/.test(fileId)) return fail(404, "not_found");
   const owner = req.nextUrl.searchParams.get("user");
   const userId = owner && me.isAdmin ? owner : me.id;
-  const f = (await store.listVerifications(userId)).flatMap((v) => v.files).find((x) => x.id === fileId);
+  const f = (await store.listVerifications(userId))
+    .filter((v) => !isExpired(v))
+    .flatMap((v) => v.files)
+    .find((x) => x.id === fileId);
   if (!f) return fail(404, "not_found");
   const data = await store.getFile(f.path);
   if (!data) return fail(404, "not_found");

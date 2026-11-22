@@ -12,7 +12,7 @@ import {
 import { store, toPublicUser } from "@/lib/store";
 import { hashMpin } from "@/lib/auth/mpin";
 import { clearVerifiedTicket, readVerifiedTicket } from "@/lib/auth/otp";
-import { nowSec, setSessionCookie } from "@/lib/auth/session";
+import { startSession } from "@/lib/auth/session";
 import type { Role } from "@/lib/store/types";
 import { CATEGORY_IDS } from "@/lib/pricing";
 import { isEmail } from "@/lib/auth/target";
@@ -37,8 +37,9 @@ export async function POST(req: NextRequest) {
     return fail(422, "categories_required", { field: "categories" });
 
   // The verified phone or email comes from the OTP ticket cookie, never from the request body.
-  const target = await readVerifiedTicket("signup");
-  if (!target) return fail(401, "otp_required");
+  const ticket = await readVerifiedTicket("signup");
+  if (!ticket) return fail(401, "otp_required");
+  const { target } = ticket;
   const viaEmail = isEmail(target);
 
   const problem = mpinProblem(mpin);
@@ -65,7 +66,7 @@ export async function POST(req: NextRequest) {
       termsAcceptedAt: new Date().toISOString(),
     });
     await clearVerifiedTicket();
-    await setSessionCookie({ sub: user.id, role: user.activeRole, mpinAt: nowSec() });
+    await startSession(user);
     return NextResponse.json({ ok: true, user: toPublicUser(user) });
   } catch (e) {
     if (e instanceof Error && (e.message === "phone_taken" || e.message === "email_taken"))

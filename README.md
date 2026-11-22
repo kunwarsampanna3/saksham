@@ -112,6 +112,26 @@ Also landed early because later steps depend on them: the Claude integration (`/
 | Price table                                                                                                          | Example starting prices, editable by admins at /admin; plain code applies them                                                                                                                                                        |
 | Demo reset                                                                                                           | Admin button, DEMO_MODE only: wipes demo-account and example data and re-seeds it. Real accounts are untouched                                                                                                                        |
 
+## Tests
+
+```bash
+npm run build     # tests run against the production build
+npm test
+```
+
+Each test starts the app in a throwaway folder with invented users, so your `.data` is never touched.
+
+## How data and limits are protected
+
+- A damaged `.data/db.json` is never saved over: the app stops loading it and says so in the server log.
+  `.data/db.json.bak` is the copy from before the previous run's first save.
+- Money, offers, MPIN tries and verifications are handled one at a time **within one server process**. Run one
+  instance, or move these to database transactions before running several.
+- On Supabase, also run `0015_sessions.sql`.
+- IP headers are not trusted by default, because visitors can write them. Signed-in limits are per account; signed-out
+  visitors share a larger limit. Set `TRUSTED_IP_HEADER` only to a header your proxy overwrites.
+- Expired ID photos are deleted at server start and every hour while it runs.
+
 ## Free demo on Render
 
 New → Web Service → this repo, instance type **Free**.

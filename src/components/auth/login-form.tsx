@@ -10,14 +10,10 @@ import { MpinInput, type MpinHandle } from "./mpin-input";
 import { AuthSwitch } from "./auth-switch";
 import { isNepalMobile } from "./phone-input";
 import { IdentityInput, isEmailAddress, targetBody, type Channel } from "./identity-input";
+import { safeNext } from "@/lib/safe-next";
 import type { PublicUser } from "@/lib/store/types";
 
 export const PASSKEY_FLAG = "sk_passkey_device";
-
-export function safeNext(next: string | null | undefined): string {
-  // Only allow same-site relative paths (no protocol-relative or absolute URLs).
-  return next && next.startsWith("/") && !next.startsWith("//") && !next.startsWith("/\\") ? next : "/";
-}
 
 export function LoginForm({ next }: { next?: string }) {
   const { t } = useI18n();

@@ -5,6 +5,7 @@ import { loadTask, ruleResponse } from "@/lib/task-api";
 import { requireFreshMpin } from "@/lib/booking-api";
 import { store } from "@/lib/store";
 import { createBooking } from "@/lib/escrow";
+import { withLock } from "@/lib/lock";
 
 const Body = z.object({
   taskId: z.string().min(3).max(64),
@@ -18,12 +19,14 @@ export async function POST(req: NextRequest) {
   if ("res" in g) return g.res;
   const stale = await requireFreshMpin();
   if (stale) return stale;
-  const l = await loadTask(g.data.taskId);
-  if ("res" in l) return l.res;
   try {
-    const b = await createBooking(l.task, l.user, g.data.plan, g.data.method);
-    const hold = (await store.listReceipts(b.id)).filter((r) => r.kind === "hold").at(-1);
-    return NextResponse.json({ ok: true, id: b.id, ref: hold?.ref, receiptId: hold?.id });
+    return await withLock(`task:${g.data.taskId}`, async () => {
+      const l = await loadTask(g.data.taskId);
+      if ("res" in l) return l.res;
+      const b = await createBooking(l.task, l.user, g.data.plan, g.data.method);
+      const hold = (await store.listReceipts(b.id)).filter((r) => r.kind === "hold").at(-1);
+      return NextResponse.json({ ok: true, id: b.id, ref: hold?.ref, receiptId: hold?.id });
+    });
   } catch (e) {
     return ruleResponse(e);
   }

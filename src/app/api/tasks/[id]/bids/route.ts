@@ -3,6 +3,7 @@ import { z } from "zod";
 import { guard } from "@/lib/auth/http";
 import { loadTask, ruleResponse, cleanText } from "@/lib/task-api";
 import { placeBid } from "@/lib/tasks";
+import { withLock } from "@/lib/lock";
 
 const Body = z.object({
   amount: z.number().int().min(100, "amount_range").max(10_000_000, "amount_range"),
@@ -14,11 +15,14 @@ const Body = z.object({
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const g = await guard(req, { name: "bid", schema: Body, limit: 20 });
   if ("res" in g) return g.res;
-  const l = await loadTask((await params).id);
-  if ("res" in l) return l.res;
+  const { id } = await params;
   try {
-    const b = await placeBid(l.task, l.user, { ...g.data, message: cleanText(g.data.message, 1000) });
-    return NextResponse.json({ ok: true, id: b.id });
+    return await withLock(`task:${id}`, async () => {
+      const l = await loadTask(id);
+      if ("res" in l) return l.res;
+      const b = await placeBid(l.task, l.user, { ...g.data, message: cleanText(g.data.message, 1000) });
+      return NextResponse.json({ ok: true, id: b.id });
+    });
   } catch (e) {
     return ruleResponse(e);
   }

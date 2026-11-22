@@ -41,6 +41,8 @@ export interface ScheduleProps {
   providerIsExample: boolean;
   method: "esewa_sandbox" | "khalti_sandbox" | "card_sandbox";
   demoMode: boolean;
+  /** Demo accounts may play the reviewer for their own dispute. Real accounts may not. */
+  canResolveDemo: boolean;
   installments: Inst[];
   receipts: {
     id: string;
@@ -389,7 +391,7 @@ function Guarantee(p: ScheduleProps & { errText: (e?: string) => string }) {
         </div>
       )}
 
-      {p.status === "disputed" && p.demoMode && p.role !== "admin" && (
+      {p.status === "disputed" && p.canResolveDemo && p.role !== "admin" && (
         <div className="mt-4 space-y-2">
           <p className="flex items-center gap-1.5 text-xs">
             <span className="demo-tag !border-white/40 !bg-white/10 !text-white">

@@ -80,6 +80,7 @@ export function TaskLive({
     const r = await postJson<{ next?: string }>(`/api/tasks/${taskId}/bids/${bidId}`, body);
     if (!r.ok) {
       setErr(errText(r.error));
+      void refresh(); // show what changed, e.g. a new price
       return false;
     }
     await refresh();
@@ -200,7 +201,15 @@ export function TaskLive({
             <ol className="mt-5 space-y-4">
               {visibleOffers.map((o) => (
                 <li key={o.id}>
-                  <OfferTicket o={o} owner={live.owner} open={open} onAct={act} taskId={taskId} />
+                  {/* A new price starts a fresh card, so the counter box never holds an old amount. */}
+                  <OfferTicket
+                    key={o.amount}
+                    o={o}
+                    owner={live.owner}
+                    open={open}
+                    onAct={act}
+                    taskId={taskId}
+                  />
                 </li>
               ))}
             </ol>
