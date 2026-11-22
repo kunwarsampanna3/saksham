@@ -228,7 +228,7 @@ export async function ensureDemoVerifications(user: User) {
       ? { id: "verified", selfie: "verified" }
       : user.phone === "9800000003"
         ? { id: "verified", selfie: "verified", address: "verified", womenGroup: "verified" }
-        : user.phone === "9800000001" || user.phone === "9800000004"
+        : ["9800000001", "9800000004", "9800000005", "9800000006", "9800000007"].includes(user.phone)
           ? { id: "verified", selfie: "verified" }
           : {};
   for (const [kind, status] of Object.entries(plan) as [VerificationKind, VerificationStatus][]) {

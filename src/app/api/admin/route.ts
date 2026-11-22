@@ -8,6 +8,8 @@ import { config } from "@/lib/config";
 import { CATEGORY_IDS } from "@/lib/pricing";
 import { DEMO_PERSONAS, demoSeed } from "@/lib/auth/demo";
 import { resetExampleSeed, ensureExampleTasks } from "@/lib/tasks";
+import { ensureAbroadDemo } from "@/lib/seed/abroad-demo";
+import { withLock } from "@/lib/lock";
 
 const Amount = z.number().int().min(100).max(1_000_000);
 const Body = z.discriminatedUnion("action", [
@@ -57,13 +59,16 @@ export async function POST(req: NextRequest) {
 
   // reset-demo: DEMO_MODE only. Removes demo-account and example data, then re-seeds.
   if (!config.demoMode) return fail(403, "demo_only");
-  const ids = (await Promise.all(Object.values(DEMO_PERSONAS).map((p) => store.getUserByPhone(p.phone))))
-    .filter((u) => u?.isDemo)
-    .map((u) => u!.id);
-  await store.purgeDemoData(ids);
-  await store.resetDemo(await demoSeed());
-  resetExampleSeed();
-  await ensureExampleTasks();
+  await withLock("demo:accounts", async () => {
+    const ids = (await Promise.all(Object.values(DEMO_PERSONAS).map((p) => store.getUserByPhone(p.phone))))
+      .filter((u) => u?.isDemo)
+      .map((u) => u!.id);
+    await store.purgeDemoData(ids);
+    await store.resetDemo(await demoSeed());
+    resetExampleSeed();
+    await ensureExampleTasks();
+    await ensureAbroadDemo();
+  });
   // The demo accounts were re-created with new ids, so this session no longer points at a user.
   if (me.isDemo) await clearSessionCookie();
   return NextResponse.json({ ok: true, signedOut: me.isDemo });

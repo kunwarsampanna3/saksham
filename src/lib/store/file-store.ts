@@ -3,6 +3,7 @@ import { promises as fs } from "node:fs";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
 import type {
+  AbroadJob,
   Bid,
   Block,
   Booking,
@@ -48,6 +49,7 @@ interface DB {
   reports?: Report[];
   blocks?: Block[];
   priceOverrides?: (PriceOverride & { id: string })[];
+  abroadJobs?: AbroadJob[];
 }
 
 const FILE = path.join(process.cwd(), ".data", "db.json");
@@ -221,6 +223,9 @@ export const fileStore: Store = {
     db.reports = (db.reports ?? []).filter((r) => !demo.has(r.reporterId));
     db.blocks = (db.blocks ?? []).filter((b) => !demo.has(b.blockerId) && !demo.has(b.blockedId));
     db.verifications = (db.verifications ?? []).filter((v) => !demo.has(v.userId));
+    db.abroadJobs = (db.abroadJobs ?? [])
+      .filter((j) => !j.isDemo)
+      .map((j) => ({ ...j, applications: j.applications.filter((a) => !demo.has(a.userId)) }));
     await persist(db);
     // Uploaded demo files (ID photos, chat media, task photos)
     for (const id of demoIds)
@@ -229,6 +234,18 @@ export const fileStore: Store = {
       await fs.rm(safePath(`tasks/${t}`), { recursive: true, force: true }).catch(() => undefined);
     for (const c of convs)
       await fs.rm(safePath(`chat/${c}`), { recursive: true, force: true }).catch(() => undefined);
+  },
+  async listAbroadJobs() {
+    return (await load()).abroadJobs ?? [];
+  },
+  async getAbroadJob(id) {
+    return ((await load()).abroadJobs ?? []).find((j) => j.id === id) ?? null;
+  },
+  async putAbroadJob(j) {
+    const db = await load();
+    db.abroadJobs = upsert(db.abroadJobs, j);
+    await persist(db);
+    return j;
   },
   async listPayouts(userId) {
     return ((await load()).payouts ?? []).filter((p) => p.userId === userId);

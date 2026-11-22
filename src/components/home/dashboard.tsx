@@ -7,6 +7,7 @@ import {
   LifeBuoy,
   MapPin,
   MessageSquare,
+  Plane,
   Plus,
   Search,
   ShieldAlert,
@@ -207,6 +208,22 @@ export async function Dashboard({ t, lang, user, city }: { t: Dict; lang: Lang; 
         </>
       ) : (
         <QuickGrid t={t} lang={lang} isProvider={false} stacked />
+      )}
+
+      {working && (
+        <Link
+          href="/abroad?for=workers"
+          className="border-line bg-surface hover:border-accent flex items-center gap-4 rounded-[10px] border p-4"
+        >
+          <span className="bg-accent-soft text-accent grid h-12 w-12 shrink-0 place-items-center rounded-[10px]">
+            <Plane size={24} aria-hidden />
+          </span>
+          <span className="flex-1">
+            <span className="font-display block text-lg font-bold">{t.abroadJobs.banner.title}</span>
+            <span className="text-muted block text-sm">{t.abroadJobs.banner.body}</span>
+          </span>
+          <ArrowRight size={18} aria-hidden className="text-accent" />
+        </Link>
       )}
 
       {/* a few tasks: nearby (hiring) or matching your skills (working) */}

@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { postJson, useI18n } from "@/components/providers";
 import { npDate } from "@/lib/format";
+import { VisaCard } from "./visa-card";
 
 export type Method = "esewa_sandbox" | "khalti_sandbox" | "card_sandbox";
 export type PayResult = { ok: boolean; error?: string; ref?: string; receiptHref?: string };
@@ -21,7 +22,7 @@ export type PayResult = { ok: boolean; error?: string; ref?: string; receiptHref
 const BRAND: Record<Method, string> = {
   esewa_sandbox: "bg-[#41a124]", // eSewa-style green
   khalti_sandbox: "bg-[#5c2d91]", // Khalti-style purple
-  card_sandbox: "bg-gradient-to-br from-forest to-accent",
+  card_sandbox: "bg-[#1a1f71]", // Visa-style blue
 };
 
 /**
@@ -39,20 +40,26 @@ export function PaySheet({
   taskTitle,
   providerName,
   approx,
+  headline,
   pay,
   onDone,
   onClose,
   mode = "pay",
   fee = 0,
   money,
+  methodLabel,
 }: {
   method: Method;
+  /** When only one brand is offered, e.g. "Visa card" for hiring abroad */
+  methodLabel?: string;
   amount: number;
   amountText: string;
   installment: { seq: number; of: number };
   taskTitle: string;
   providerName: string;
   approx?: string;
+  /** Shown above the amount in place of "Installment 1 of 3" */
+  headline?: string;
   /** "release": the client approves and releases a held installment to the provider */
   mode?: "pay" | "release";
   fee?: number;
@@ -136,6 +143,7 @@ export function PaySheet({
     else onClose();
   };
   const release = mode === "release";
+  const label = methodLabel ?? b.methods[method];
   const fmt = money ?? ((n: number) => String(n));
   const rows: [string, string][] = release
     ? [
@@ -149,7 +157,7 @@ export function PaySheet({
         [s.for, taskTitle],
         [s.heldFor, providerName],
         [s.amount, amountText],
-        [s.method, b.methods[method]],
+        [s.method, label],
         [s.serviceCharge, s.serviceFree],
       ];
 
@@ -161,14 +169,13 @@ export function PaySheet({
         close();
       }}
       aria-labelledby="pay-h"
-      className="bg-surface text-text backdrop:bg-ink/60 m-auto w-[min(26rem,calc(100vw-1.5rem))] overflow-hidden rounded-[18px] border-0 p-0 shadow-2xl"
+      className="bg-surface text-text backdrop:bg-ink/60 m-auto max-h-[calc(100dvh-1.5rem)] w-[min(26rem,calc(100vw-1.5rem))] overflow-x-hidden overflow-y-auto rounded-[18px] border-0 p-0 shadow-2xl"
     >
       {/* brand header */}
       <div className={`${BRAND[method]} px-5 pt-4 pb-5 text-white`}>
         <div className="flex items-center justify-between gap-2">
           <span className="inline-flex items-center gap-1.5 text-sm font-semibold">
-            <LockKeyhole size={15} aria-hidden />{" "}
-            {release ? s.releaseHeader : `${b.methods[method]} · ${s.secure}`}
+            <LockKeyhole size={15} aria-hidden /> {release ? s.releaseHeader : `${label} · ${s.secure}`}
           </span>
           <button
             type="button"
@@ -179,7 +186,9 @@ export function PaySheet({
             <X size={16} aria-hidden />
           </button>
         </div>
-        <p className="mt-3 text-sm text-white/85">{s.installmentOf(installment.seq, installment.of)}</p>
+        <p className="mt-3 text-sm text-white/85">
+          {headline ?? s.installmentOf(installment.seq, installment.of)}
+        </p>
         <p id="pay-h" className="font-display text-4xl font-extrabold">
           {amountText}
         </p>
@@ -200,17 +209,8 @@ export function PaySheet({
             ))}
           </dl>
           {!release && method === "card_sandbox" && (
-            <div
-              aria-label={b.testCard}
-              className="from-forest to-accent mt-3 rounded-[12px] bg-gradient-to-br p-4 font-mono text-white"
-            >
-              <p className="text-[0.7rem] tracking-widest text-white/70 uppercase">{b.testCard}</p>
-              <p className="mt-2 text-lg tracking-[0.18em]">4242 4242 4242 4242</p>
-              <div className="mt-2 flex justify-between text-xs">
-                <span>12 / 30</span>
-                <span>CVC •••</span>
-                <span>VISA</span>
-              </div>
+            <div className="mt-3">
+              <VisaCard />
             </div>
           )}
           <p className="bg-accent-soft mt-3 flex gap-2 rounded-[10px] p-3 text-xs">
@@ -324,7 +324,7 @@ export function PaySheet({
             </div>
             <div className="flex justify-between gap-3 px-3 py-2.5">
               <dt className="text-muted">{s.method}</dt>
-              <dd className="font-semibold">{b.methods[method]}</dd>
+              <dd className="font-semibold">{label}</dd>
             </div>
           </dl>
           <p className="text-muted mt-3 inline-flex items-center gap-1.5 text-xs">

@@ -45,8 +45,8 @@ const FAQ: { re: RegExp; en: string; ne: string }[] = [
   },
   {
     re: /abroad|family|विदेश|परिवार/i,
-    en: "Use Hire from abroad: describe the job, pay in NPR into escrow, and share a private link so your family can confirm the work.",
-    ne: "'विदेशबाट काम लगाउनुहोस्' प्रयोग गर्नुहोस्: काम लेख्नुहोस्, नेपाली रुपैयाँमा एस्क्रोमा तिर्नुहोस्, र परिवारलाई पुष्टि गर्ने गोप्य लिंक पठाउनुहोस्।",
+    en: "Hire from abroad has two options. For family in Nepal: describe the job, pay into escrow and share a private link so they confirm. Hire Nepalis abroad: post how many workers you need and pay each by Visa into escrow when you hire.",
+    ne: "'विदेशबाट काम लगाउनुहोस्' मा दुई विकल्प छन्। नेपालको परिवारका लागि: काम लेख्नुहोस्, एस्क्रोमा तिर्नुहोस् र पुष्टि गर्ने लिंक पठाउनुहोस्। विदेशमा रहेका नेपालीका लागि: कति जना चाहिन्छ राख्नुहोस्, र लिँदा Visa बाट एस्क्रोमा तिर्नुहोस्।",
   },
 ];
 

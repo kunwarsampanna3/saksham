@@ -2,11 +2,14 @@
  * UI strings in English and Nepali. Keys are grouped by surface.
  * Nepali copy is written for everyday readers (not Sanskritised); keep sentences short.
  */
+import { abroadJobsEn, abroadJobsNe } from "./abroad-jobs";
+
 /** Event params and a money formatter (for notification / system-message texts). */
 type P = Record<string, string | number | undefined>;
 type M = (v: string | number | undefined) => string;
 
 export const en = {
+  abroadJobs: abroadJobsEn,
   brand: { name: "Saksham", deva: "सक्षम", tagline: "Your skill. Your price." },
   common: {
     continue: "Continue",
@@ -97,7 +100,8 @@ export const en = {
     mina: "Recruiter · boutique owner, Bhaktapur",
     bikash: "Applicant · IT student, Kathmandu",
     aasha: "Women-led group · tailoring, Bhaktapur",
-    suman: "Recruiter abroad · works in Doha, hires for family in Pokhara",
+    suman: "Recruiter abroad · hires Nepalis in Doha, and for family in Pokhara",
+    hari: "Applicant abroad · Nepali worker living in Doha",
   },
   otp: {
     title: "Verify your number",
@@ -1303,6 +1307,10 @@ export const en = {
     paid: (p: P, m: M) => `${m(p.amount)} paid into escrow`,
     delivered: (p: P, m: M) => `Work delivered for ${m(p.amount)} — ready to release`,
     released: (p: P, m: M) => `${m(p.amount)} released (${m(p.net)} after fee)`,
+    abroad_applied: (p: P) => `${p.name} applied for your job abroad: ${p.job}`,
+    abroad_hired: (p: P, m: M) => `You are hired: ${p.job}. ${m(p.amount)} is in escrow`,
+    abroad_declined: (p: P) => `Not selected this time: ${p.job}`,
+    abroad_filled: (p: P) => `All places are filled: ${p.job}`,
     dispute_opened: () => `A dispute was opened — payments are frozen`,
     dispute_redo: () => `Dispute resolved: a redo was arranged`,
     dispute_refund: () => `Dispute resolved: escrow refunded to the recruiter`,
@@ -1755,6 +1763,7 @@ type Widen<T> = T extends (...a: infer A) => infer R
 export type Dict = Widen<typeof en>;
 
 export const ne: Dict = {
+  abroadJobs: abroadJobsNe,
   brand: { name: "सक्षम", deva: "सक्षम", tagline: "तपाईंको सीप। तपाईंको मूल्य।" },
   common: {
     continue: "अगाडि बढ्नुहोस्",
@@ -1844,7 +1853,8 @@ export const ne: Dict = {
     mina: "भर्नाकर्ता · बुटिक सञ्चालक, भक्तपुर",
     bikash: "आवेदक · आईटी विद्यार्थी, काठमाडौं",
     aasha: "महिला नेतृत्वको समूह · सिलाइ, भक्तपुर",
-    suman: "विदेशमा रहेका भर्नाकर्ता · दोहामा काम, पोखरामा परिवारका लागि",
+    suman: "विदेशमा रहेका भर्नाकर्ता · दोहाका नेपालीलाई र पोखराको परिवारका लागि",
+    hari: "विदेशमा रहेका आवेदक · दोहामा बस्ने नेपाली कामदार",
   },
   otp: {
     title: "नम्बर प्रमाणित गर्नुहोस्",
@@ -3012,6 +3022,10 @@ export const ne: Dict = {
     paid: (p: P, m: M) => `${m(p.amount)} एस्क्रोमा जम्मा`,
     delivered: (p: P, m: M) => `${m(p.amount)} को काम बुझाइयो — छोड्न तयार`,
     released: (p: P, m: M) => `${m(p.amount)} छोडियो (शुल्कपछि ${m(p.net)})`,
+    abroad_applied: (p: P) => `${p.name} ले विदेशको काममा आवेदन दिनुभयो: ${p.job}`,
+    abroad_hired: (p: P, m: M) => `तपाईं छानिनुभयो: ${p.job}। ${m(p.amount)} एस्क्रोमा छ`,
+    abroad_declined: (p: P) => `यसपटक छानिनुभएन: ${p.job}`,
+    abroad_filled: (p: P) => `सबै जना पुगे: ${p.job}`,
     dispute_opened: () => `विवाद खोलियो — भुक्तानी रोकियो`,
     dispute_redo: () => `विवाद समाधान: फेरि काम मिलाइयो`,
     dispute_refund: () => `विवाद समाधान: एस्क्रो भर्नाकर्तालाई फिर्ता`,

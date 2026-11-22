@@ -2,6 +2,7 @@ import "server-only";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { config } from "@/lib/config";
 import type {
+  AbroadJob,
   Bid,
   Block,
   Booking,
@@ -182,6 +183,9 @@ async function syncPasskeys(userId: string, passkeys: Passkey[]) {
 
 type BaseMethods = Omit<
   Store,
+  | "listAbroadJobs"
+  | "getAbroadJob"
+  | "putAbroadJob"
   | "listReports"
   | "putReport"
   | "listBlocks"
@@ -453,6 +457,7 @@ type TRow = {
   flexible: boolean;
   family_country: string | null;
   family_name: string | null;
+  abroad: Task["abroad"] | null;
   photos: StoredFile[];
   ai_source: Task["aiSource"];
   status: Task["status"];
@@ -486,6 +491,7 @@ const toT = (r: TRow): Task => ({
   forFamilyAbroad: r.family_country
     ? { country: r.family_country, familyName: r.family_name ?? "" }
     : undefined,
+  abroad: r.abroad ?? undefined,
   photos: r.photos ?? [],
   aiSource: r.ai_source,
   status: r.status,
@@ -518,6 +524,7 @@ const fromT = (t: Task): TRow => ({
   flexible: t.flexible,
   family_country: t.forFamilyAbroad?.country ?? null,
   family_name: t.forFamilyAbroad?.familyName ?? null,
+  abroad: t.abroad ?? null,
   photos: t.photos,
   ai_source: t.aiSource,
   status: t.status,
@@ -1320,6 +1327,7 @@ const safetyMethods = {
       ok(await db().from("bookings").delete().in("id", bIds));
     }
     ok(await db().from("requests").delete().eq("is_example", true));
+    ok(await db().from("abroad_jobs").delete().eq("is_demo", true));
     // Remaining rows (requests, bids, conversations, messages, notifications, payouts, credit, reports, blocks,
     // verifications) cascade from users; demo users are re-created by resetDemo afterwards.
   },
@@ -1335,8 +1343,27 @@ const safetyMethods = {
   | "purgeDemoData"
 >;
 
+const abroadMethods = {
+  async listAbroadJobs() {
+    return (ok(await db().from("abroad_jobs").select("data")) as { data: AbroadJob }[]).map((r) => r.data);
+  },
+  async getAbroadJob(id: string) {
+    const row = ok(await db().from("abroad_jobs").select("data").eq("id", id).maybeSingle()) as {
+      data: AbroadJob;
+    } | null;
+    return row?.data ?? null;
+  },
+  async putAbroadJob(j: AbroadJob) {
+    ok(
+      await db().from("abroad_jobs").upsert({ id: j.id, client_id: j.clientId, is_demo: j.isDemo, data: j }),
+    );
+    return j;
+  },
+} satisfies Pick<Store, "listAbroadJobs" | "getAbroadJob" | "putAbroadJob">;
+
 export const supabaseStore: Store = {
   ...base,
+  ...abroadMethods,
   ...verificationMethods,
   ...taskMethods,
   ...bookingMethods,

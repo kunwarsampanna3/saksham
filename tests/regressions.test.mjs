@@ -49,7 +49,7 @@ function storedId(inMs) {
     Object.assign(
       db.verifications.find((v) => v.userId === user && v.kind === "id"),
       {
-        purgeAfter: new Date(Date.now() + inMs).toISOString(),
+        purgeAfter: new Date(Date.now() + (typeof inMs === "function" ? inMs() : inMs)).toISOString(),
         files: [{ id: file.id, path: rel, mime: "image/jpeg", size: 10, label: "front" }],
       },
     );
@@ -359,12 +359,13 @@ describe("verification", () => {
   });
 
   test("16 an expired ID photo is not served", async (t) => {
-    const { file, prepare } = storedId(6000);
+    const expires = Date.now() + 25_000; // long enough for a slow machine to start and sign in
+    const { file, prepare } = storedId(() => expires - Date.now());
     const app = await App.create(t, { prepare });
     const admin = await app.login("admin");
     const url = `/api/verification/file/${file.id}?user=${app.users.pro2.id}`;
     assert.equal((await app.call(url, null, admin)).status, 200, "served until it expires");
-    await sleep(6000);
+    await sleep(expires - Date.now() + 500);
     assert.equal((await app.call(url, null, admin)).status, 404);
   });
 

@@ -2,6 +2,9 @@ import type { Metadata } from "next";
 import { CreditCard, HeartHandshake, MessageSquareText, ShieldCheck } from "lucide-react";
 import { Contours } from "@/components/contours";
 import { AbroadPlanner } from "@/components/abroad/planner";
+import { JobsBoard } from "@/components/abroad/jobs-board";
+import { OptionCards, type AbroadChoice } from "@/components/abroad/option-cards";
+import { ensureAbroadDemo } from "@/lib/seed/abroad-demo";
 import { requireUser } from "@/lib/auth/current-user";
 import { getDict } from "@/lib/i18n/server";
 
@@ -9,8 +12,19 @@ export const metadata: Metadata = { title: "Hire from abroad" };
 
 const ICONS = [MessageSquareText, ShieldCheck, HeartHandshake, CreditCard];
 
-export default async function AbroadPage() {
-  const [user, { t }] = await Promise.all([requireUser("/abroad"), getDict()]);
+export default async function AbroadPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ for?: string; country?: string }>;
+}) {
+  const [user, { t, lang }, sp] = await Promise.all([requireUser("/abroad"), getDict(), searchParams]);
+  if (user.isDemo) await ensureAbroadDemo();
+  const choice: AbroadChoice =
+    sp.for === "workers" || sp.for === "family"
+      ? sp.for
+      : user.activeRole === "provider"
+        ? "workers"
+        : "family";
   const a = t.abroad2;
   const s = a.simple;
   return (
@@ -22,16 +36,26 @@ export default async function AbroadPage() {
           aria-hidden
           className="deva-giant absolute top-2 -right-4 text-[7rem] sm:text-[11rem]"
         >
-          परिवार
+          {choice === "family" ? "परिवार" : "परदेश"}
         </span>
         <div className="relative mx-auto max-w-[88rem] px-4 pt-10 pb-8 sm:px-6">
           <p className="text-accent text-xs font-bold tracking-wider uppercase">{s.kicker}</p>
           <h1 className="font-display text-4xl font-extrabold sm:text-5xl">{a.title}</h1>
-          <p className="text-muted mt-2 max-w-2xl text-lg">{a.lead}</p>
+          <p className="text-muted mt-2 max-w-2xl text-lg">
+            {choice === "family" ? a.lead : t.abroadJobs.options.workers.body}
+          </p>
         </div>
       </div>
 
-      <div className="mx-auto max-w-[88rem] space-y-8 px-4 py-10 sm:px-6">
+      <div className="mx-auto max-w-[88rem] px-4 pt-8 sm:px-6">
+        <OptionCards t={t} active={choice} />
+      </div>
+      {choice === "workers" && (
+        <div className="mx-auto max-w-[88rem] px-4 py-8 sm:px-6">
+          <JobsBoard t={t} lang={lang} user={user} country={sp.country} />
+        </div>
+      )}
+      <div hidden={choice !== "family"} className="mx-auto max-w-[88rem] space-y-8 px-4 py-8 sm:px-6">
         {/* the whole idea in four steps */}
         <ol className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {s.steps.map((st, i) => {

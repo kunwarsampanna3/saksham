@@ -41,7 +41,7 @@ export function taskCoords(
 }
 
 /** Demo personas map onto their example profiles for rating/jobs (sample stats, labelled Example). */
-const PERSONA_PROFILE: Record<string, string> = {
+export const PERSONA_PROFILE: Record<string, string> = {
   "9800000002": "bikash-tamang",
   "9800000003": "aasha-tailoring-group",
 };
@@ -258,6 +258,8 @@ export async function sameWorld(
 
 export async function canView(task: Task, viewer: User): Promise<boolean> {
   if (task.clientId === viewer.id) return true;
+  // A hire abroad shows a person's pay and workplace, so only the two of them see it.
+  if (task.abroad) return task.abroad.workerId === viewer.id;
   if (!(await sameWorld(task, viewer))) return false;
   return !task.womenOnly || canSeeWomenOnly(viewer);
 }

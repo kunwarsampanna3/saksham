@@ -112,6 +112,24 @@ Also landed early because later steps depend on them: the Claude integration (`/
 | Price table                                                                                                          | Example starting prices, editable by admins at /admin; plain code applies them                                                                                                                                                        |
 | Demo reset                                                                                                           | Admin button, DEMO_MODE only: wipes demo-account and example data and re-seeds it. Real accounts are untouched                                                                                                                        |
 
+## Hire from abroad
+
+Two options on `/abroad`:
+
+1. **For family in Nepal**: you are abroad, someone does the job for your family, and they confirm by a private link.
+2. **Hire Nepalis abroad**: post a job in another country with the number of workers needed. Each hire is paid by Visa
+   (sandbox test card) into escrow and released when that worker's job is done.
+
+A job leaves the open list when every place is filled, when the work of everyone hired is completed, or when the
+recruiter closes it. It stays on the recruiter's and the workers' profiles, and can be reopened if places are left.
+
+To try it with `DEMO_MODE=true`: sign in as Suman, open **Hire from abroad → Hire Nepalis abroad**, and follow
+"Try the whole thing". Admin → Demo reset starts it again.
+
+Before real use: connect a licensed card gateway (the app never takes card numbers) and get legal advice on the
+Foreign Employment Act. These jobs are only for Nepalis already living in that country. On Supabase, run
+`0016_abroad_jobs.sql`.
+
 ## Tests
 
 ```bash

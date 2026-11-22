@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import {
   ArrowLeft,
   MapPin,
@@ -44,6 +44,8 @@ export default async function TaskPage({ params }: { params: Params }) {
   const task = /^[\w-]{3,64}$/.test(id) ? await store.getTask(id) : null;
   // Women-only tasks are indistinguishable from missing ones for anyone who may not see them.
   if (!task || !(await canView(task, user))) notFound();
+  // A hire abroad is shown on its job, not as a task with offers.
+  if (task.abroad) redirect(`/abroad/jobs/${task.abroad.jobId}`);
 
   const k = t.task;
   const owner = isOwner(task, user);

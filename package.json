@@ -13,7 +13,7 @@
     "lint": "eslint .",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "test": "node --test --test-concurrency=1 tests/regressions.test.mjs"
+    "test": "node --test --test-concurrency=1 tests/regressions.test.mjs tests/abroad.test.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^1.9.0",

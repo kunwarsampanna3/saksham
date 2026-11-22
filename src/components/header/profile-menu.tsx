@@ -91,6 +91,7 @@ export function ProfileMenu({ user }: { user: PublicUser }) {
 
   const links = [
     { href: "/my-tasks", label: t.nav.myTasks, Icon: LayoutDashboard },
+    { href: `/profile/${user.id}`, label: t.abroadJobs.record.myProfile, Icon: UserRound },
     { href: "/wallet", label: t.nav.wallet, Icon: Wallet },
     { href: "/verification", label: t.nav.verification, Icon: ShieldCheck },
     { href: "/location", label: t.location.title, Icon: MapPin },

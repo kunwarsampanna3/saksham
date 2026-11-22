@@ -133,6 +133,21 @@ export const ABROAD_COUNTRIES = [
   "Other",
 ] as const;
 
+/** Countries for "hire Nepalis abroad": jobs need a real country, so there is no "Other". */
+export const JOB_COUNTRIES = [
+  "Qatar",
+  "UAE",
+  "Saudi Arabia",
+  "Kuwait",
+  "Malaysia",
+  "South Korea",
+  "Japan",
+  "Australia",
+  "UK",
+  "USA",
+] as const;
+export type JobCountry = (typeof JOB_COUNTRIES)[number];
+
 /**
  * EXAMPLE exchange rates (NPR per 1 unit of local currency), rounded, for showing a rough
  * local-currency figure only. Not live — the page says so. Payment is always in NPR.

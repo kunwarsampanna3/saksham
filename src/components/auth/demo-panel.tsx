@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Store, Laptop, Scissors, Plane, ChevronRight } from "lucide-react";
+import { Store, Laptop, Scissors, Plane, HardHat, ChevronRight } from "lucide-react";
 import { postJson, useI18n, useUser } from "@/components/providers";
 import type { PublicUser } from "@/lib/store/types";
 import { safeNext } from "@/lib/safe-next";
@@ -20,6 +20,7 @@ export function DemoPanel({ mpin, next }: { mpin: string; next?: string }) {
     { key: "bikash", name: "Bikash Tamang", sub: t.demo.bikash, Icon: Laptop },
     { key: "aasha", name: "Aasha's Tailoring Group", sub: t.demo.aasha, Icon: Scissors },
     { key: "suman", name: "Suman Gurung", sub: t.demo.suman, Icon: Plane },
+    { key: "hari", name: "Hari Thapa", sub: t.demo.hari, Icon: HardHat },
   ] as const;
 
   const go = async (persona: string) => {

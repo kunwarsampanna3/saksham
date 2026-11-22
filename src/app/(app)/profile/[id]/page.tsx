@@ -1,6 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
+import { AbroadWorkRecord } from "@/components/abroad/work-record";
+import { MemberProfile } from "@/components/abroad/member-profile";
+import { abroadRecord } from "@/lib/abroad";
+import { store } from "@/lib/store";
+import { PERSONA_PROFILE } from "@/lib/tasks";
 import QRCode from "qrcode";
 import {
   ArrowLeft,
@@ -38,9 +43,25 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
 export default async function Profile({ params }: { params: Params }) {
   const { id } = await params;
   const [viewer, { t, lang }] = await Promise.all([requireUser(`/profile/${id}`), getDict()]);
+  if (id === "me") redirect(`/profile/${viewer.id}`);
   const p = await findProvider(id);
+
+  // No service profile (recruiters, workers abroad, yourself): a simple profile with the work abroad record.
+  if (!p) {
+    const person = /^[0-9a-f-]{36}$/.test(id) ? await store.getUserById(id) : null;
+    if (!person || person.isDemo !== viewer.isDemo) notFound();
+    const self = person.id === viewer.id;
+    const { known, records } = await abroadRecord(person.id, viewer);
+    if (!self && !known) notFound();
+    return <MemberProfile person={person} records={records} self={self} t={t} lang={lang} />;
+  }
   // Example profiles are for the demo accounts only.
-  if (!p || (!p.isReal && !viewer.isDemo)) notFound();
+  if (!p.isReal && !viewer.isDemo) notFound();
+
+  // An example profile can belong to a demo account.
+  const personaPhone = Object.entries(PERSONA_PROFILE).find(([, slug]) => slug === p.id)?.[0];
+  const ownerId = p.isReal ? p.id : personaPhone ? (await store.getUserByPhone(personaPhone))?.id : undefined;
+  const workAbroad = ownerId ? (await abroadRecord(ownerId, viewer)).records : [];
 
   const b = t.browse,
     pr = t.profile;
@@ -234,6 +255,10 @@ export default async function Profile({ params }: { params: Params }) {
                 ))}
               </ul>
             </section>
+          )}
+
+          {workAbroad.length > 0 && (
+            <AbroadWorkRecord records={workAbroad} self={ownerId === viewer.id} t={t} lang={lang} />
           )}
 
           <section aria-labelledby="rev-h">

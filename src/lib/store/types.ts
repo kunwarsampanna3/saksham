@@ -144,6 +144,8 @@ export interface Task {
   dueDate?: string; // YYYY-MM-DD
   flexible: boolean;
   forFamilyAbroad?: { country: string; familyName: string };
+  /** One worker's hire on a "hire Nepalis abroad" job. Only the two of them can see this task. */
+  abroad?: { jobId: string; workerId: string; country: string };
   photos: StoredFile[];
   aiSource: "ai" | "fallback" | "manual";
   status: TaskStatus;
@@ -188,6 +190,45 @@ export interface Question {
 /* ------------------------------------------------------------------ money */
 export type PlanKind = "full" | "two" | "milestones";
 export type EscrowState = "scheduled" | "held" | "delivered" | "released" | "refunded";
+export interface AbroadApplication {
+  id: string;
+  userId: string;
+  name: string;
+  note: string;
+  status: "pending" | "hired" | "declined" | "withdrawn";
+  /** When they confirmed they live in that country and are allowed to work there. */
+  eligibleConfirmedAt: string;
+  /** Set when hired: this worker's task, which carries the escrow booking. */
+  taskId?: string;
+  createdAt: string;
+}
+
+/** "Hire Nepalis abroad": one job, one or more workers. */
+export interface AbroadJob {
+  id: string;
+  clientId: string;
+  clientName: string;
+  isDemo: boolean;
+  title: string;
+  titleNe?: string;
+  details: string;
+  detailsNe?: string;
+  category: string;
+  country: string;
+  city: string;
+  workersNeeded: number;
+  days: number;
+  /** NPR for the whole job, per worker */
+  payPerWorker: number;
+  applications: AbroadApplication[];
+  /** Closed by the recruiter before it was full */
+  closedAt?: string;
+  /** How many hires had finished when the recruiter reopened it */
+  reopenedAtDone?: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export type PayMethod = "esewa_sandbox" | "khalti_sandbox" | "card_sandbox";
 
 export interface Installment {
@@ -373,6 +414,11 @@ export interface Store {
   putPriceOverride(p: PriceOverride): Promise<PriceOverride>;
   /** Admin "Reset demo": remove everything created by demo accounts and example data. */
   purgeDemoData(demoUserIds: string[]): Promise<void>;
+
+  /* hire Nepalis abroad */
+  listAbroadJobs(): Promise<AbroadJob[]>;
+  getAbroadJob(id: string): Promise<AbroadJob | null>;
+  putAbroadJob(j: AbroadJob): Promise<AbroadJob>;
 
   /* wallet */
   listPayouts(userId: string): Promise<Payout[]>;
