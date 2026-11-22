@@ -14,7 +14,7 @@ export default function Credits() {
       <h1 className="font-display mt-8 text-4xl font-extrabold">Photo credits</h1>
       <p className="mt-3 text-muted">
         Saksham only uses its own, consented, or openly licensed photos. Stand-in photos are labelled
-        “Sample photo” and are never presented as real providers or testimonials. The photos below come from
+        “Sample photo” and are never presented as real applicants or testimonials. The photos below come from
         Wikimedia Commons and were resized and converted to WebP; CC BY-SA files are shared under the same licence.
       </p>
       <ul className="mt-8 divide-y divide-line border-y border-line">

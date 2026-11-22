@@ -18,7 +18,7 @@ export default function Privacy() {
         <section><h2 className="font-display text-xl font-bold">How it is protected</h2>
           <p className="mt-2">Your MPIN is stored only as a secure hash. ID photos and selfies are kept in private storage, have location data removed, and are deleted 90 days after a decision. Phone numbers and emails are hidden from other users until you book each other.</p></section>
         <section><h2 className="font-display text-xl font-bold">How we use it</h2>
-          <p className="mt-2">To run your account, match tasks and providers, hold payments in escrow, keep people safe and resolve disputes. We send product updates or offers only if you ticked that box, and you can stop them at any time.</p></section>
+          <p className="mt-2">To run your account, match tasks and applicants, hold payments in escrow, keep people safe and resolve disputes. We send product updates or offers only if you ticked that box, and you can stop them at any time.</p></section>
         <section><h2 className="font-display text-xl font-bold">Saksham AI</h2>
           <p className="mt-2">When you use AI features, the text you type is sent to our AI provider to draft a task or answer a question. AI never decides prices, rankings, credit or payments.</p></section>
         <section><h2 className="font-display text-xl font-bold">Sharing</h2>

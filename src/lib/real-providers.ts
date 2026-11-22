@@ -24,8 +24,8 @@ export async function toRealProvider(u: User): Promise<ExampleProvider> {
     name: u.name,
     kind: "person",
     headline: {
-      en: u.headline ?? (skillNames.length ? skillNames.map((c) => c.en).slice(0, 3).join(" · ") : "Saksham provider"),
-      ne: u.headline ?? (skillNames.length ? skillNames.map((c) => c.ne).slice(0, 3).join(" · ") : "सक्षम सेवा प्रदायक"),
+      en: u.headline ?? (skillNames.length ? skillNames.map((c) => c.en).slice(0, 3).join(" · ") : "Saksham applicant"),
+      ne: u.headline ?? (skillNames.length ? skillNames.map((c) => c.ne).slice(0, 3).join(" · ") : "सक्षम आवेदक"),
     },
     bio: {
       en: `${u.name} offers ${skillNames.map((c) => c.en.toLowerCase()).join(", ") || "their skills"} in and around ${u.city}.`,
@@ -52,7 +52,7 @@ export async function toRealProvider(u: User): Promise<ExampleProvider> {
     portfolio: [],
     week: ALL_WEEK,
     reviews: ratings.slice(0, 6).map((r, i) => ({
-      by: raters[i]?.name.split(" ")[0] ?? "Client",
+      by: raters[i]?.name.split(" ")[0] ?? "Recruiter",
       stars: r.stars,
       text: { en: r.text, ne: r.text },
       monthsAgo: Math.max(0, Math.round((now - new Date(r.createdAt).getTime()) / (30 * 86_400_000))),

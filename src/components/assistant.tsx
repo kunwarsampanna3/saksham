@@ -12,7 +12,7 @@ const PAGES: [RegExp, string][] = [
   [/^\/post/, "Post a task wizard"], [/^\/task\//, "Task page with offers"], [/^\/payments\//, "Escrow payment schedule"],
   [/^\/wallet/, "Wallet, Earnings Passport and Saksham Credit"], [/^\/verification/, "Identity verification"],
   [/^\/safety/, "Safety and SOS"], [/^\/abroad/, "Hire from abroad"], [/^\/explore/, "Browse tasks map"],
-  [/^\/professionals/, "Browse providers"], [/^\/messages/, "Messages"], [/^\/my-tasks/, "My tasks"], [/^\/$/, "Home"],
+  [/^\/professionals/, "Browse applicants"], [/^\/messages/, "Messages"], [/^\/my-tasks/, "My tasks"], [/^\/$/, "Home"],
 ];
 
 /** Floating Saksham AI help. Answers questions about using the app; it never changes anything. */
