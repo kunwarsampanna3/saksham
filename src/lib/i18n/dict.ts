@@ -879,6 +879,7 @@ export const en = {
     cameraDenied: "The camera is blocked. Upload a photo instead.",
     consentSelfie: "I agree that Saksham uses this selfie only to compare it with my ID.",
     selfieSim: "Demo account: face matching is simulated — no real comparison is made.",
+    selfieReview: "A reviewer compares your selfie with your ID photo, so verification isn't instant.",
     selfieReal:
       "Your selfie is compared with the face on your ID photo, on Saksham's own server. A clear match is verified at once; a close call goes to a reviewer.",
     pendingReal: "A Saksham reviewer checks this, usually within a day. We'll notify you.",
@@ -2603,6 +2604,7 @@ export const ne: Dict = {
     cameraDenied: "क्यामेरा रोकिएको छ। बरु फोटो अपलोड गर्नुहोस्।",
     consentSelfie: "यो सेल्फी मेरो परिचयपत्रसँग मिलाउन मात्र प्रयोग गर्न म सहमत छु।",
     selfieSim: "डेमो खाता: अनुहार मिलान नक्कली हो — वास्तविक तुलना हुँदैन।",
+    selfieReview: "जाँचकर्ताले तपाईंको सेल्फी परिचयपत्रको फोटोसँग तुलना गर्नुहुन्छ, त्यसैले तुरुन्त प्रमाणित हुँदैन।",
     selfieReal:
       "तपाईंको सेल्फी परिचयपत्रको फोटोसँग सक्षमकै सर्भरमा तुलना हुन्छ। स्पष्ट मिलेमा तुरुन्त प्रमाणित हुन्छ; नजिकको नतिजा जाँचकर्ताकहाँ जान्छ।",
     pendingReal: "सक्षमका जाँचकर्ताले प्रायः एक दिनभित्र जाँच्नुहुन्छ। हामी सूचना दिनेछौं।",

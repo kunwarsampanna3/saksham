@@ -37,6 +37,7 @@ export default async function VerificationPage() {
         <VerificationCenter
           initial={status}
           demoMode={config.demoMode}
+          faceMatch={config.faceMatch}
           role={role}
           city={user.city}
           area={user.area}

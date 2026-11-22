@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 
-/** Direct upload.wikimedia.org URL for a Commons file name (served through next/image, so the browser only talks to us). */
+/** Direct upload.wikimedia.org URL for a Commons file name. */
 export function commonsUrl(fileName: string): string {
   const name = fileName.replace(/ /g, "_");
   const h = createHash("md5").update(name).digest("hex");

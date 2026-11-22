@@ -8,7 +8,7 @@ import path from "node:path";
  *  - only own, consented, or commercially licensed photos;
  *  - stand-ins are labelled "Sample photo" on screen (isSample: true);
  *  - stock photos are never presented as real providers or testimonials.
- * Files are 1280–1600px WebP in /public/photos; next/image serves sized AVIF/WebP from them.
+ * Files are 1280–1600px WebP in /public/photos and are served as they are (no resizing on the server).
  * A photo whose file is missing renders the terrace graphic instead, so nothing breaks.
  */
 export interface Photo {

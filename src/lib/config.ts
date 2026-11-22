@@ -9,6 +9,11 @@ export const config = {
   sessionSecret: process.env.SESSION_SECRET ?? "",
   /** A header your proxy overwrites with the visitor's IP. Empty: no IP header is trusted (see auth/http.ts). */
   trustedIpHeader: process.env.TRUSTED_IP_HEADER ?? "",
+  /**
+   * Automatic selfie ↔ ID matching needs about 700 MB. FACE_MATCH=on/off decides; otherwise it is on,
+   * except on Render (512 MB on Free), where selfies go to admin review instead.
+   */
+  faceMatch: process.env.FACE_MATCH ? process.env.FACE_MATCH === "on" : process.env.RENDER !== "true",
   anthropicModel: process.env.ANTHROPIC_MODEL || "claude-opus-5-5",
   hasAnthropic: Boolean(process.env.ANTHROPIC_API_KEY),
   /** Outgoing email for sign-in codes (Resend key, or SMTP such as Gmail with an app password). */

@@ -155,8 +155,12 @@ Each test starts the app in a throwaway folder with invented users, so your `.da
 New → Web Service → this repo, instance type **Free**.
 
 - Build command: `npm ci --include=dev && npm run build`
-- Start command: `npx next start -p $PORT`
+- Start command: `node node_modules/next/dist/bin/next start -p $PORT` (not `npx` or `npm`: their wrapper process takes
+  about 86 MB of the 512 MB)
 - Environment: `NODE_VERSION=22`, `DEMO_MODE=true`, `SESSION_SECRET` (Generate), `SITE_PASSWORD` (12+ characters)
+
+To stay under 512 MB, photos are served without resizing, and on Render selfies go to Admin for review instead of the
+automatic face match. Set `FACE_MATCH=on` only on a server with 1 GB or more.
 
 Data resets whenever the free server restarts or sleeps. Testers share the demo admin, so never upload real IDs there.
 

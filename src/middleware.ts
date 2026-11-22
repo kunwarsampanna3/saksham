@@ -8,7 +8,7 @@ import { siteGate } from "@/lib/site-gate";
  * public legal pages and static assets needs a valid session cookie.
  * API routes do their own checks (they return JSON 401 rather than redirecting).
  */
-// The image optimizer fetches these bundled sample photos itself, without the password. Nothing private lives there.
+// Bundled sample photos skip the password. They are public in the repo; nothing private lives there.
 const SAMPLE_PHOTO = new RegExp("^/photos/[a-z0-9-]+[.]webp$");
 const NO_SESSION_CHECK = new RegExp(
   "^/(api|_next/image|photos|icon|manifest[.]webmanifest|sw[.]js|favicon[.]ico|robots[.]txt)",

@@ -4,11 +4,13 @@ import { uploadGuard, str, file } from "@/lib/auth/upload-guard";
 import { cleanImage, IdChangedError, saveFiles, submit, statusFor, UploadError } from "@/lib/verification";
 import { compareFaces, MATCH_BELOW, REVIEW_BELOW } from "@/lib/face-match";
 import { store } from "@/lib/store";
+import { config } from "@/lib/config";
 
 /**
  * Selfie match.
  *  - Real accounts: the face on the selfie is compared with the face on the ID photo, on our server.
  *    Clear match → verified. Close call or no face on the ID → a reviewer looks. Clear mismatch → retake.
+ *  - Face matching off (config.faceMatch): the model is never loaded, and a reviewer compares the two.
  *  - Demo accounts: no real ID photo exists, so the match is simulated and labelled.
  */
 export async function POST(req: NextRequest) {
@@ -40,7 +42,7 @@ export async function POST(req: NextRequest) {
     }
 
     const front = idRec.files.find((f) => f.label === "front");
-    const idPhoto = front ? await store.getFile(front.path) : null;
+    const idPhoto = front && config.faceMatch ? await store.getFile(front.path) : null;
     const r = idPhoto ? await compareFaces(idPhoto, clean) : { idFaces: 0, selfieFaces: 0, distance: null };
 
     if (idPhoto && r.selfieFaces === 0) return fail(422, "no_face", { field: "selfie" });

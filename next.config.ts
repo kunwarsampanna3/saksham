@@ -31,13 +31,9 @@ const nextConfig: NextConfig = {
   allowedDevOrigins: ["*.app.github.dev"],
   // Middleware sees /api uploads too; its default 10 MB limit would cut off uploads the routes accept (20 MB).
   experimental: { middlewareClientMaxBodySize: "21mb" },
-  images: {
-    formats: ["image/avif", "image/webp"],
-    remotePatterns: [
-      { protocol: "https", hostname: "*.supabase.co" },
-      { protocol: "https", hostname: "upload.wikimedia.org", pathname: "/wikipedia/commons/**" },
-    ],
-  },
+  // Serve photos as they are. Resizing them on the server peaked over 600 MB, which crashes a 512 MB host.
+  // They are already 1280–1600px WebP, so add new ones at that size.
+  images: { unoptimized: true },
   async headers() {
     return [
       {

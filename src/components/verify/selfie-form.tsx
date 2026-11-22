@@ -8,7 +8,12 @@ import { SelfieCamera } from "./selfie-camera";
 import { Consent, postForm, type FormProps, type StatusMap } from "./shared";
 
 /** Take a live selfie that is matched against the ID photo. */
-export function SelfieForm({ onDone, errText, demoMode }: FormProps & { demoMode: boolean }) {
+export function SelfieForm({
+  onDone,
+  errText,
+  demoMode,
+  faceMatch,
+}: FormProps & { demoMode: boolean; faceMatch: boolean }) {
   const { t } = useI18n();
   const v = t.verify;
   const isDemo = !!useUser().user?.isDemo;
@@ -56,7 +61,8 @@ export function SelfieForm({ onDone, errText, demoMode }: FormProps & { demoMode
         </p>
       ) : (
         <p className="flex items-start gap-2 text-sm">
-          <ScanFace size={16} aria-hidden className="text-accent mt-0.5 shrink-0" /> {v.selfieReal}
+          <ScanFace size={16} aria-hidden className="text-accent mt-0.5 shrink-0" />{" "}
+          {faceMatch ? v.selfieReal : v.selfieReview}
         </p>
       )}
       {camera ? (

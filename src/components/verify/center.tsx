@@ -41,12 +41,14 @@ const ICONS: Record<VerificationKind, LucideIcon> = {
 export function VerificationCenter({
   initial,
   demoMode,
+  faceMatch,
   role,
   city,
   area,
 }: {
   initial: StatusMap;
   demoMode: boolean;
+  faceMatch: boolean;
   role: KycRole;
   city: string;
   area?: string;
@@ -294,7 +296,12 @@ export function VerificationCenter({
                             (status.id.status === "not_started" || status.id.status === "rejected" ? (
                               <p className="text-danger text-sm font-semibold">{v.errors.id_first}</p>
                             ) : (
-                              <SelfieForm onDone={apply} errText={errText} demoMode={demoMode} />
+                              <SelfieForm
+                                onDone={apply}
+                                errText={errText}
+                                demoMode={demoMode}
+                                faceMatch={faceMatch}
+                              />
                             ))}
                           {k === "address" &&
                             (area ? (
