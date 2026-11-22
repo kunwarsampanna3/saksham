@@ -48,7 +48,7 @@ export function DemoPanel({ mpin, next }: { mpin: string; next?: string }) {
       <p className="text-muted mt-1 text-sm">{t.demo.body}</p>
       <ul className="mt-3 grid gap-2">
         {people.map(({ key, name, sub, Icon }) => (
-          <li key={key}>
+          <li key={key} className="min-w-0">
             <button
               type="button"
               onClick={() => void go(key)}
