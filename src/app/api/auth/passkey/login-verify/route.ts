@@ -5,6 +5,7 @@ import { b64url, rp, takeChallenge } from "@/lib/auth/passkey";
 import { store, toPublicUser } from "@/lib/store";
 import { lockRemainingSeconds } from "@/lib/auth/mpin";
 import { startSession } from "@/lib/auth/session";
+import { config } from "@/lib/config";
 
 export async function POST(req: NextRequest) {
   if (!sameOrigin(req)) return fail(403, "bad_origin");
@@ -19,6 +20,7 @@ export async function POST(req: NextRequest) {
   }
   const user = await store.getUserByPasskeyId(body.response?.id ?? "");
   if (!user) return fail(401, "passkey_unknown");
+  if (config.publicDemo && !user.isDemo) return fail(403, "public_demo");
   if (lockRemainingSeconds(user) > 0) return fail(423, "locked", { retryAfter: lockRemainingSeconds(user) });
   const pk = user.passkeys.find((p) => p.id === body.response.id)!;
 

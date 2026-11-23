@@ -8,7 +8,7 @@ import { burnTime, tryMpin } from "@/lib/auth/mpin";
 import { startSession } from "@/lib/auth/session";
 import { withLock } from "@/lib/lock";
 import { rateLimit } from "@/lib/auth/rate-limit";
-import { policy } from "@/lib/config";
+import { config, policy } from "@/lib/config";
 
 const Body = z
   .object({ ...targetFields, mpin: mpinSchema })
@@ -27,6 +27,8 @@ export async function POST(req: NextRequest) {
   if (!perPhone.ok) return fail(429, "rate_limited", { retryAfter: perPhone.retryAfter });
 
   const user = await userByTarget(phone);
+  // The example accounts are public on an open demo; every other account stays closed.
+  if (config.publicDemo && !user?.isDemo) return fail(403, "public_demo");
   if (!user) {
     // Counted one by one like real accounts, so parallel guesses look the same too.
     return withLock(`mpin:ghost:${phone}`, async () => {

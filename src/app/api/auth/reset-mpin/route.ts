@@ -8,12 +8,14 @@ import { clearVerifiedTicket, readVerifiedTicket } from "@/lib/auth/otp";
 import { startSession } from "@/lib/auth/session";
 import { withLock } from "@/lib/lock";
 import { userByTarget } from "@/lib/auth/target";
+import { config } from "@/lib/config";
 
 const Body = z.object({ mpin: mpinSchema });
 
 export async function POST(req: NextRequest) {
   const g = await guard(req, { name: "reset-mpin", schema: Body, limit: 5, windowSec: 60 });
   if ("res" in g) return g.res;
+  if (config.publicDemo) return fail(403, "public_demo");
 
   const ticket = await readVerifiedTicket("reset");
   if (!ticket) return fail(401, "otp_required");

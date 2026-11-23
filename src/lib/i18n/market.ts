@@ -134,6 +134,13 @@ export const marketEn = {
       declined_demo: "Declined (demo)",
     },
   },
+  publicDemo: {
+    banner:
+      "Public demo: other visitors see what you type, and it's erased often. Don't use real names, numbers or money details.",
+    title: "Try Saksham",
+    lead: "This is a public demo. Tap an example account to sign in. Sign-up is off here.",
+    off: "That's off on the public demo. Use the example accounts.",
+  },
   blocked: {
     maintenance: {
       title: "Saksham is paused for a short while",
@@ -286,6 +293,13 @@ export const marketNe: typeof marketEn = {
       approved_demo: "स्वीकृत (डेमो)",
       declined_demo: "अस्वीकृत (डेमो)",
     },
+  },
+  publicDemo: {
+    banner:
+      "सार्वजनिक डेमो: तपाईंले लेखेको अरू आगन्तुकले देख्छन्, र यो छिटोछिटो मेटिन्छ। वास्तविक नाम, नम्बर वा पैसाको विवरण नराख्नुहोस्।",
+    title: "सक्षम चलाएर हेर्नुहोस्",
+    lead: "यो सार्वजनिक डेमो हो। साइन इन गर्न नमुना खातामा थिच्नुहोस्। यहाँ नयाँ खाता खोल्न मिल्दैन।",
+    off: "सार्वजनिक डेमोमा यो बन्द छ। नमुना खाता प्रयोग गर्नुहोस्।",
   },
   blocked: {
     maintenance: {

@@ -6,6 +6,8 @@ import { LangSwitch, ThemeToggle } from "@/components/prefs-controls";
 import { AdminNav } from "@/components/admin/admin-nav";
 import { requireAdmin } from "@/lib/admin";
 import { getDict } from "@/lib/i18n/server";
+import { config } from "@/lib/config";
+import { PublicDemoNote } from "@/components/public-demo-note";
 
 export const metadata: Metadata = { title: "Admin", robots: { index: false, follow: false } };
 
@@ -15,6 +17,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   const d = t.adminDash;
   return (
     <>
+      {config.publicDemo && <PublicDemoNote t={t} />}
       <header className="border-line bg-surface border-b">
         <a href="#main" className="skip-link">
           {t.nav.skip}

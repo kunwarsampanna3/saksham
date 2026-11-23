@@ -4,6 +4,11 @@ import "server-only";
 export const config = {
   /** Demo affordances: one-tap accounts, on-screen sandbox OTP, demo reset. Off in production. */
   demoMode: process.env.DEMO_MODE === "true",
+  /**
+   * An open demo anyone can use: only the example accounts sign in, there is no sign-up or MPIN reset, nothing can
+   * be uploaded, and the demo admin can't switch the site off or lock accounts. Needs DEMO_MODE=true.
+   */
+  publicDemo: process.env.DEMO_MODE === "true" && process.env.PUBLIC_DEMO === "true",
   isProd: process.env.NODE_ENV === "production",
   appOrigin: process.env.APP_ORIGIN || process.env.RENDER_EXTERNAL_URL || "http://localhost:3000",
   sessionSecret: process.env.SESSION_SECRET ?? "",

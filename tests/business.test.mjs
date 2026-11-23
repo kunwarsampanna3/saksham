@@ -953,3 +953,50 @@ describe("Claude: match and coach", () => {
     assert.equal(fake.seen.length, 2);
   });
 });
+
+describe("open public demo", () => {
+  const open = { RENDER: "true", PUBLIC_DEMO: "true" };
+
+  test("anyone can open it, and only the example accounts work", async (t) => {
+    const app = await App.create(t, { demo: true, env: open });
+    const home = await app.call("/");
+    assert.equal(home.status, 200);
+    assert.match(home.text, /data-public-demo/);
+    assert.match((await app.call("/login")).text, /Tap an example account/);
+    assert.equal((await app.call("/signup")).status, 307);
+    assert.equal((await app.call("/forgot-mpin")).status, 307);
+
+    for (const purpose of ["signup", "reset"]) {
+      const r = await app.call("/api/auth/otp/request", { phone: "9812121212", purpose });
+      assert.equal(r.json.error, "public_demo", purpose);
+    }
+    const real = await app.call("/api/auth/login", { phone: app.users.client.phone, mpin: "7391" });
+    assert.equal(real.json.error, "public_demo", "real accounts stay closed");
+
+    const mina = (await app.call("/api/auth/demo", { persona: "mina" })).cookie;
+    assert.equal((await app.call("/wallet", null, mina)).status, 200);
+    const form = new FormData();
+    form.set("docType", "passport");
+    const upload = await app.call("/api/verification/id", form, mina);
+    assert.equal(upload.json.error, "public_demo", "nothing can be uploaded");
+
+    const manage = (body) => app.call("/api/admin/manage", body, mina);
+    const controls = { action: "controls", signups: true, posting: true, applying: true, maintenance: true, maxOnline: 0 };
+    assert.equal((await manage(controls)).json.error, "public_demo", "can't switch the site off");
+    const bikash = app.db().users.find((u) => u.name === "Bikash Tamang");
+    const suspend = { action: "suspend", userId: bikash?.id ?? randomUUID(), reason: "test" };
+    assert.equal((await manage(suspend)).json.error, "public_demo");
+    assert.equal((await app.call("/admin", null, mina)).status, 200, "can still look around");
+  });
+
+  test("without PUBLIC_DEMO a demo on Render stays locked, and a password still wins", async (t) => {
+    const locked = await App.create(t, { demo: true, env: { RENDER: "true" } });
+    assert.equal((await locked.call("/")).status, 503);
+    await locked.stop();
+    const withPassword = await App.create(t, {
+      demo: true,
+      env: { ...open, SITE_PASSWORD: "a-long-test-password-123" },
+    });
+    assert.equal((await withPassword.call("/")).status, 401);
+  });
+});

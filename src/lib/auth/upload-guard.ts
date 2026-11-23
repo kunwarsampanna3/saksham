@@ -4,6 +4,7 @@ import { fail, pausedFor, sameOrigin } from "./http";
 import { rateLimit } from "./rate-limit";
 import { currentUser } from "./current-user";
 import type { User } from "@/lib/store/types";
+import { config } from "@/lib/config";
 
 /** Guard for multipart uploads: same origin, signed in, rate-limited per account. */
 export async function uploadGuard(
@@ -11,6 +12,8 @@ export async function uploadGuard(
   name: string,
 ): Promise<{ user: User; form: FormData } | { res: Response }> {
   if (!sameOrigin(req)) return { res: fail(403, "bad_origin") };
+  // On an open demo every visitor shares the example accounts, so an upload would be shown to strangers.
+  if (config.publicDemo) return { res: fail(403, "public_demo") };
   const user = await currentUser();
   if (!user) return { res: fail(401, "signed_out") };
   const paused = await pausedFor(user);

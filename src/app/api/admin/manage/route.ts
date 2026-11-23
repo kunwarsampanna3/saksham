@@ -7,6 +7,7 @@ import { withLock } from "@/lib/lock";
 import { notify } from "@/lib/chat";
 import { getControls } from "@/lib/controls";
 import { cleanText } from "@/lib/task-api";
+import { config } from "@/lib/config";
 import { canManage, canManagePost, canSeePrivate, logAdmin } from "@/lib/admin";
 
 const reason = z.string().trim().min(3, "reason").max(300, "reason");
@@ -47,6 +48,9 @@ export async function POST(req: NextRequest) {
   const d = g.data;
   const at = new Date().toISOString();
   const done = () => NextResponse.json({ ok: true });
+  // On an open demo anyone can be the demo admin: they may look around, not switch the site off or lock accounts.
+  if (config.publicDemo && me.isDemo && ["controls", "suspend", "unsuspend", "sign-out"].includes(d.action))
+    return fail(403, "public_demo");
 
   switch (d.action) {
     case "suspend":

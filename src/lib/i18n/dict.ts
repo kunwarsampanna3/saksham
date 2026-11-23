@@ -230,6 +230,7 @@ export const en = {
     loading: "Loading…",
   },
   errors: {
+    public_demo: marketEn.publicDemo.off,
     phone_invalid: "Enter a valid Nepali mobile number (starts with 97 or 98).",
     email_invalid: "Enter a valid email address, like name@gmail.com.",
     mpin_format: "MPIN is 4 digits.",
@@ -918,6 +919,7 @@ export const en = {
       "Deleted 90 days after a decision. You can remove them any time.",
     ],
     errors: {
+      public_demo: marketEn.publicDemo.off,
       file_type: "Use a JPG, PNG or WebP photo.",
       file_too_big: "That photo is too large (8 MB max).",
       file_small: "That photo is too small to read. Use a clearer one.",
@@ -1745,6 +1747,7 @@ export const en = {
     back: "Conversations",
     start: "Message",
     errors: {
+      public_demo: marketEn.publicDemo.off,
       file_type: "That file type isn't supported.",
       file_too_big: "That file is too large.",
       generic: "Couldn't send. Try again.",
@@ -1994,6 +1997,7 @@ export const ne: Dict = {
     loading: "लोड हुँदैछ…",
   },
   errors: {
+    public_demo: marketNe.publicDemo.off,
     phone_invalid: "सही नेपाली मोबाइल नम्बर लेख्नुहोस् (९७ वा ९८ बाट सुरु)।",
     email_invalid: "name@gmail.com जस्तो सही इमेल ठेगाना लेख्नुहोस्।",
     mpin_format: "MPIN ४ अंकको हुन्छ।",
@@ -2657,6 +2661,7 @@ export const ne: Dict = {
       "निर्णयको ९० दिनपछि मेटाइन्छ। तपाईं जुनसुकै बेला हटाउन सक्नुहुन्छ।",
     ],
     errors: {
+      public_demo: marketNe.publicDemo.off,
       file_type: "JPG, PNG वा WebP फोटो प्रयोग गर्नुहोस्।",
       file_too_big: "फोटो धेरै ठूलो भयो (बढीमा ८ MB)।",
       file_small: "फोटो पढ्न नसकिने गरी सानो छ। अझ स्पष्ट फोटो पठाउनुहोस्।",
@@ -3448,6 +3453,7 @@ export const ne: Dict = {
     back: "कुराकानीहरू",
     start: "सन्देश",
     errors: {
+      public_demo: marketNe.publicDemo.off,
       file_type: "यो फाइल प्रकार मिल्दैन।",
       file_too_big: "फाइल धेरै ठूलो भयो।",
       generic: "पठाउन सकिएन। फेरि प्रयास गर्नुहोस्।",

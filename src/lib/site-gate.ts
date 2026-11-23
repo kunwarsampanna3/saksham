@@ -3,7 +3,8 @@
  * Runs in middleware, so it must stay free of Node-only imports.
  *
  * - SITE_PASSWORD set: every request needs it (browser's own password box; any username).
- * - Not set on Render while DEMO_MODE=true: locked, because demo mode gives away admin and sign-in codes.
+ * - Not set on Render while DEMO_MODE=true: locked, because demo mode gives away admin and sign-in codes,
+ *   unless PUBLIC_DEMO=true: then it's open, and the app allows only the example accounts (see config.publicDemo).
  * - Not set anywhere else (your laptop): no password.
  */
 const MIN_LENGTH = 12;
@@ -33,8 +34,11 @@ function sentPassword(header: string | null): string | null {
 export async function siteGate(authorization: string | null): Promise<Response | null> {
   const password = process.env.SITE_PASSWORD ?? "";
   if (!password) {
-    const publicDemo = process.env.RENDER === "true" && process.env.DEMO_MODE === "true";
-    return publicDemo ? deny(503, "Locked: set SITE_PASSWORD before sharing this demo.") : null;
+    const demoOnRender = process.env.RENDER === "true" && process.env.DEMO_MODE === "true";
+    const openOnPurpose = process.env.PUBLIC_DEMO === "true";
+    return demoOnRender && !openOnPurpose
+      ? deny(503, "Locked: set SITE_PASSWORD, or PUBLIC_DEMO=true for an open demo with example accounts only.")
+      : null;
   }
   if (password.length < MIN_LENGTH)
     return deny(503, `Locked: SITE_PASSWORD needs at least ${MIN_LENGTH} characters.`);
