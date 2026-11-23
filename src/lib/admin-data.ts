@@ -108,7 +108,10 @@ export async function moneyOverview() {
     .sort((a, b) => b.post.paidAt.localeCompare(a.post.paidAt));
 
   const postFees = posting.reduce((n, p) => n + p.post.fee, 0);
-  const withdrawFees = payouts.reduce((n, p) => n + (p.fee ?? 0), 0);
+  // Only withdrawals that were sent earned their 7%; waiting or rejected ones haven't.
+  const withdrawFees = payouts
+    .filter((p) => p.status === "sent_sandbox")
+    .reduce((n, p) => n + (p.fee ?? 0), 0);
   const releaseFees = receipts.filter((r) => r.kind === "release").reduce((n, r) => n + r.fee, 0);
   const toAccounts = sumPieces(
     bookings.filter((b) => !b.providerIsExample),
@@ -129,7 +132,12 @@ export async function moneyOverview() {
       bookings.filter((b) => b.status === "active"),
       "scheduled",
     ),
-    inWallets: Math.max(0, toAccounts - releaseFees - payouts.reduce((n, p) => n + p.amount, 0)),
+    inWallets: Math.max(
+      0,
+      toAccounts -
+        releaseFees -
+        payouts.filter((p) => p.status !== "rejected").reduce((n, p) => n + p.amount, 0),
+    ),
   };
 }
 

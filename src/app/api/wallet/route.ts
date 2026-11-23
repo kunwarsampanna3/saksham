@@ -35,7 +35,7 @@ export async function POST(req: NextRequest) {
     return await withLock(`wallet:${user.id}`, async () => {
       if (g.data.action === "payout") {
         const p = await requestPayout(user, g.data.amount, g.data.method);
-        return NextResponse.json({ ok: true, id: p.id, ref: p.ref, fee: p.fee ?? 0 });
+        return NextResponse.json({ ok: true, id: p.id, ref: p.ref, fee: p.fee ?? 0, payoutStatus: p.status });
       }
       const a = await applyForCredit(
         user,

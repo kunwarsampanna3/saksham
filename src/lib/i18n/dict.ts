@@ -52,6 +52,7 @@ export const en = {
     notifications: "Notifications",
     profile: "Profile",
     admin: "Admin",
+    superAdmin: "Super Admin",
     search: "Search tasks or skills",
     searchShort: "Search",
     more: "More",
@@ -1300,6 +1301,8 @@ export const en = {
       busy: marketEn.blocked.busy.title,
       bad_state: "That step isn't available right now.",
       booking_locked: "Payments are frozen while a dispute is open.",
+      finance_hold:
+        "Saksham's finance team put this booking on hold for a review. Money stays safe in escrow until it is lifted.",
       reason: "Describe the problem in at least 10 characters.",
       forbidden: "Not allowed.",
       not_found: "Not found.",
@@ -1336,6 +1339,14 @@ export const en = {
     dispute_refund: () => `Dispute resolved: escrow refunded to the recruiter`,
     message_new: (p: P) => `New message from ${p.from}`,
     payout_sent: (p: P, m: M) => `${m(p.amount)} sent to your wallet (sandbox)`,
+    payout_requested: (p: P, m: M) =>
+      `Withdrawal of ${m(p.amount)} requested. Saksham's finance team will review it.`,
+    booking_on_hold: (p: P) =>
+      `Saksham's finance team put booking ${p.booking} on hold for a review. Money stays in escrow.`,
+    booking_hold_lifted: (p: P) => `The review of booking ${p.booking} is finished. Payments can continue.`,
+    payout_on_hold: (p: P, m: M) => `Your withdrawal of ${m(p.amount)} is on hold for a review`,
+    payout_rejected: (p: P, m: M) =>
+      `Your withdrawal of ${m(p.amount)} was not sent: ${p.reason}. The money is back in your balance.`,
     credit_applied: (p: P, m: M) => `Credit application for ${m(p.amount)} submitted (demo partner)`,
     rated: (p: P) => `You received a ${p.stars}-star rating`,
     sos_demo: (p: P) => `SOS demo alert — in a real build ${p.contacts} trusted contact(s) would be alerted`,
@@ -1604,6 +1615,8 @@ export const en = {
     to: "To",
     withdrawSend: "Withdraw (sandbox)",
     withdrawn: (r: string) => `Sent — sandbox reference ${r}`,
+    withdrawRequested: (r: string) =>
+      `Requested — Saksham's finance team will review it before it is sent. Reference ${r}`,
     payouts: "Withdrawals",
     noPayouts: "No withdrawals yet.",
     receipts: "Receipts",
@@ -1822,6 +1835,7 @@ export const ne: Dict = {
     notifications: "सूचनाहरू",
     profile: "प्रोफाइल",
     admin: "एडमिन",
+    superAdmin: "सुपर एडमिन",
     search: "काम वा सीप खोज्नुहोस्",
     searchShort: "खोज",
     more: "थप",
@@ -3035,6 +3049,7 @@ export const ne: Dict = {
       busy: marketNe.blocked.busy.title,
       bad_state: "यो चरण अहिले उपलब्ध छैन।",
       booking_locked: "विवाद खुला हुँदा भुक्तानी रोकिन्छ।",
+      finance_hold: "सक्षमको वित्त टोलीले जाँचका लागि यो बुकिङ रोकेको छ। नखोलेसम्म पैसा एस्क्रोमा सुरक्षित रहन्छ।",
       reason: "समस्या कम्तीमा १० अक्षरमा लेख्नुहोस्।",
       forbidden: "अनुमति छैन।",
       not_found: "भेटिएन।",
@@ -3070,6 +3085,12 @@ export const ne: Dict = {
     dispute_refund: () => `विवाद समाधान: एस्क्रो भर्नाकर्तालाई फिर्ता`,
     message_new: (p: P) => `${p.from} बाट नयाँ सन्देश`,
     payout_sent: (p: P, m: M) => `${m(p.amount)} तपाईंको वालेटमा पठाइयो (स्यान्डबक्स)`,
+    payout_requested: (p: P, m: M) => `${m(p.amount)} झिक्न अनुरोध गरियो। सक्षमको वित्त टोलीले जाँच्नेछ।`,
+    booking_on_hold: (p: P) => `सक्षमको वित्त टोलीले बुकिङ ${p.booking} जाँचका लागि रोकेको छ। पैसा एस्क्रोमा रहन्छ।`,
+    booking_hold_lifted: (p: P) => `बुकिङ ${p.booking} को जाँच सकियो। भुक्तानी अघि बढ्न सक्छ।`,
+    payout_on_hold: (p: P, m: M) => `तपाईंको ${m(p.amount)} झिकाइ जाँचका लागि रोकिएको छ`,
+    payout_rejected: (p: P, m: M) =>
+      `तपाईंको ${m(p.amount)} झिकाइ पठाइएन: ${p.reason}। पैसा तपाईंको ब्यालेन्समा फर्कियो।`,
     credit_applied: (p: P, m: M) => `${m(p.amount)} को क्रेडिट आवेदन पठाइयो (डेमो साझेदार)`,
     rated: (p: P) => `तपाईंले ${toDeva(String(p.stars))} तारा रेटिङ पाउनुभयो`,
     sos_demo: (p: P) =>
@@ -3315,6 +3336,7 @@ export const ne: Dict = {
     to: "कहाँ",
     withdrawSend: "निकाल्नुहोस् (स्यान्डबक्स)",
     withdrawn: (r: string) => `पठाइयो — स्यान्डबक्स सन्दर्भ ${r}`,
+    withdrawRequested: (r: string) => `अनुरोध गरियो — पठाउनुअघि सक्षमको वित्त टोलीले जाँच्नेछ। सन्दर्भ ${r}`,
     payouts: "निकासीहरू",
     noPayouts: "अहिलेसम्म निकासी छैन।",
     receipts: "रसिदहरू",

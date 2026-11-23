@@ -16,6 +16,7 @@ import {
   Sparkles,
   UserRound,
   Wallet,
+  Landmark,
 } from "lucide-react";
 import { startRegistration } from "@simplewebauthn/browser";
 import { PASSKEY_FLAG } from "@/components/auth/login-form";
@@ -100,6 +101,7 @@ export function ProfileMenu({ user }: { user: PublicUser }) {
     { href: "/match", label: t.match.title, Icon: Sparkles },
     { href: "/safety", label: t.nav.safety, Icon: ShieldAlert },
     ...(user.isAdmin ? [{ href: "/admin", label: t.nav.admin, Icon: UserRound }] : []),
+    ...(user.isAdmin ? [{ href: "/superadmin", label: t.nav.superAdmin, Icon: Landmark }] : []),
   ];
 
   return (

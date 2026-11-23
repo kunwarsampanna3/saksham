@@ -167,6 +167,31 @@ posts, money, credit, trust & safety, and a log of admin changes.
 Numbers in `OWNER_PHONES` see and manage everyone. The demo admin (Mina) sees real accounts' contacts masked and
 can't change those accounts. Online counts are kept in memory, so they reset with the server.
 
+## Super Admin dashboard
+
+`/superadmin`: a separate dashboard with its own navy sidebar. Overview, Payment Management, Pending Releases,
+Applicant and Customer Management, Booking Management, Disputes, Transactions, Financial Reports (CSV downloads) and
+Settings (with the audit log).
+
+Only the admin account opens it: an account with `isAdmin`, or a number in `OWNER_PHONES`. It signs in on the normal
+login page. Everyone else gets 404, from the pages and from `/api/superadmin`. Money actions need the MPIN within 5
+minutes.
+
+- **The job money rules don't change.** 50% in → 30% to the applicant, 20% held; 50% in → 30% to the applicant, 40%
+  held; customer approval → the last 40%. Escrow is released only by those steps. The admin can _hold_ a booking
+  (its next release waits), never release escrow early.
+- **Withdrawals are reviewed.** An applicant's withdrawal waits in Pending Releases until the admin approves it
+  (sent, sandbox), rejects it with a reason (the money returns to their balance), or holds it. Settings has a switch
+  to send withdrawals at once, as before.
+- **Revenue** is only what Saksham earned: posting fees, the 7% on withdrawals that were sent, and the 7% that
+  bookings from before took at release. Escrow is never counted.
+- **History is never rewritten.** Every admin action is appended to `finance_events` (Supabase blocks updates and
+  deletes on it) and to the audit log.
+
+Demo: sign in as **Mina** (the demo admin), open `/superadmin`, then Settings → **Add sample bookings** for 9 bookings
+at different milestones and 3 withdrawals to review. All sandbox money; Admin → Reset demo removes them.
+With Supabase, run `supabase/migrations/0018_superadmin_finance.sql`.
+
 ## Tests
 
 ```bash

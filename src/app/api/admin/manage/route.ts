@@ -133,7 +133,8 @@ export async function POST(req: NextRequest) {
           (k) => before[k] !== wanted[k],
         );
         if (!changed.length) return done();
-        await store.putControls({ ...wanted, updatedAt: at, updatedBy: me.id });
+        // Keep switches this form doesn't show (Super Admin → Settings has the withdrawal review).
+        await store.putControls({ ...before, ...wanted, updatedAt: at, updatedBy: me.id });
         await logAdmin(me, "controls", "", changed.map((k) => `${k}=${wanted[k]}`).join(", "));
         return done();
       });

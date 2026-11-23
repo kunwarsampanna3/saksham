@@ -298,6 +298,8 @@ export interface Booking {
   method: PayMethod;
   status: BookingStatus;
   installments: Installment[];
+  /** Put on hold by the Super Admin: no money leaves escrow for the applicant until it is lifted. */
+  financeHold?: FinanceHold | null;
   /** Hire-from-abroad: family member in Nepal confirms work through a private link (token stored hashed). */
   family?: {
     name: string;
@@ -306,6 +308,13 @@ export interface Booking {
   };
   createdAt: string;
   updatedAt: string;
+}
+
+export interface FinanceHold {
+  at: string;
+  by: string;
+  byName: string;
+  reason: string;
 }
 
 export interface Receipt {
@@ -386,7 +395,43 @@ export interface Payout {
   method: PayMethod;
   /** sandbox reference — no real transfer in this build */
   ref: string;
-  status: "sent_sandbox";
+  /**
+   * requested / on_hold: waiting for the Super Admin (the amount is reserved from the balance).
+   * sent_sandbox: sent (sandbox). rejected: not sent, the amount is back in the balance.
+   */
+  status: PayoutStatus;
+  /** The Super Admin's decision on a reviewed withdrawal. */
+  review?: { at: string; by: string; byName: string; reason: string };
+  createdAt: string;
+}
+
+export type PayoutStatus = "requested" | "on_hold" | "sent_sandbox" | "rejected";
+
+/**
+ * One finance action by the Super Admin. Append-only: never edited or deleted,
+ * so the money history can always be traced to the person who acted.
+ */
+export interface FinanceEvent {
+  id: string;
+  adminId: string;
+  adminName: string;
+  action:
+    | "payout_approved"
+    | "payout_rejected"
+    | "payout_held"
+    | "booking_held"
+    | "booking_unheld"
+    | "dispute_redo"
+    | "dispute_refund";
+  bookingId?: string;
+  payoutId?: string;
+  userId?: string;
+  amount: number;
+  from: string;
+  to: string;
+  reason: string;
+  /** Reference of the money movement this caused, if any */
+  ref?: string;
   createdAt: string;
 }
 
@@ -429,6 +474,8 @@ export interface SiteControls {
   maintenance: boolean;
   /** Most people on the site at once. 0 means no limit. */
   maxOnline: number;
+  /** Withdrawals wait for the Super Admin. Missing means on. */
+  payoutReview?: boolean;
   updatedAt?: string;
   updatedBy?: string;
 }
@@ -512,6 +559,13 @@ export interface Store {
   listAbroadJobs(): Promise<AbroadJob[]>;
   getAbroadJob(id: string): Promise<AbroadJob | null>;
   putAbroadJob(j: AbroadJob): Promise<AbroadJob>;
+
+  /* Super Admin finance */
+  listFinanceEvents(): Promise<FinanceEvent[]>;
+  /** Insert only: an event with an id that already exists is an error. */
+  addFinanceEvent(e: FinanceEvent): Promise<FinanceEvent>;
+  listAllPayouts(): Promise<Payout[]>;
+  getPayout(id: string): Promise<Payout | null>;
 
   /* wallet */
   listPayouts(userId: string): Promise<Payout[]>;

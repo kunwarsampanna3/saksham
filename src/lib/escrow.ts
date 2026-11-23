@@ -148,6 +148,8 @@ export async function reportHalfDone(b: Booking, user: User) {
 export async function paySecondHalf(b: Booking, user: User) {
   if (roleIn(b, user) !== "client") throw new RuleError("forbidden", 403);
   if (b.status !== "active") throw new RuleError("booking_locked");
+  // This step releases money to the applicant, so a finance hold stops it.
+  if (b.financeHold) throw new RuleError("finance_hold", 409);
   if (b.plan !== "advance") throw new RuleError("bad_state");
   if (!b.halfDoneAt) throw new RuleError("half_not_reported");
   const finish = b.installments.find((i) => i.label === "finish")!;
@@ -212,6 +214,7 @@ export async function markDelivered(b: Booking, user: User, id: string) {
 export async function release(b: Booking, user: User, id: string) {
   if (roleIn(b, user) !== "client") throw new RuleError("forbidden", 403);
   if (b.status !== "active") throw new RuleError("booking_locked");
+  if (b.financeHold) throw new RuleError("finance_hold", 409);
   const i = inst(b, id);
   if (!isApprovable(b, i) || (i.state !== "held" && i.state !== "delivered"))
     throw new RuleError("bad_state");

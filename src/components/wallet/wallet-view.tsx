@@ -53,6 +53,8 @@ export interface WalletData extends CreditData {
     fee: number;
     method: "esewa_sandbox" | "khalti_sandbox" | "card_sandbox";
     ref: string;
+    status: "requested" | "on_hold" | "sent_sandbox" | "rejected";
+    reason: string;
     createdAt: string;
   }[];
   passport: Passport;
@@ -98,10 +100,15 @@ export function WalletView({
   /** money actions: MPIN first, retry once if the server says the MPIN is stale */
   const moneyPost = async (body: Record<string, unknown>) => {
     if (!(await ensureFresh()))
-      return { ok: false, error: "cancelled" } as { ok: boolean; error?: string; ref?: string };
-    let r = await postJson<{ ref?: string }>("/api/wallet", body);
+      return { ok: false, error: "cancelled" } as {
+        ok: boolean;
+        error?: string;
+        ref?: string;
+        payoutStatus?: string;
+      };
+    let r = await postJson<{ ref?: string; payoutStatus?: string }>("/api/wallet", body);
     if (!r.ok && r.error === "reauth_required" && (await ensureFresh()))
-      r = await postJson<{ ref?: string }>("/api/wallet", body);
+      r = await postJson<{ ref?: string; payoutStatus?: string }>("/api/wallet", body);
     return r;
   };
 
@@ -362,6 +369,16 @@ export function WalletView({
                     <span className="text-muted block text-xs">
                       {p.ref} · {npDate(p.createdAt, lang)}
                     </span>
+                    {p.status !== "sent_sandbox" && (
+                      <span
+                        className={`mt-1 block text-xs font-semibold ${p.status === "rejected" ? "text-danger" : "text-[var(--warn-text)]"}`}
+                        data-payout-status={p.status}
+                      >
+                        {p.status === "rejected" && p.reason
+                          ? t.market.withdraw.rejectedWhy(p.reason)
+                          : t.market.withdraw.status[p.status]}
+                      </span>
+                    )}
                   </li>
                 ))}
               </ul>
@@ -387,7 +404,9 @@ export function WalletView({
             const r = await moneyPost({ action: "payout", amount, method });
             if (r.ok) {
               setWithdrawOpen(false);
-              setNotice(w.withdrawn(r.ref ?? ""));
+              setNotice(
+                r.payoutStatus === "requested" ? w.withdrawRequested(r.ref ?? "") : w.withdrawn(r.ref ?? ""),
+              );
               router.refresh();
               return null;
             }

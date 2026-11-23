@@ -1,13 +1,14 @@
 import "server-only";
 import { randomBytes, randomUUID } from "node:crypto";
 import { store } from "@/lib/store";
-import type { Booking, CreditApplication, CreditKind, PayMethod, User } from "@/lib/store/types";
+import type { Booking, CreditApplication, CreditKind, PayMethod, Payout, User } from "@/lib/store/types";
 import { creditOffer, type CreditOffer } from "@/lib/rules";
 import { MIN_WITHDRAW, WITHDRAW_FEE_RATE, withdrawalFee } from "@/lib/business";
 import { getProvider } from "@/lib/seed/providers";
 import { config } from "@/lib/config";
 import { RuleError } from "@/lib/tasks";
 import { notify } from "@/lib/chat";
+import { getControls } from "@/lib/controls";
 
 /**
  * Wallet numbers are derived from escrow (bookings + receipts) — never typed in.
@@ -52,7 +53,16 @@ export interface WalletSummary {
     createdAt: string;
     role: "client" | "provider";
   }[];
-  payouts: { id: string; amount: number; fee: number; method: PayMethod; ref: string; createdAt: string }[];
+  payouts: {
+    id: string;
+    amount: number;
+    fee: number;
+    method: PayMethod;
+    ref: string;
+    status: Payout["status"];
+    reason: string;
+    createdAt: string;
+  }[];
   passport: Passport;
   examplePassport: Passport | null;
   credit: Record<CreditKind, CreditState>;
@@ -180,9 +190,12 @@ export async function walletFor(user: User): Promise<WalletSummary> {
     .reduce((a, r) => a + r.fee, 0);
   const releasedGross = sum(asProvider, ["released"]);
   const payouts = (await store.listPayouts(user.id)).sort((a, b) => b.createdAt.localeCompare(a.createdAt));
-  const paidOut = payouts.reduce((a, p) => a + p.amount, 0);
-  const withdrawFees = payouts.reduce((a, p) => a + (p.fee ?? 0), 0);
-  const taxedBefore = payouts.reduce((a, p) => a + (p.feeBase ?? 0), 0);
+  // A withdrawal waiting for the Super Admin keeps its amount reserved; a rejected one gives it back.
+  const reserved = payouts.filter(holdsBalance);
+  const sent = payouts.filter((p) => p.status === "sent_sandbox");
+  const paidOut = reserved.reduce((a, p) => a + p.amount, 0);
+  const withdrawFees = sent.reduce((a, p) => a + (p.fee ?? 0), 0);
+  const taxedBefore = reserved.reduce((a, p) => a + (p.feeBase ?? 0), 0);
   const balance = Math.max(0, releasedGross - releaseFees - paidOut);
   // Money that hasn't paid its 7% yet: released on bookings that don't charge at release.
   const taxable = sum(
@@ -214,7 +227,7 @@ export async function walletFor(user: User): Promise<WalletSummary> {
         asProvider.filter((b) => b.status === "active"),
         ["scheduled"],
       ),
-      received: paidOut - withdrawFees,
+      received: sent.reduce((a, p) => a + p.amount, 0) - withdrawFees,
       available: balance,
       untaxed,
       taxedBefore,
@@ -232,6 +245,8 @@ export async function walletFor(user: User): Promise<WalletSummary> {
       fee: p.fee ?? 0,
       method: p.method,
       ref: p.ref,
+      status: p.status,
+      reason: p.status === "rejected" ? (p.review?.reason ?? "") : "",
       createdAt: p.createdAt,
     })),
     passport,
@@ -277,6 +292,12 @@ export async function walletFor(user: User): Promise<WalletSummary> {
   };
 }
 
+/** Still counted against the balance: sent, or waiting for the Super Admin. */
+export const holdsBalance = (p: Pick<Payout, "status">) => p.status !== "rejected";
+
+/** Withdrawals wait for the Super Admin unless Super Admin → Settings turned that off. */
+export const payoutReviewOn = async () => (await getControls()).payoutReview !== false;
+
 /* ------------------------------------------------------------------ actions */
 export async function requestPayout(user: User, amount: number, method: PayMethod) {
   if (!user.roles.includes("provider")) throw new RuleError("provider_only", 403);
@@ -284,6 +305,7 @@ export async function requestPayout(user: User, amount: number, method: PayMetho
   if (amount < MIN_WITHDRAW) throw new RuleError("payout_min", 422, { field: "amount" });
   if (amount > w.provider.available) throw new RuleError("payout_too_much", 422, { field: "amount" });
   const { fee, feeBase } = withdrawalFee(amount, w.provider);
+  const review = await payoutReviewOn();
   const p = await store.putPayout({
     id: randomUUID(),
     userId: user.id,
@@ -292,10 +314,16 @@ export async function requestPayout(user: User, amount: number, method: PayMetho
     feeBase,
     method,
     ref: `${method === "esewa_sandbox" ? "ESEWA" : "KHALTI"}-PAYOUT-SBX-${randomBytes(4).toString("hex").toUpperCase()}`,
-    status: "sent_sandbox",
+    status: review ? "requested" : "sent_sandbox",
     createdAt: new Date().toISOString(),
   });
-  await notify(user.id, "payment", "payout_sent", { amount: p.amount - fee }, "/wallet");
+  await notify(
+    user.id,
+    "payment",
+    review ? "payout_requested" : "payout_sent",
+    { amount: p.amount - fee },
+    "/wallet",
+  );
   return p;
 }
 

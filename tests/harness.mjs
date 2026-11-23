@@ -73,7 +73,8 @@ function seed() {
       });
     }
   });
-  return { users, otps: [], verifications };
+  // Withdrawals are sent at once unless a test turns on the finance team's review (it is on by default in the app).
+  return { users, otps: [], verifications, controls: { payoutReview: false } };
 }
 
 export class App {

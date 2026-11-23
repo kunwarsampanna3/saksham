@@ -11,6 +11,7 @@ import type {
   Conversation,
   CreditApplication,
   Dispute,
+  FinanceEvent,
   Message,
   Notification,
   OtpRecord,
@@ -56,6 +57,8 @@ interface DB {
   controls?: SiteControls;
   traffic?: TrafficDay[];
   audit?: AuditEntry[];
+  /** Append-only, never trimmed: money history */
+  financeEvents?: FinanceEvent[];
 }
 /** The dashboard keeps this much history. */
 const KEEP = { trafficDays: 90, auditEntries: 1000 };
@@ -286,6 +289,22 @@ export const fileStore: Store = {
     db.abroadJobs = upsert(db.abroadJobs, j);
     await persist(db);
     return j;
+  },
+  async listFinanceEvents() {
+    return (await load()).financeEvents ?? [];
+  },
+  async addFinanceEvent(e) {
+    const db = await load();
+    if ((db.financeEvents ?? []).some((x) => x.id === e.id)) throw new Error("finance_event_exists");
+    db.financeEvents = [...(db.financeEvents ?? []), e];
+    await persist(db);
+    return e;
+  },
+  async listAllPayouts() {
+    return (await load()).payouts ?? [];
+  },
+  async getPayout(id) {
+    return ((await load()).payouts ?? []).find((p) => p.id === id) ?? null;
   },
   async listPayouts(userId) {
     return ((await load()).payouts ?? []).filter((p) => p.userId === userId);

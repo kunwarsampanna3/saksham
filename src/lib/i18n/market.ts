@@ -95,6 +95,13 @@ export const marketEn = {
     lowered: "Part of this balance paid its 7% when it was released, so it isn't charged again.",
     beforeFee: "Before the 7% fee",
     feeOf: (amount: string) => `7% fee: ${amount}`,
+    status: {
+      requested: "Waiting for review",
+      on_hold: "On hold for review",
+      sent_sandbox: "Sent (sandbox)",
+      rejected: "Not sent",
+    },
+    rejectedWhy: (reason: string) => `Not sent: ${reason}. The money is back in your balance.`,
   },
   credit: {
     tabs: { applicant: "As applicant", recruiter: "As recruiter" },
@@ -256,6 +263,13 @@ export const marketNe: typeof marketEn = {
     lowered: "यस रकमको केही भागको ७% पैसा छोड्दै कटिसकेकाले फेरि काटिँदैन।",
     beforeFee: "७% शुल्क काट्नुअघि",
     feeOf: (amount) => `७% शुल्क: ${amount}`,
+    status: {
+      requested: "जाँच हुँदै",
+      on_hold: "जाँचका लागि रोकिएको",
+      sent_sandbox: "पठाइयो (स्यान्डबक्स)",
+      rejected: "पठाइएन",
+    },
+    rejectedWhy: (reason) => `पठाइएन: ${reason}। पैसा तपाईंको ब्यालेन्समा फर्कियो।`,
   },
   credit: {
     tabs: { applicant: "आवेदकका रूपमा", recruiter: "भर्नाकर्ताका रूपमा" },

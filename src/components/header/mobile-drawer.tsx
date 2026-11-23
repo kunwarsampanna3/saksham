@@ -16,6 +16,7 @@ import {
   UserRound,
   Wallet,
   X,
+  Landmark,
 } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { LangSwitch, ThemeToggle } from "@/components/prefs-controls";
@@ -80,6 +81,7 @@ export function MobileDrawer({
         { href: "/safety", label: t.nav.safety, Icon: ShieldAlert },
         { href: "/contact", label: t.footer.contact, Icon: MessageCircleQuestion },
         ...(user.isAdmin ? [{ href: "/admin", label: t.nav.admin, Icon: UserRound }] : []),
+        ...(user.isAdmin ? [{ href: "/superadmin", label: t.nav.superAdmin, Icon: Landmark }] : []),
       ]
     : [];
   const item = ({ href, label, Icon }: NavLink, badge = 0) => {

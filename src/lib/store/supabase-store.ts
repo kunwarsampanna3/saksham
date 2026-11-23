@@ -16,6 +16,7 @@ import type {
   OtpRecord,
   Passkey,
   Payout,
+  FinanceEvent,
   PriceOverride,
   Question,
   Rating,
@@ -209,6 +210,10 @@ type BaseMethods = Omit<
   | "purgeDemoData"
   | "listPayouts"
   | "putPayout"
+  | "listAllPayouts"
+  | "getPayout"
+  | "listFinanceEvents"
+  | "addFinanceEvent"
   | "listRatingsFor"
   | "getRatingByBooking"
   | "putRating"
@@ -678,6 +683,7 @@ const taskMethods = {
 /* ------------------------------------------------------------ bookings, receipts, disputes */
 type BkRow = {
   half_done_at: string | null;
+  finance_hold: Booking["financeHold"] | null;
   id: string;
   request_id: string;
   bid_id: string;
@@ -739,6 +745,7 @@ async function loadBooking(r: BkRow | null): Promise<Booking | null> {
     feeRate: Number(r.fee_rate),
     plan: r.plan,
     halfDoneAt: r.half_done_at ?? undefined,
+    financeHold: r.finance_hold ?? null,
     method: r.method,
     status: r.status,
     installments: (data as InRow[]).map(toIn),
@@ -782,6 +789,7 @@ const bookingMethods = {
         fee_rate: b.feeRate,
         plan: b.plan,
         half_done_at: b.halfDoneAt ?? null,
+        finance_hold: b.financeHold ?? null,
         method: b.method,
         status: b.status,
         created_at: b.createdAt,
@@ -1101,33 +1109,75 @@ const toR = (r: RRow): Rating => ({
   createdAt: r.created_at,
 });
 
+type PayoutRow = {
+  id: string;
+  user_id: string;
+  amount: number;
+  fee: number;
+  fee_base: number;
+  method: Payout["method"];
+  ref: string;
+  status: Payout["status"];
+  review: Payout["review"] | null;
+  created_at: string;
+};
+const toPayout = (p: PayoutRow): Payout => ({
+  id: p.id,
+  userId: p.user_id,
+  amount: p.amount,
+  fee: p.fee,
+  feeBase: p.fee_base,
+  method: p.method,
+  ref: p.ref,
+  status: p.status,
+  review: p.review ?? undefined,
+  createdAt: p.created_at,
+});
+
 const walletMethods = {
   async listPayouts(userId: string) {
     const { data, error } = await db().from("payouts").select("*").eq("user_id", userId).order("created_at");
     if (error) throw new Error(error.message);
-    return (
-      data as {
-        id: string;
-        user_id: string;
-        amount: number;
-        fee: number;
-        fee_base: number;
-        method: Payout["method"];
-        ref: string;
-        status: Payout["status"];
-        created_at: string;
-      }[]
-    ).map((p) => ({
-      id: p.id,
-      userId: p.user_id,
-      amount: p.amount,
-      fee: p.fee,
-      feeBase: p.fee_base,
-      method: p.method,
-      ref: p.ref,
-      status: p.status,
-      createdAt: p.created_at,
-    }));
+    return (data as PayoutRow[]).map(toPayout);
+  },
+  async listAllPayouts() {
+    const out: Payout[] = [];
+    for (let from = 0; ; from += 1000) {
+      const { data, error } = await db()
+        .from("payouts")
+        .select("*")
+        .order("created_at")
+        .range(from, from + 999);
+      if (error) throw new Error(error.message);
+      out.push(...(data as PayoutRow[]).map(toPayout));
+      if (data.length < 1000) return out;
+    }
+  },
+  async getPayout(id: string) {
+    const { data, error } = await db().from("payouts").select("*").eq("id", id).maybeSingle();
+    if (error) throw new Error(error.message);
+    return data ? toPayout(data as PayoutRow) : null;
+  },
+  async listFinanceEvents() {
+    const out: FinanceEvent[] = [];
+    for (let from = 0; ; from += 1000) {
+      const { data, error } = await db()
+        .from("finance_events")
+        .select("data")
+        .order("created_at")
+        .range(from, from + 999);
+      if (error) throw new Error(error.message);
+      out.push(...(data as { data: FinanceEvent }[]).map((r) => r.data));
+      if (data.length < 1000) return out;
+    }
+  },
+  async addFinanceEvent(e: FinanceEvent) {
+    // insert, not upsert: the table is append-only (the migration also blocks update and delete).
+    const { error } = await db()
+      .from("finance_events")
+      .insert({ id: e.id, created_at: e.createdAt, data: e });
+    if (error) throw new Error(error.message);
+    return e;
   },
   async putPayout(p: Payout) {
     const { error } = await db()
@@ -1141,6 +1191,7 @@ const walletMethods = {
         method: p.method,
         ref: p.ref,
         status: p.status,
+        review: p.review ?? null,
         created_at: p.createdAt,
       });
     if (error) throw new Error(error.message);
@@ -1234,6 +1285,10 @@ const walletMethods = {
   Store,
   | "listPayouts"
   | "putPayout"
+  | "listAllPayouts"
+  | "getPayout"
+  | "listFinanceEvents"
+  | "addFinanceEvent"
   | "listRatingsFor"
   | "getRatingByBooking"
   | "putRating"
