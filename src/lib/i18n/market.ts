@@ -136,10 +136,8 @@ export const marketEn = {
   },
   publicDemo: {
     banner:
-      "Public demo: other visitors see what you type, and it's erased often. Don't use real names, numbers or money details.",
-    title: "Try Saksham",
-    lead: "This is a public demo. Tap an example account to sign in. Sign-up is off here.",
-    off: "That's off on the public demo. Use the example accounts.",
+      "Public demo: other visitors see what you type, and it's erased often. Don't use your real number, name or money details.",
+    off: "Uploading is off on the public demo, so nobody's photos are shown to strangers.",
   },
   blocked: {
     maintenance: {
@@ -296,10 +294,8 @@ export const marketNe: typeof marketEn = {
   },
   publicDemo: {
     banner:
-      "सार्वजनिक डेमो: तपाईंले लेखेको अरू आगन्तुकले देख्छन्, र यो छिटोछिटो मेटिन्छ। वास्तविक नाम, नम्बर वा पैसाको विवरण नराख्नुहोस्।",
-    title: "सक्षम चलाएर हेर्नुहोस्",
-    lead: "यो सार्वजनिक डेमो हो। साइन इन गर्न नमुना खातामा थिच्नुहोस्। यहाँ नयाँ खाता खोल्न मिल्दैन।",
-    off: "सार्वजनिक डेमोमा यो बन्द छ। नमुना खाता प्रयोग गर्नुहोस्।",
+      "सार्वजनिक डेमो: तपाईंले लेखेको अरू आगन्तुकले देख्छन्, र यो छिटोछिटो मेटिन्छ। आफ्नो वास्तविक नम्बर, नाम वा पैसाको विवरण नराख्नुहोस्।",
+    off: "सार्वजनिक डेमोमा फाइल अपलोड बन्द छ, ताकि कसैको फोटो अरूले नदेखून्।",
   },
   blocked: {
     maintenance: {

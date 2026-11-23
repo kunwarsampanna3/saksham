@@ -957,36 +957,35 @@ describe("Claude: match and coach", () => {
 describe("open public demo", () => {
   const open = { RENDER: "true", PUBLIC_DEMO: "true" };
 
-  test("anyone can open it, and only the example accounts work", async (t) => {
+  test("anyone can open it, sign up and sign in, but nothing can be uploaded", async (t) => {
     const app = await App.create(t, { demo: true, env: open });
     const home = await app.call("/");
     assert.equal(home.status, 200);
     assert.match(home.text, /data-public-demo/);
-    assert.match((await app.call("/login")).text, /Tap an example account/);
-    assert.equal((await app.call("/signup")).status, 307);
-    assert.equal((await app.call("/forgot-mpin")).status, 307);
+    for (const page of ["/login", "/signup", "/forgot-mpin"]) assert.equal((await app.call(page)).status, 200, page);
 
-    for (const purpose of ["signup", "reset"]) {
-      const r = await app.call("/api/auth/otp/request", { phone: "9812121212", purpose });
-      assert.equal(r.json.error, "public_demo", purpose);
-    }
-    const real = await app.call("/api/auth/login", { phone: app.users.client.phone, mpin: "7391" });
-    assert.equal(real.json.error, "public_demo", "real accounts stay closed");
+    const phone = "9812121212";
+    const { devCode } = (await app.call("/api/auth/otp/request", { phone, purpose: "signup" })).json;
+    const verified = await app.call("/api/auth/otp/verify", { phone, purpose: "signup", code: devCode });
+    const body = { name: "Demo Visitor", city: "Kathmandu", role: "client", mpin: "8264", acceptTerms: true };
+    assert.equal((await app.call("/api/auth/register", body, verified.cookie)).status, 200, "sign-up works");
+    assert.equal((await app.call("/api/auth/login", { phone, mpin: "8264" })).status, 200, "sign-in works");
+    await app.call("/api/auth/demo", { persona: "mina" }); // creates the example accounts
+    const mina = await app.call("/api/auth/login", { phone: "9800000001", mpin: "2468" });
+    assert.equal(mina.status, 200, "an example account by number and MPIN");
 
-    const mina = (await app.call("/api/auth/demo", { persona: "mina" })).cookie;
-    assert.equal((await app.call("/wallet", null, mina)).status, 200);
     const form = new FormData();
     form.set("docType", "passport");
-    const upload = await app.call("/api/verification/id", form, mina);
+    const upload = await app.call("/api/verification/id", form, mina.cookie);
     assert.equal(upload.json.error, "public_demo", "nothing can be uploaded");
 
-    const manage = (body) => app.call("/api/admin/manage", body, mina);
+    const manage = (b) => app.call("/api/admin/manage", b, mina.cookie);
     const controls = { action: "controls", signups: true, posting: true, applying: true, maintenance: true, maxOnline: 0 };
     assert.equal((await manage(controls)).json.error, "public_demo", "can't switch the site off");
     const bikash = app.db().users.find((u) => u.name === "Bikash Tamang");
     const suspend = { action: "suspend", userId: bikash?.id ?? randomUUID(), reason: "test" };
     assert.equal((await manage(suspend)).json.error, "public_demo");
-    assert.equal((await app.call("/admin", null, mina)).status, 200, "can still look around");
+    assert.equal((await app.call("/admin", null, mina.cookie)).status, 200, "can still look around");
   });
 
   test("without PUBLIC_DEMO a demo on Render stays locked, and a password still wins", async (t) => {

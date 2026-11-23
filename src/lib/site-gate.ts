@@ -4,7 +4,7 @@
  *
  * - SITE_PASSWORD set: every request needs it (browser's own password box; any username).
  * - Not set on Render while DEMO_MODE=true: locked, because demo mode gives away admin and sign-in codes,
- *   unless PUBLIC_DEMO=true: then it's open, and the app allows only the example accounts (see config.publicDemo).
+ *   unless PUBLIC_DEMO=true: then it's open, with uploads and the site switches turned off (see config.publicDemo).
  * - Not set anywhere else (your laptop): no password.
  */
 const MIN_LENGTH = 12;

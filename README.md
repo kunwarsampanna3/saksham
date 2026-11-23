@@ -202,8 +202,8 @@ automatic face match. Set `FACE_MATCH=on` only on a server with 1 GB or more.
 Data resets whenever the free server restarts or sleeps. Testers share the demo admin, so never upload real IDs there.
 
 **Open it to everyone (no password):** in Render → Environment, delete `SITE_PASSWORD` and add `PUBLIC_DEMO=true`.
-Then only the example accounts can sign in: sign-up, real-number sign-in, MPIN reset and all uploads are off, a banner
-warns visitors that others see what they type, and the demo admin can look around but can't switch the site off or
+Sign-in, sign-up and the example accounts all work (codes appear on screen, so treat every account as public), all
+uploads are off, a banner warns visitors that others see what they type, and the demo admin can look around but can't switch the site off or
 lock accounts. Without either setting, a demo on Render shows "Locked".
 
 ## Before launch

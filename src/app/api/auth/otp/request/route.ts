@@ -6,7 +6,6 @@ import { issueOtp } from "@/lib/auth/otp";
 import { rateLimit } from "@/lib/auth/rate-limit";
 import { policy } from "@/lib/config";
 import { switchedOff } from "@/lib/controls";
-import { config } from "@/lib/config";
 
 const Body = z
   .object({ ...targetFields, purpose: z.enum(["signup", "reset"]) })
@@ -17,8 +16,6 @@ export async function POST(req: NextRequest) {
   if ("res" in g) return g.res;
   const { purpose } = g.data;
   const target = targetOf(g.data);
-  // An open demo has no real accounts: a code shown on screen could take over whatever number someone typed.
-  if (config.publicDemo) return fail(403, "public_demo");
   if (purpose === "signup") {
     const off = await switchedOff("signups", null);
     if (off) return off;
