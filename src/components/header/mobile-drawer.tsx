@@ -73,7 +73,7 @@ export function MobileDrawer({
 
   const more = user
     ? [
-        { href: `/profile/${user.id}`, label: t.abroadJobs.record.myProfile, Icon: UserRound },
+        { href: "/profile/me", label: t.me.title, Icon: UserRound },
         { href: "/wallet", label: t.nav.wallet, Icon: Wallet },
         { href: "/verification", label: t.nav.verification, Icon: ShieldCheck },
         { href: "/abroad", label: t.nav.abroad, Icon: Globe2 },

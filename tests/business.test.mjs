@@ -999,3 +999,22 @@ describe("open public demo", () => {
     assert.equal((await withPassword.call("/")).status, 401);
   });
 });
+
+describe("my profile", () => {
+  test("shows my skills, and I can change them", async (t) => {
+    const app = await App.create(t);
+    await app.everyone();
+    const page = await app.call("/profile/me", null, app.pro);
+    assert.equal(page.status, 200);
+    assert.match(page.text, /data-skill="plumbing"/);
+    assert.doesNotMatch(page.text, /Fair price/, "no price on the skill cards");
+    const save = (categories, who = app.pro) => app.call("/api/profile", { categories }, who);
+    assert.equal((await save(["coding", "tutoring"])).status, 200);
+    assert.deepEqual(app.db().users.find((u) => u.id === app.users.pro.id).categories, ["coding", "tutoring"]);
+    assert.equal((await save([])).json.error, "categories_required", "an applicant keeps at least one");
+    assert.equal((await save(["not-a-skill"])).status, 422);
+    assert.equal((await save([], app.client)).status, 200, "a recruiter may have none");
+    assert.equal((await app.call(`/profile/${app.users.pro.id}`, null, app.pro)).status, 200);
+    assert.equal((await save(["coding"], "")).status, 401);
+  });
+});

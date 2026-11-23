@@ -32,25 +32,62 @@ import { category } from "@/lib/pricing";
 import { rs, rsRange, num } from "@/lib/format";
 import { toDeva } from "@/lib/i18n/dict";
 import { config } from "@/lib/config";
+import { MyProfile } from "@/components/profile/my-profile";
+import { passportFor } from "@/lib/wallet";
+import { statusFor } from "@/lib/verification";
+import { openTasksFor } from "@/lib/task-search";
 
 type Params = Promise<{ id: string }>;
 
 export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
-  const [p, viewer] = await Promise.all([findProvider((await params).id), currentUser()]);
+  const { id } = await params;
+  if (id === "me") return { title: "My profile" };
+  const [p, viewer] = await Promise.all([findProvider(id), currentUser()]);
   return { title: p && (p.isReal || viewer?.isDemo) ? p.name : "Profile" };
 }
 
 export default async function Profile({ params }: { params: Params }) {
   const { id } = await params;
   const [viewer, { t, lang }] = await Promise.all([requireUser(`/profile/${id}`), getDict()]);
-  if (id === "me") redirect(`/profile/${viewer.id}`);
+  // Your own profile, with your skills to see and change.
+  if (id === "me") {
+    const [passport, checks, open, { records }] = await Promise.all([
+      passportFor(viewer),
+      statusFor(viewer),
+      openTasksFor(viewer),
+      abroadRecord(viewer.id, viewer),
+    ]);
+    const openJobs: Record<string, number> = {};
+    for (const task of open) openJobs[task.category] = (openJobs[task.category] ?? 0) + 1;
+    const persona = PERSONA_PROFILE[viewer.phone];
+    const publicHref = viewer.roles.includes("provider")
+      ? viewer.isDemo
+        ? persona
+          ? `/profile/${persona}`
+          : null
+        : `/profile/${viewer.id}`
+      : null;
+    return (
+      <MyProfile
+        user={viewer}
+        passport={passport}
+        checks={checks}
+        openJobs={openJobs}
+        records={records}
+        publicHref={publicHref}
+        t={t}
+        lang={lang}
+      />
+    );
+  }
   const p = await findProvider(id);
 
   // No service profile (recruiters, workers abroad, yourself): a simple profile with the work abroad record.
   if (!p) {
     const person = /^[0-9a-f-]{36}$/.test(id) ? await store.getUserById(id) : null;
     if (!person || person.isDemo !== viewer.isDemo) notFound();
-    const self = person.id === viewer.id;
+    if (person.id === viewer.id) redirect("/profile/me");
+    const self = false;
     const { known, records } = await abroadRecord(person.id, viewer);
     if (!self && !known) notFound();
     return <MemberProfile person={person} records={records} self={self} t={t} lang={lang} />;

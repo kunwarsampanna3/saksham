@@ -5,6 +5,7 @@
 import { abroadJobsEn, abroadJobsNe } from "./abroad-jobs";
 import { adminDashEn, adminDashNe } from "./admin-dashboard";
 import { matchEn, matchNe } from "./match";
+import { myProfileEn, myProfileNe } from "./my-profile";
 import { marketEn, marketEventsEn, marketEventsNe, marketNe } from "./market";
 
 /** Event params and a money formatter (for notification / system-message texts). */
@@ -15,6 +16,7 @@ export const en = {
   abroadJobs: abroadJobsEn,
   market: marketEn,
   match: matchEn,
+  me: myProfileEn,
   adminDash: adminDashEn,
   brand: { name: "Saksham", deva: "सक्षम", tagline: "Your skill. Your price." },
   common: {
@@ -1784,6 +1786,7 @@ export const ne: Dict = {
   abroadJobs: abroadJobsNe,
   market: marketNe,
   match: matchNe,
+  me: myProfileNe,
   adminDash: adminDashNe,
   brand: { name: "सक्षम", deva: "सक्षम", tagline: "तपाईंको सीप। तपाईंको मूल्य।" },
   common: {
